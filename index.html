@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; form-action 'none'; base-uri 'self'" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="description" content="An interactive game for mastering displacement-time, velocity-time and acceleration-time graphs, from GCSE to A-level and beyond." />
+  <title>Motion Graphs Mastery</title>
+  <link rel="stylesheet" href="styles.css?v=202611032200" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg?v=202611032200" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="app-header"></header>
+  <main id="main" tabindex="-1">
+    <noscript><p>Motion Graphs Mastery needs JavaScript switched on.</p></noscript>
+  </main>
+
+  <!-- Engines: pure logic, also run under Node for the test suite -->
+  <script src="src/format.js?v=202611032200"></script>
+  <script src="src/motionModel.js?v=202611032200"></script>
+  <script src="src/dragModel.js?v=202611032200"></script>
+  <script src="src/scenarios.js?v=202611032200"></script>
+  <script src="src/misconceptions.js?v=202611032200"></script>
+  <script src="src/graphCompare.js?v=202611032200"></script>
+  <script src="src/quantGenerators.js?v=202611032200"></script>
+  <script src="src/reconstruction.js?v=202611032200"></script>
+  <script src="src/levels.js?v=202611032200"></script>
+  <script src="src/progress.js?v=202611032200"></script>
+
+  <!-- Shared interface pieces -->
+  <script src="app/dom.js?v=202611032200"></script>
+  <script src="app/graphCanvas.js?v=202611032200"></script>
+  <script src="app/motionStage.js?v=202611032200"></script>
+  <script src="app/viewer.js?v=202611032200"></script>
+  <script src="app/runner.js?v=202611032200"></script>
+
+  <!-- Game modes -->
+  <script src="app/activities/common.js?v=202611032200"></script>
+  <script src="app/activities/signs.js?v=202611032200"></script>
+  <script src="app/activities/predict.js?v=202611032200"></script>
+  <script src="app/activities/match.js?v=202611032200"></script>
+  <script src="app/activities/draw.js?v=202611032200"></script>
+  <script src="app/activities/fix.js?v=202611032200"></script>
+  <script src="app/activities/create.js?v=202611032200"></script>
+  <script src="app/activities/detective.js?v=202611032200"></script>
+  <script src="app/activities/quant.js?v=202611032200"></script>
+  <script src="app/activities/link.js?v=202611032200"></script>
+  <script src="app/activities/area.js?v=202611032200"></script>
+  <script src="app/activities/reconstruct.js?v=202611032200"></script>
+  <script src="app/activities/drag.js?v=202611032200"></script>
+
+  <!-- Pages -->
+  <script src="app/views/home.js?v=202611032200"></script>
+  <script src="app/views/learn.js?v=202611032200"></script>
+  <script src="app/views/explore.js?v=202611032200"></script>
+  <script src="app/views/insights.js?v=202611032200"></script>
+  <script src="app/views/dashboard.js?v=202611032200"></script>
+  <script src="app/views/teacher.js?v=202611032200"></script>
+  <script src="app/views/drag.js?v=202611032200"></script>
+  <script src="app/app.js?v=202611032200"></script>
+</body>
+</html>
