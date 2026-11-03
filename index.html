@@ -3,63 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; form-action 'none'; base-uri 'self'" />
-  <meta name="referrer" content="no-referrer" />
   <meta name="robots" content="noindex, nofollow" />
-  <meta name="description" content="An interactive game for mastering displacement-time, velocity-time and acceleration-time graphs, from GCSE to A-level and beyond." />
-  <title>Motion Graphs Mastery</title>
-  <link rel="stylesheet" href="styles.css?v=202611032200" />
-  <link rel="icon" type="image/svg+xml" href="favicon.svg?v=202611032200" />
+  <title>Physics apps</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; --bg:#f7f7f5; --ink:#1b1f24; --muted:#5b6570; --accent:#2a6bd6; --line:#dfe3e8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); }
+    main { max-width: 860px; margin: 0 auto; padding: 2rem max(16px, env(safe-area-inset-left, 0px)); }
+    h1 { margin: 0 0 0.3rem; }
+    p.lead { color: var(--muted); margin: 0 0 1.5rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+    a.card { display: block; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 1rem 1.1rem; text-decoration: none; color: inherit; }
+    a.card:hover { border-color: var(--accent); }
+    a.card strong { color: #173d75; font-size: 1.1rem; }
+    a.card p { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.95rem; }
+  </style>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to content</a>
-  <header class="app-header"></header>
-  <main id="main" tabindex="-1">
-    <noscript><p>Motion Graphs Mastery needs JavaScript switched on.</p></noscript>
+  <main>
+    <h1>Physics apps</h1>
+    <p class="lead">Interactive tools for GCSE and A-level physics.</p>
+    <div class="grid">
+      <a class="card" href="motion-graphs/">
+        <strong>Motion Graphs Mastery</strong>
+        <p>Displacement, velocity and acceleration graphs: explore freely, an air resistance lab, and a six-stage learning journey.</p>
+      </a>
+    </div>
   </main>
-
-  <!-- Engines: pure logic, also run under Node for the test suite -->
-  <script src="src/format.js?v=202611032200"></script>
-  <script src="src/motionModel.js?v=202611032200"></script>
-  <script src="src/dragModel.js?v=202611032200"></script>
-  <script src="src/scenarios.js?v=202611032200"></script>
-  <script src="src/misconceptions.js?v=202611032200"></script>
-  <script src="src/graphCompare.js?v=202611032200"></script>
-  <script src="src/quantGenerators.js?v=202611032200"></script>
-  <script src="src/reconstruction.js?v=202611032200"></script>
-  <script src="src/levels.js?v=202611032200"></script>
-  <script src="src/progress.js?v=202611032200"></script>
-
-  <!-- Shared interface pieces -->
-  <script src="app/dom.js?v=202611032200"></script>
-  <script src="app/graphCanvas.js?v=202611032200"></script>
-  <script src="app/motionStage.js?v=202611032200"></script>
-  <script src="app/viewer.js?v=202611032200"></script>
-  <script src="app/runner.js?v=202611032200"></script>
-
-  <!-- Game modes -->
-  <script src="app/activities/common.js?v=202611032200"></script>
-  <script src="app/activities/signs.js?v=202611032200"></script>
-  <script src="app/activities/predict.js?v=202611032200"></script>
-  <script src="app/activities/match.js?v=202611032200"></script>
-  <script src="app/activities/draw.js?v=202611032200"></script>
-  <script src="app/activities/fix.js?v=202611032200"></script>
-  <script src="app/activities/create.js?v=202611032200"></script>
-  <script src="app/activities/detective.js?v=202611032200"></script>
-  <script src="app/activities/quant.js?v=202611032200"></script>
-  <script src="app/activities/link.js?v=202611032200"></script>
-  <script src="app/activities/area.js?v=202611032200"></script>
-  <script src="app/activities/reconstruct.js?v=202611032200"></script>
-  <script src="app/activities/drag.js?v=202611032200"></script>
-
-  <!-- Pages -->
-  <script src="app/views/home.js?v=202611032200"></script>
-  <script src="app/views/learn.js?v=202611032200"></script>
-  <script src="app/views/explore.js?v=202611032200"></script>
-  <script src="app/views/insights.js?v=202611032200"></script>
-  <script src="app/views/dashboard.js?v=202611032200"></script>
-  <script src="app/views/teacher.js?v=202611032200"></script>
-  <script src="app/views/drag.js?v=202611032200"></script>
-  <script src="app/app.js?v=202611032200"></script>
 </body>
 </html>
