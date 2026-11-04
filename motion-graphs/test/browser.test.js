@@ -302,3 +302,30 @@ test('Home opens on Explore freely; the stage map lives on the Learn page', asyn
   assert.deepEqual(errors, []);
   await page.close();
 });
+
+test('Gradient and Area explorers tell the journey\'s story and show the moving object', async (t) => {
+  if (skipIfNoBrowser(t)) return;
+  const { page, errors } = await openPage(1280, true);
+  for (const r of ['#/explore/gradient', '#/explore/area']) {
+    await page.goto(base + r);
+    await page.waitForTimeout(600);
+    assert.ok((await page.locator('.journey-panel .scenario-story').innerText()).length > 40, r + ' needs a story');
+    assert.equal(await page.locator('.journey-panel canvas').count(), 1, r + ' needs the animation');
+  }
+  // the animation really changes with the time slider (Gradient)
+  await page.goto(base + '#/explore/gradient');
+  await page.waitForTimeout(600);
+  const shot = () => page.locator('.journey-panel canvas').screenshot();
+  const first = await shot();
+  await page.locator('input[aria-label="Time of the point"]').fill('2');
+  await page.waitForTimeout(200);
+  const second = await shot();
+  assert.ok(!first.equals(second), 'moving the time slider should move the object');
+  // Area: play the highlighted part, then it stops by itself
+  await page.goto(base + '#/explore/area');
+  await page.waitForTimeout(600);
+  await page.getByRole('button', { name: /Play this part/ }).click();
+  await page.waitForSelector('button:has-text("▶ Play this part")', { timeout: 12000 });
+  assert.deepEqual(errors, []);
+  await page.close();
+});

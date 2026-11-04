@@ -28,6 +28,37 @@
     return sel;
   }
 
+  /**
+   * A small "what is actually happening" panel for the explorers: the journey's
+   * story in one or two sentences, and the animated object, driven by whatever
+   * time the explorer is currently looking at.
+   */
+  function journeyPanel() {
+    const story = h('p', { class: 'scenario-story', style: { margin: '0 0 0.5rem' } });
+    const slot = h('div', { class: 'stage-panel' });
+    let stage = null;
+    return {
+      el: h('div', { class: 'card journey-panel' }, story, slot),
+      set(sc) {
+        if (stage) stage.destroy();
+        clear(slot);
+        const c = h('canvas');
+        slot.appendChild(c);
+        stage = window.MotionStage.create(c, sc, { cssHeight: sc.orientation === 'vertical' ? 210 : 150 });
+        story.textContent = '';
+        story.appendChild(h('b', null, sc.title + '. '));
+        const text = sc.story || '';
+        story.appendChild(document.createTextNode(text + (/positive/i.test(text) ? '' : ' Positive is ' + sc.pos + '.')));
+      },
+      render(t, extra) {
+        if (stage) stage.render(t, extra);
+      },
+      destroy() {
+        if (stage) stage.destroy();
+      },
+    };
+  }
+
   // ------------------------------------------------------------------ Motion Lab
   function lab(container) {
     const parts = [];
@@ -201,6 +232,8 @@
     const chordRow = h('label', { class: 'setting' }, h('span', null, 'Chord width Δt — shrink it towards zero'), dtSlider);
     chordRow.hidden = mathMode !== 'extension';
     const playBtn = h('button', { type: 'button', class: 'btn btn-secondary btn-small' }, '▶ Sweep');
+    const journey = journeyPanel();
+    journey.set(sc);
     let raf = null;
 
     let topG = top;
@@ -246,6 +279,7 @@
       }
       topG.render(state);
       botG.render({ upTo: t, cursor: t });
+      journey.render(t);
       const words = pair === 's' ? 'velocity' : 'acceleration';
       clear(readout);
       readout.appendChild(h('div', { class: 'fb-title' }, 'At t = ' + t.toFixed(2) + ' s: ' + (pair === 's' ? 's' : 'v') + ' = ' + Fmt.signedUnit(val, unitTop, 2)));
@@ -264,6 +298,7 @@
       sc = Scn.getScenario(sel.value);
       t = Math.min(t, sc.motion.duration);
       tSlider.value = String(t);
+      journey.set(sc);
       rebuildGraphs();
     });
     const pairCtl = window.UI.segmented(
@@ -310,6 +345,7 @@
     container.appendChild(h('h1', null, '📐 Gradient Explorer'));
     container.appendChild(h('p', { class: 'subtitle' }, 'The gradient of one graph is the height of the next. Move the point and watch the lower graph being built, one gradient at a time.'));
     container.appendChild(h('div', { class: 'card' }, h('div', { class: 'toggle-row' }, h('label', null, 'Journey ', sel), pairCtl.el, playBtn), h('label', { class: 'setting', style: { marginTop: '0.6rem' } }, h('span', null, 'Move the point in time'), tSlider), chordRow));
+    container.appendChild(h('div', { style: { marginTop: '1rem' } }, journey.el));
     container.appendChild(h('div', { class: 'grid-2', style: { marginTop: '1rem' } }, h('div', { class: 'graph-panel' }, topTitle, topC), h('div', { class: 'graph-panel' }, botTitle, botC)));
     container.appendChild(readout);
     container.appendChild(h('p', { class: 'mode-note' }, 'Maths mode: ' + { standard: 'Standard — gradients.', advanced: 'Advanced — rates of change.', extension: 'Mathematical Extension — limits and derivatives (switch modes at the top of the page).' }[mathMode]));
@@ -321,6 +357,7 @@
       if (raf) cancelAnimationFrame(raf);
       topG.destroy();
       botG.destroy();
+      journey.destroy();
     };
   }
 
@@ -344,6 +381,11 @@
     const stripsIn = h('input', { type: 'range', min: '2', max: '60', step: '1', value: '8', 'aria-label': 'Number of strips' });
     const stripsRow = h('label', { class: 'setting' }, h('span', null, 'Split the area into thin strips (each strip ≈ ' + (q === 'v' ? 'v' : 'a') + ' × Δt)'), stripsIn);
     stripsRow.hidden = mathMode === 'standard';
+    const journey = journeyPanel();
+    journey.set(sc);
+    const playBtn = h('button', { type: 'button', class: 'btn btn-secondary btn-small' }, '▶ Play this part of the journey');
+    let playRaf = null;
+    let tPlay = null; // null = not playing
     let dragging = null;
 
     function snap(x) {
@@ -351,7 +393,10 @@
     }
     function bindPointer(g) {
       g.onPointer((kind, t) => {
-        if (kind === 'down') dragging = Math.abs(t - t1) < Math.abs(t - t2) ? 't1' : 't2';
+        if (kind === 'down') {
+          stopPlay();
+          dragging = Math.abs(t - t1) < Math.abs(t - t2) ? 't1' : 't2';
+        }
         if ((kind === 'down' || kind === 'move') && dragging) {
           if (dragging === 't1') t1 = Math.min(snap(t), t2);
           else t2 = Math.max(snap(t), t1);
@@ -391,6 +436,7 @@
       }
       main.render(st);
       acc.render({ upTo: revealed ? t2 : t1, cursor: revealed ? t2 : t1, markers: [{ t: t1, label: 't₁' }, { t: t2, label: 't₂' }] });
+      journey.render(revealed ? t2 : t1, revealed && t2 - t1 > 1e-6 ? { ghostS: MM.stateAt(sc.motion, t1).s, ghostState: MM.stateAt(sc.motion, t1), ghostLabel: '' } : undefined);
       predUnit.textContent = q === 'v' ? 'm' : 'm/s';
       clear(out);
       out.appendChild(h('p', { class: 'prompt' }, 'Predict the ' + (q === 'v' ? 'displacement' : 'change in velocity') + ' between t₁ = ' + t1.toFixed(2) + ' s and t₂ = ' + t2.toFixed(2) + ' s, then reveal. Drag the dashed edges to change the region.'));
@@ -408,7 +454,42 @@
       }
     }
 
+    function stopPlay() {
+      if (playRaf) cancelAnimationFrame(playRaf);
+      playRaf = null;
+      tPlay = null;
+      playBtn.textContent = '▶ Play this part of the journey';
+    }
+    playBtn.addEventListener('click', () => {
+      if (playRaf) {
+        stopPlay();
+        draw();
+        return;
+      }
+      if (t2 - t1 < 1e-6) return;
+      const secs = Math.min(8, Math.max(2.5, t2 - t1));
+      const rate = (t2 - t1) / secs;
+      tPlay = t1;
+      playBtn.textContent = '⏸ Stop';
+      let last = null;
+      const step = (now) => {
+        const d = last === null ? 0 : Math.min(now - last, 100) / 1000;
+        last = now;
+        tPlay = Math.min(t2, tPlay + d * rate);
+        main.render({ highlight: [t1, t2], markers: [{ t: t1, label: 't₁', color: '#173d75' }, { t: t2, label: 't₂', color: '#173d75' }], cursor: tPlay });
+        acc.render({ upTo: tPlay, cursor: tPlay, markers: [{ t: t1, label: 't₁' }, { t: t2, label: 't₂' }] });
+        journey.render(tPlay, { ghostS: MM.stateAt(sc.motion, t1).s, ghostState: MM.stateAt(sc.motion, t1), ghostLabel: '' });
+        if (tPlay >= t2) {
+          stopPlay();
+          draw();
+          return;
+        }
+        playRaf = requestAnimationFrame(step);
+      };
+      playRaf = requestAnimationFrame(step);
+    });
     predBtn.addEventListener('click', () => {
+      stopPlay();
       const guess = Fmt.parseAnswer(predIn.value);
       revealed = true;
       draw();
@@ -443,9 +524,11 @@
     }
     const sel = scenarioSelect(sc.id, (s) => !s.motion.idealised);
     sel.addEventListener('change', () => {
+      stopPlay();
       sc = Scn.getScenario(sel.value);
       t1 = 0;
       t2 = sc.motion.duration;
+      journey.set(sc);
       rebuild();
     });
     const qCtl = window.UI.segmented(
@@ -468,6 +551,7 @@
     container.appendChild(h('h1', null, '▧ Area Explorer'));
     container.appendChild(h('p', { class: 'subtitle' }, 'Area under a v–t graph is displacement; area under an a–t graph is change in velocity. Area below the axis counts as negative.'));
     container.appendChild(h('div', { class: 'card' }, h('div', { class: 'toggle-row' }, h('label', null, 'Journey ', sel), qCtl.el), stripsRow));
+    container.appendChild(h('div', { style: { marginTop: '1rem' } }, journey.el, h('div', { class: 'btn-row', style: { marginTop: '0.5rem', alignItems: 'center' } }, playBtn, h('span', { class: 'note' }, 'The faded figure shows where it started (t₁).'))));
     container.appendChild(h('div', { class: 'grid-2', style: { marginTop: '1rem' } }, mainSlot, accSlot));
     container.appendChild(h('div', { class: 'card', style: { marginTop: '1rem' } }, out, h('div', { class: 'answer-row' }, predIn, predUnit, predBtn)));
     requestAnimationFrame(() => {
@@ -475,8 +559,10 @@
       rebuild();
     });
     return () => {
+      stopPlay();
       main.destroy();
       acc.destroy();
+      journey.destroy();
     };
   }
 
