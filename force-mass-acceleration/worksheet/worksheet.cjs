@@ -37,9 +37,9 @@ s1.push(lines(3, PW, 430, 520));
 s2.push(H1('Part 2  Collect results'));
 ['Set the distance s from the start to the finish: s = ________ m. Keep it the same for Tables 1 and 2.', 'Release the trolley from rest without pushing. Time it from release to the finish.', 'Do 3 timings for each setting. Cross out any obvious anomaly and repeat it.', 'Table 1: move one slotted mass at a time from the trolley to the hanger. Total mass m = ________ kg.', 'Table 2: keep the hanger the same (F = ________ N) and add 0.1 kg blocks to the trolley.'].forEach(t => s2.push(STEP(t)));
 s2.push(P('**Table 1**  Investigation 1: a against F (total mass constant)', { before: 80, after: 50, keepNext: true }));
-s2.push(tbl(['Masses on hanger', 'm_{h} / kg', 'F = m_{h}g / N', 't_{1} / s', 't_{2} / s', 't_{3} / s', 't̄ / s', 'half range Δt / s', 'a = 2s / t̄^{2} / m s^{-2}', '% unc. in a'], blanks(6, 10), fit([1100, 1100, 1400, 1000, 1000, 1000, 1000, 1500, 2100, 1300], LW), { rowH: 400 }));
+s2.push(tbl(['Masses on hanger', 'm_{h} (kg)', 'F = m_{h}g (N)', 't_{1} (s)', 't_{2} (s)', 't_{3} (s)', 't̄ (s)', 'half range Δt (s)', 'a = 2s / t̄^{2} (m s^{-2})', '% unc. in a'], blanks(6, 10), fit([1100, 1100, 1400, 1000, 1000, 1000, 1000, 1500, 2100, 1300], LW), { rowH: 400 }));
 s2.push(P('**Table 2**  Investigation 2: a against 1/m (force constant)', { before: 160, after: 50, keepNext: true }));
-s2.push(tbl(['Extra mass / kg', 'm / kg', '1/m / kg^{-1}', 't_{1} / s', 't_{2} / s', 't_{3} / s', 't̄ / s', 'half range Δt / s', 'a = 2s / t̄^{2} / m s^{-2}', '% unc. in a'], blanks(6, 10, ['0', '0.1', '0.2', '0.3', '0.4', '0.5']), fit([1100, 1100, 1400, 1000, 1000, 1000, 1000, 1500, 2100, 1300], LW), { rowH: 400 }));
+s2.push(tbl(['Extra mass (kg)', 'm (kg)', '1/m (kg^{-1})', 't_{1} (s)', 't_{2} (s)', 't_{3} (s)', 't̄ (s)', 'half range Δt (s)', 'a = 2s / t̄^{2} (m s^{-2})', '% unc. in a'], blanks(6, 10, ['0', '0.1', '0.2', '0.3', '0.4', '0.5']), fit([1100, 1100, 1400, 1000, 1000, 1000, 1000, 1500, 2100, 1300], LW), { rowH: 400 }));
 s2.push(NOTE('a depends on t², so the percentage uncertainty in a is twice the percentage uncertainty in t.'));
 
 /* ---------------- Parts 3-4: analyse ---------------- */
@@ -98,7 +98,7 @@ s3.push(NOTE('Record the % uncertainty in a. Which designs meet the 5% target? W
 s3.push(lines(2, PW, 430, 520));
 s3.push(H2('Task B  Friction'));
 s3.push(P('Tilt the track a little (pulley end lower) and record a. Compare with F / m = ________ m s^{-2}.', { after: 60, keepNext: true }));
-s3.push(tbl(['tilt θ / °', '0', '0.2', '0.4', '0.6', '0.8', '1.0'], [['a / m s^{-2}', '', '', '', '', '', ''], ['a − F / m', '', '', '', '', '', '']], [2000, 1273, 1273, 1273, 1273, 1273, 1273], { rowH: 480, firstLeft: true }));
+s3.push(tbl(['tilt θ (°)', '0', '0.2', '0.4', '0.6', '0.8', '1.0'], [['a (m s^{-2})', '', '', '', '', '', ''], ['a − F / m (m s^{-2})', '', '', '', '', '', '']], [2000, 1273, 1273, 1273, 1273, 1273, 1273], { rowH: 480, firstLeft: true }));
 s3.push(NOTE('At what tilt does a equal F / m? Friction is the same in every reading. Can repeating remove its effect? Explain.'));
 s3.push(lines(3, PW, 430, 520));
 
@@ -109,28 +109,28 @@ s3.push(BOX([P('**Constant acceleration**', { after: 40 }),
 s3.push(gap(60));
 s3.push(H2('Test 1  From rest:  s = ½at²'));
 s3.push(P('Use stopwatch or video. Keep F and m the same and change s.', { after: 40 }));
-s3.push(tbl(['s / m', 't_{1} / s', 't_{2} / s', 't_{3} / s', 't̄ / s', 't̄^{2} / s^{2}', 'Δ(t^{2}) = 2t̄Δt / s^{2}'], blanks(6, 7, ['0.4', '0.6', '0.8', '1.0', '1.2', '1.4']), fit([900, 1100, 1100, 1100, 1100, 1500, 2500], PW), { rowH: 420 }));
+s3.push(tbl(['s (m)', 't_{1} (s)', 't_{2} (s)', 't_{3} (s)', 't̄ (s)', 't̄^{2} (s^{2})', 'Δ(t^{2}) = 2t̄Δt (s^{2})'], blanks(6, 7, ['0.4', '0.6', '0.8', '1.0', '1.2', '1.4']), fit([900, 1100, 1100, 1100, 1100, 1500, 2500], PW), { rowH: 420 }));
 s3.push(P('**Graph 3**  Plot s against t².', { before: 100, after: 40, keepNext: true }));
 s3.push(img('grid_s_t2.png', 380));
 s3.push(Q(QN(), 'What shape should it be? Use the gradient to find a.', { before: 60 }));
 s3.push(lines(2, PW, 430, 520));
 s3.push(H2('Test 2  Two light gates:  v² = u² + 2as', { newPage: true }));
 s3.push(P('Put gate 1 at 0.3 m. Move gate 2 to different positions. The trolley is already moving at gate 1.', { after: 40 }));
-s3.push(tbl(['gate 2 / m', 's / m', 'u / m s^{-1}', 'v / m s^{-1}', 'v^{2} − u^{2} / m^{2} s^{-2}'], blanks(6, 5, ['0.6', '0.8', '1.0', '1.2', '1.4', '1.6']), fit([1500, 1300, 1700, 1700, 2600], PW), { rowH: 420 }));
+s3.push(tbl(['gate 2 (m)', 's (m)', 'u (m s^{-1})', 'v (m s^{-1})', 'v^{2} − u^{2} (m^{2} s^{-2})'], blanks(6, 5, ['0.6', '0.8', '1.0', '1.2', '1.4', '1.6']), fit([1500, 1300, 1700, 1700, 2600], PW), { rowH: 420 }));
 s3.push(P('**Graph 4**  Plot v² − u² against s.', { before: 100, after: 40, keepNext: true }));
 s3.push(img('grid_v2_d.png', 380));
 s3.push(Q(QN(), 'What should the gradient equal? Find a and compare with Test 1.', { before: 60 }));
 s3.push(lines(2, PW, 430, 520));
 s3.push(H2('Test 3  Do all the equations agree?'));
 s3.push(P('Take one run with gate 1 at 0.3 m and gate 2 at 1.2 m. Use your means of u, v and t, with s = 0.90 m.', { after: 40 }));
-s3.push(tbl(['u / m s^{-1}', 'v / m s^{-1}', 't / s', 's / m'], [['', '', '', '0.90']], [2400, 2400, 2400, 2438], { rowH: 450, firstFill: false }));
+s3.push(tbl(['u (m s^{-1})', 'v (m s^{-1})', 't (s)', 's (m)'], [['', '', '', '0.90']], [2400, 2400, 2400, 2438], { rowH: 450, firstFill: false }));
 s3.push(gap(60));
-s3.push(tbl(['Equation', 'rearranged for a', 'a / m s^{-2}'], [['v = u + at', 'a = (v − u) / t', ''], ['s = ut + ½at²', 'a = 2(s − ut) / t²', ''], ['v² = u² + 2as', 'a = (v² − u²) / 2s', ''], ['s = ½(u + v)t', 'check: ½(u + v)t = ____ m', 'compare with s']], [3000, 3600, 3038], { rowH: 450, firstLeft: true }));
+s3.push(tbl(['Equation', 'rearranged for a', 'a (m s^{-2})'], [['v = u + at', 'a = (v − u) / t', ''], ['s = ut + ½at²', 'a = 2(s − ut) / t²', ''], ['v² = u² + 2as', 'a = (v² − u²) / 2s', ''], ['s = ½(u + v)t', 'check: ½(u + v)t = ____ m', 'compare with s']], [3000, 3600, 3038], { rowH: 450, firstLeft: true }));
 s3.push(Q(QN(), 'Do the values of a agree within their uncertainties? What does this show about the equations?', { before: 100 }));
 s3.push(lines(2, PW, 430, 520));
 s3.push(H2('Challenge  Ramp'));
 s3.push(P('Remove the hanger and tilt the track. Time the trolley down the slope with the gates. Do the same with 0.5 kg added to the trolley.', { after: 40 }));
-s3.push(tbl(['tilt θ / °', 'sin θ', 'a / m s^{-2}', 'a with 0.5 kg added / m s^{-2}'], blanks(5, 4, ['2', '4', '6', '8', '10']), [1800, 1800, 2400, 3638], { rowH: 420 }));
+s3.push(tbl(['tilt θ (°)', 'sin θ', 'a (m s^{-2})', 'a with 0.5 kg added (m s^{-2})'], blanks(5, 4, ['2', '4', '6', '8', '10']), [1800, 1800, 2400, 3638], { rowH: 420 }));
 s3.push(Q(QN(), 'Plot a against sinθ (Graph 5). Show why the gradient should be g, and why the mass does not matter.', { before: 100 }));
 s3.push(EQ([mr('m a = m g sinθ'), mr('      →      '), mr('a = g sinθ')]));
 s3.push(img('grid_a_sin.png', 420));
@@ -148,10 +148,10 @@ s3.push(lines(2, PW, 430, 520));
 s3.push(new Paragraph({ pageBreakBefore: true, spacing: { after: 100 }, children: [new TextRun({ text: 'Teacher answers  (remove before printing)', font: FONT, bold: true, size: 30, color: OR })] }));
 s3.push(P('**Model** (also in the simulation): trolley 0.600 kg + ten 20 g slotted masses; hanger 10 g + 20 g per mass; kinetic friction μ = ' + d.MU + '; pulley adds 5 g effective mass. Total mass in Investigation 1: m = **' + f(d.setup.m, 3) + ' kg**.', { after: 60 }));
 s3.push(P('**Table 1 expected** (s = 1.0 m, flat track, total mass constant)', { after: 40, keepNext: true }));
-s3.push(tbl(['masses', 'F / N', 'a / m s^{-2}', 't / s', 'F/m / m s^{-2}'], d.aF.filter(r => r.nh % 2 === 0).map(r => [String(r.nh), f(r.F, 2), f(r.a, 2), f(r.t1, 2), f(r.ideal, 2)]), [1400, 1800, 2000, 1800, 2400], { rowH: 340 }));
+s3.push(tbl(['masses', 'F (N)', 'a (m s^{-2})', 't (s)', 'F/m (m s^{-2})'], d.aF.filter(r => r.nh % 2 === 0).map(r => [String(r.nh), f(r.F, 2), f(r.a, 2), f(r.t1, 2), f(r.ideal, 2)]), [1400, 1800, 2000, 1800, 2400], { rowH: 340 }));
 s3.push(P('Gradient of a–F: **' + f(d.fitF.slope, 3) + ' kg^{-1}** (1/m = ' + f(1 / d.setup.m, 3) + '; about 1% higher because friction falls as mass moves to the hanger). Intercept **' + f(d.fitF.intercept, 3) + ' m s^{-2}**, the effect of friction ≈ −μg = ' + f(-d.MU * d.G, 3) + '.', { before: 80, after: 60 }));
 s3.push(P('**Table 2 expected** (5 masses on hanger, F = ' + f(d.setup.F, 2) + ' N)', { after: 40, keepNext: true }));
-s3.push(tbl(['extra / kg', 'm / kg', '1/m / kg^{-1}', 'a / m s^{-2}', 't / s'], d.aM.map(r => [f(r.extra, 1), f(r.m, 3), f(r.invm, 3), f(r.a, 2), f(r.t1, 2)]), [1800, 1800, 2000, 2000, 2038], { rowH: 330 }));
+s3.push(tbl(['extra (kg)', 'm (kg)', '1/m (kg^{-1})', 'a (m s^{-2})', 't (s)'], d.aM.map(r => [f(r.extra, 1), f(r.m, 3), f(r.invm, 3), f(r.a, 2), f(r.t1, 2)]), [1800, 1800, 2000, 2000, 2038], { rowH: 330 }));
 [
   '**Q1** Change F (masses on hanger) / measure a (from t) / keep m, s, track, timer the same. Investigation 2: change m / measure a / keep F, s the same.',
   '**Q2** Moving masses keeps the total mass the same, so only F changes. If masses were added to the hanger, the mass accelerated would increase and a against F would curve.',

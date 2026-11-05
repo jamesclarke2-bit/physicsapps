@@ -31,7 +31,7 @@ s1.push(lines(3, PW, 430, 520));
 s2.push(H1('Part 2  Collect results'));
 ['Measure L from the pivot to the centre of the bob. Record N: ______', 'Pull the bob aside to the chosen amplitude and release without pushing.', 'Time N swings. Do 3 timings for each L.', 'Cross out any obvious anomaly and repeat it.', 'Do 5 lengths from about 0.2 m to 1.0 m.'].forEach(t => s2.push(STEP(t)));
 s2.push(P('**Table 1**  Timings for N = ______ swings', { before: 100, after: 60, keepNext: true }));
-s2.push(tbl(['L / m', 't_{1} / s', 't_{2} / s', 't_{3} / s', 't̄ / s', 'half range Δt / s', 'T = t̄ / N / s', '% unc. = Δt / t̄ × 100', 'T^{2} / s^{2}'], blanks(6, 9), [1300, 1400, 1400, 1400, 1500, 1900, 1900, 2000, 1770], { rowH: 520 }));
+s2.push(tbl(['L (m)', 't_{1} (s)', 't_{2} (s)', 't_{3} (s)', 't̄ (s)', 'half range Δt (s)', 'T = t̄ / N (s)', '% unc. = Δt / t̄ × 100', 'T^{2} (s^{2})'], blanks(6, 9), [1300, 1400, 1400, 1400, 1500, 1900, 1900, 2000, 1770], { rowH: 520 }));
 
 s3.push(H1('Part 3  Analyse'));
 s3.push(P('Plot T² against L. Choose your scales and draw a line of best fit.', { after: 60, keepNext: true }));
@@ -59,7 +59,7 @@ s3.push(lines(3, PW, 430, 520));
 s3.push(new Paragraph({ children: [new PageBreak()] }));
 s3.push(new Paragraph({ spacing: { after: 100 }, children: [new TextRun({ text: 'Teacher answers  (remove before printing)', font: FONT, bold: true, size: 30, color: OR })] }));
 s3.push(P('Model: T = 2π√(L/g)×(small amplitude correction), g = ' + d.G + ' m s^{-2}. Gradient of T²–L is 4π²/g = **' + f(d.gradient, 3) + ' s² m^{-1}**.', { after: 80 }));
-s3.push(tbl(['L / m', 'T / s (10°)', 'T² / s²'], d.lengths.map((L, i) => [f(L, 1), f(d.periods[i], 3), f(d.periods[i] ** 2, 3)]), [2000, 2400, 2400], { rowH: 380 }));
+s3.push(tbl(['L (m)', 'T (s), 10°', 'T² (s²)'], d.lengths.map((L, i) => [f(L, 1), f(d.periods[i], 3), f(d.periods[i] ** 2, 3)]), [2000, 2400, 2400], { rowH: 380 }));
 s3.push(gap(60));
 [
   '**Q1** Reaction time at start and stop is a fixed error, so a longer total time makes it a smaller percentage.',

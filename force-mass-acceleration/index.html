@@ -47,10 +47,11 @@ select.series{max-width:100%;font:inherit;padding:6px 8px;border-radius:8px;bord
 
   <!-- BENCH -->
   <section id="p-bench" role="tabpanel" aria-labelledby="t-bench">
-    <div class="think"><b>Think</b><span>Predict first: if you double the pulling force and keep the total mass the same, what happens to the acceleration?</span></div>
+    <div class="card" id="exp-card" style="margin-bottom:14px"></div>
+    <div class="think"><b>Think</b><span id="think-bench">Choose an experiment above, then predict what you expect to see before you take any readings.</span></div>
     <div class="bench">
-      <div class="card">
-        <div class="cardhead"><h2>Set up</h2></div>
+      <div class="card" id="set-card">
+        <div class="cardhead"><h2>Step 3: Set up and take readings</h2></div>
         <div class="ctl"><label for="c-nh">Slotted masses on the hanger (20 g each) <b id="o-nh"></b></label><input id="c-nh" type="range" min="0" max="10" step="1" value="5"></div>
         <div class="ctl"><label class="check"><input type="checkbox" id="c-const" checked> Move masses from the trolley to the hanger (total mass stays the same)</label></div>
         <div class="ctl"><label for="c-k">Extra mass on the trolley <b id="o-k"></b></label><input id="c-k" type="range" min="0" max="5" step="1" value="0"></div>

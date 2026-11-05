@@ -80,8 +80,8 @@
   function renderResults() {
     results.cfg.rows = Object.keys(meta).map(function (k) { return meta[k]; });
     results.cfg.columns = [
-      { head: 'Mean t / s', cell: function (r, st) { return st.n ? Sim.calcButton(fmt(st.mean, 2), 'Mean time', function () { return popMean(r, st); }) : ''; } },
-      { head: '± half range / s', cell: function (r, st) { return st.n ? fmt(st.half, 2) : ''; } },
+      { head: 'Mean t (s)', cell: function (r, st) { return st.n ? Sim.calcButton(fmt(st.mean, 2), 'Mean time', function () { return popMean(r, st); }) : ''; } },
+      { head: '± half range (s)', cell: function (r, st) { return st.n ? fmt(st.half, 2) : ''; } },
       { head: 'T = t / N  (s)', cell: function (r, st) { return st.n ? Sim.calcButton(fmt(st.mean / r.N, 3), 'Period', function () { return popT(r, st); }) : ''; } },
       { head: '% uncertainty', cell: function (r, st) { return st.n ? Sim.calcButton(fmt(st.pct, 1) + '%', 'Uncertainty', function () { return popUnc(r, st); }) : ''; } }
     ];

@@ -131,3 +131,20 @@ details summary{cursor:pointer;font-weight:700}
 /* multi-field readings in the results table (Sim.Results cfg.fields) */
 .chiprows{display:flex;flex-direction:column;gap:4px}
 .chiplabel{font:500 12px var(--f-mono);color:var(--muted);min-width:3.2em;align-self:center}
+
+/* experiment chooser (Sim.experiment) */
+.expgrid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin:6px 0 4px}
+.expopt{display:flex;flex-direction:column;gap:2px;text-align:left;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
+.expopt strong{font-weight:700}.expopt span{font-size:13px;color:var(--muted)}
+.expopt:hover{border-color:var(--c1)}
+.expopt[aria-checked=true]{border-color:var(--c1);box-shadow:0 0 0 2px var(--c1) inset;background:var(--tint,var(--surface))}
+.expopt:focus-visible{outline:3px solid var(--c1);outline-offset:2px}
+.stephead{font:700 14px var(--f-display,inherit);margin:14px 0 4px}
+.yn{margin:8px 0}.ynq{margin:0 0 6px;font-weight:700}
+.ynfb{margin:6px 0 0;font-size:14px}
+.ynfb.good{color:var(--ink)}.ynfb.warn{color:var(--ink)}
+.ynfb .ok,.ynfb .no{margin-right:4px}
+table.vars td:first-child{white-space:nowrap}
+.ctl.locked{opacity:.6}
+.ctl.locked>label::after,.ctl.locked>.lab::after{content:" \00B7  kept the same";color:var(--muted);font-weight:400}
+.gated{opacity:.55}

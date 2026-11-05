@@ -10,6 +10,7 @@
    Sim.pop.open(title, node)     modal pop-up for worked calculations (Esc, backdrop and close button)
    Sim.steps([[label, eq], ...]) numbered calculation steps for pop-ups
    Sim.Results                   readings table with click-to-cross-out chips and calculation buttons
+   Sim.experiment(cfg)           Step 1 chooser: MCQ 'What are you testing?', yes/no technique checks, locks, variables table
    Sim.plot(svg, spec)           SVG scatter/line plot with error bars, labelled axes, accessible title
 */
 (function () {
@@ -230,5 +231,50 @@
     });
   }
 
-  window.Sim = { rng: rng, stats: stats, linfit: linfit, fmt: fmt, sig: sig, el: el, svgel: svgel, tabs: tabs, pop: pop, steps: steps, Results: Results, calcButton: calcButton, plot: plot };
+
+  /* ---------- experiment chooser ----------
+     Step 1 of an app with several investigations: a multiple-choice "What are you testing?", then yes/no technique checks,
+     then a Change / Measure / Keep the same table. Answering a check applies the set-up and can lock controls.
+     cfg: { mount, title, defs:[{id,title,sub,change,measure,keep:[..],apply(),think,checks:[{q, options:[{label, good, msg, apply(), lock:[ids]}]}]}],
+            lock(ids)  - lock/unlock the named controls,  gate(on) - true until something is chosen,  onChoose(def) }  */
+  function experiment(cfg) {
+    var cur = null, ans = {};
+    function def() { return cfg.defs.filter(function (d) { return d.id === cur; })[0]; }
+    function locked() {
+      var d = def(), out = []; if (!d) return out;
+      (d.checks || []).forEach(function (c, i) { if (ans[i] !== undefined) (c.options[ans[i]].lock || []).forEach(function (x) { if (out.indexOf(x) < 0) out.push(x); }); });
+      return out;
+    }
+    function choose(id) {
+      var d = cfg.defs.filter(function (x) { return x.id === id; })[0]; if (!d) return;
+      cur = id; ans = {}; if (d.apply) d.apply(); cfg.lock([]); cfg.gate(false); render(); if (cfg.onChoose) cfg.onChoose(d);
+    }
+    function answer(i, j) {
+      var o = def().checks[i].options[j]; ans[i] = j; if (o.apply) o.apply(); cfg.lock(locked()); render();
+    }
+    function render() {
+      var d = def(), m = cfg.mount; m.textContent = '';
+      m.appendChild(el('div', { class: 'cardhead' }, el('h2', { text: cfg.title || 'Step 1: What are you testing?' })));
+      m.appendChild(el('div', { class: 'expgrid', role: 'radiogroup', 'aria-label': 'Experiment' }, cfg.defs.map(function (x) {
+        return el('button', { class: 'expopt', type: 'button', role: 'radio', 'aria-checked': String(x.id === cur), onclick: function () { choose(x.id); } }, el('strong', { text: x.title }), el('span', { text: x.sub }));
+      })));
+      if (!d) { m.appendChild(el('p', { class: 'fine', text: 'Choose one to unlock the controls.' })); return; }
+      if ((d.checks || []).length) m.appendChild(el('h3', { class: 'stephead', text: 'Step 2: Check your technique' }));
+      (d.checks || []).forEach(function (c, i) {
+        var a = ans[i], opt = a === undefined ? null : c.options[a];
+        m.appendChild(el('div', { class: 'yn' }, el('p', { class: 'ynq', text: c.q }),
+          el('div', { class: 'seg', role: 'group', 'aria-label': c.q }, c.options.map(function (o, j) { return el('button', { type: 'button', 'aria-pressed': String(a === j), text: o.label, onclick: function () { answer(i, j); } }); })),
+          opt ? el('p', { class: 'ynfb ' + (opt.good ? 'good' : 'warn') }, el('span', { class: opt.good ? 'ok' : 'no', role: 'img', 'aria-label': opt.good ? 'good design' : 'flawed design', text: opt.good ? '✓' : '✗' }), ' ' + opt.msg) : null));
+      });
+      m.appendChild(el('h3', { class: 'stephead', text: 'Your variables' }));
+      m.appendChild(el('table', { class: 'kv vars' },
+        el('tr', null, el('td', { text: 'Change' }), el('td', { text: d.change })),
+        el('tr', null, el('td', { text: 'Measure' }), el('td', { text: d.measure })),
+        el('tr', null, el('td', { text: 'Keep the same' }), el('td', { text: d.keep.join(', ') }))));
+    }
+    cfg.gate(true); cfg.lock([]); render();
+    return { choose: choose, current: function () { return def(); }, relock: function () { cfg.lock(locked()); } };
+  }
+
+  window.Sim = { rng: rng, stats: stats, linfit: linfit, fmt: fmt, sig: sig, el: el, svgel: svgel, tabs: tabs, pop: pop, steps: steps, Results: Results, calcButton: calcButton, plot: plot, experiment: experiment };
 })();

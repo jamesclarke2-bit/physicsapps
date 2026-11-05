@@ -17,12 +17,13 @@ These come from James's own teaching. They override defaults. If a build seems t
 - **Orange THINK prompts** ask for a prediction or explanation before the answer is shown. Never give the answer away in the first view.
 - Every number a student might ask "where did that come from?" is a **clickable pop-up** with the worked calculation.
 - Example data is preloaded and labelled, with a Clear button.
+- If an app supports several investigations, the **first thing on the Bench** is the "What are you testing?" multiple choice (`Sim.experiment`), then yes/no technique checks that lock the controls that should stay the same, and a variables table (change, measure, keep the same).
 - Real units, real instrument limits (stopwatch +/-0.07 s, video +/-0.01 s, gates +/-0.003 s).
 - Must work at phone width, with keyboard, in light and dark, and without animation if the user prefers reduced motion.
 
 ## Worksheets (Word)
 - A4. Concise, simple prompts. One instruction per prompt.
-- **A-level spec style tables**: quantity / unit in every heading ("t / s"), blank cells for results, columns in the order of calculation.
+- **A-level spec style tables**: units in brackets in every table heading ("t (s)", "a (m s^-2)"), in the sim tables and the worksheets. Graph axes keep "quantity / unit". Blank cells for results, columns in the order of calculation.
 - **Diagrams already drawn** (set-up, free body diagrams) and **graphs already given** where the aim is to read or interpret them; blank graph paper only where the student must plot.
 - Equations are **native Word equations** (fractions, roots, sub/superscripts), not typed text.
 - **Space for answers**: ruled lines sized to the expected answer.
