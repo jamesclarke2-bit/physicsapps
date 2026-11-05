@@ -1,0 +1,6 @@
+node_modules/
+.check/
+*/worksheet/out/
+*/worksheet/data.json
+*/worksheet/*.png
+__pycache__/

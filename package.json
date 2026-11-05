@@ -1,0 +1,11 @@
+{
+  "name": "physicsapps",
+  "private": true,
+  "description": "Interactive physics apps and matching worksheets (GitHub Pages). See docs/BUILD-RECIPE.md.",
+  "scripts": {
+    "check": "node tools/check.mjs",
+    "test": "node --test */model.test.mjs",
+    "new": "bash tools/new-app.sh"
+  },
+  "devDependencies": { "docx": "^9.0.0", "playwright": "^1.45.0" }
+}
