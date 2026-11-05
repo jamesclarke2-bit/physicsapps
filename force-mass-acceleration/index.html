@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Force, Mass and Acceleration</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../shared/sim.css">
+<style>
+/* App-specific styles only. Anything reusable belongs in shared/sim.css. */
+.rig .track{fill:var(--line);stroke:var(--ink);stroke-width:1}
+.rig .tick{stroke:var(--ink);stroke-width:1}
+.rig .trolley{fill:var(--c1);stroke:var(--ink);stroke-width:1.5}
+.rig .wheel{fill:var(--ink)}
+.rig .slot{fill:var(--c2);stroke:var(--ink);stroke-width:.8}
+.rig .block{fill:var(--muted);stroke:var(--ink);stroke-width:.8}
+.rig .string{stroke:var(--ink);stroke-width:1.2}
+.rig .pulley{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
+.rig .hanger{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
+.rig .gate{stroke:var(--c3);stroke-width:3}
+.rig .gatelbl{fill:var(--c3);font-weight:500;font-size:11px}
+.rig .flag{stroke:var(--c4);stroke-width:2;stroke-dasharray:4 3}
+.rig .ticklbl{fill:var(--muted);font-size:10px}
+.rig .lbl{fill:var(--ink);font-size:11px}
+.stepbtns{display:flex;gap:6px;align-items:center}
+.stepbtns .btn{padding:2px 9px}
+.readout{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font:500 13px var(--f-mono);margin:8px 0 0}
+.readout dt{color:var(--muted)}.readout dd{margin:0}
+select.series{max-width:100%;font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.threegraphs{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Force, Mass and Acceleration</h1>
+    <p class="sub">A trolley pulled by a hanging mass. Change the force, the mass and the tilt, take readings, and test F = ma and the equations of motion.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Simulation sections">
+    <button role="tab" id="t-bench" aria-controls="p-bench" aria-selected="true" data-tab="bench">Bench</button>
+    <button role="tab" id="t-graphs" aria-controls="p-graphs" aria-selected="false" data-tab="graphs">Motion graphs</button>
+    <button role="tab" id="t-analyse" aria-controls="p-analyse" aria-selected="false" data-tab="analyse">Analyse</button>
+    <button role="tab" id="t-design" aria-controls="p-design" aria-selected="false" data-tab="design">Improve the design</button>
+  </nav>
+
+  <!-- BENCH -->
+  <section id="p-bench" role="tabpanel" aria-labelledby="t-bench">
+    <div class="think"><b>Think</b><span>Predict first: if you double the pulling force and keep the total mass the same, what happens to the acceleration?</span></div>
+    <div class="bench">
+      <div class="card">
+        <div class="cardhead"><h2>Set up</h2></div>
+        <div class="ctl"><label for="c-nh">Slotted masses on the hanger (20 g each) <b id="o-nh"></b></label><input id="c-nh" type="range" min="0" max="10" step="1" value="5"></div>
+        <div class="ctl"><label class="check"><input type="checkbox" id="c-const" checked> Move masses from the trolley to the hanger (total mass stays the same)</label></div>
+        <div class="ctl"><label for="c-k">Extra mass on the trolley <b id="o-k"></b></label><input id="c-k" type="range" min="0" max="5" step="1" value="0"></div>
+        <div class="ctl"><label for="c-tilt">Tilt of the track <b id="o-tilt"></b></label>
+          <div class="stepbtns"><button class="btn" id="tilt-" type="button" aria-label="Tilt 0.1 degree less">&minus;0.1&deg;</button><input id="c-tilt" type="range" min="0" max="20" step="0.1" value="0" style="flex:1"><button class="btn" id="tilt+" type="button" aria-label="Tilt 0.1 degree more">+0.1&deg;</button></div></div>
+        <div class="ctl"><label class="check"><input type="checkbox" id="c-hanger" checked> String and hanger attached</label></div>
+        <div class="ctl"><span class="lab">Timer</span><div class="seg" id="seg-timer" role="group" aria-label="Timer"></div></div>
+        <div class="ctl"><label for="c-x2"><span id="l-x2">Distance to finish, s</span> <b id="o-x2"></b></label><input id="c-x2" type="range" min="0.4" max="1.8" step="0.1" value="1"></div>
+        <div class="ctl" id="x1box" hidden><label for="c-x1">First gate position <b id="o-x1"></b></label><input id="c-x1" type="range" min="0.2" max="1.0" step="0.1" value="0.3"></div>
+        <dl class="readout" id="readout"></dl>
+        <div class="btns">
+          <button class="btn primary" id="b-run3" type="button">Time 3 runs</button>
+          <button class="btn" id="b-run1" type="button">Time 1 run</button>
+          <button class="btn" id="b-watch" type="button">Watch a run</button>
+          <button class="btn" id="b-clear" type="button">Clear data</button>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card"><svg class="rig" id="rig" viewBox="0 0 760 250" role="img" aria-label="Trolley on a track pulled by a hanging mass"></svg>
+          <label class="check"><input type="checkbox" id="c-slow"> Slow motion (one quarter speed)</label></div>
+        <div class="card">
+          <div class="cardhead"><h2>Results</h2></div>
+          <p class="banner" id="banner"></p>
+          <div id="results"></div>
+          <p class="fine">Click a reading to cross out an anomaly. Click an underlined value to see how it is worked out.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOTION GRAPHS -->
+  <section id="p-graphs" role="tabpanel" aria-labelledby="t-graphs" hidden>
+    <div class="think"><b>Think</b><span>These graphs use the settings on the Bench tab. Which graph is a straight line? What do its gradient and the area under it tell you?</span></div>
+    <div class="card"><div class="cardhead"><h2 id="g-title">Motion of the trolley from rest</h2></div>
+      <p class="fine" id="g-note"></p>
+      <div class="threegraphs"><div><svg id="g-s"></svg></div><div><svg id="g-v"></svg></div><div><svg id="g-a"></svg></div></div>
+    </div>
+  </section>
+
+  <!-- ANALYSE -->
+  <section id="p-analyse" role="tabpanel" aria-labelledby="t-analyse" hidden>
+    <div class="think"><b>Think</b><span id="a-think"></span></div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="ctl"><span class="lab">Graph</span><div class="seg" id="seg-plot" role="group" aria-label="Graph"></div></div>
+      <div class="ctl"><label for="sel-series"><span class="lab">Readings to plot</span></label><select class="series" id="sel-series"></select></div>
+    </div>
+    <div class="two">
+      <div class="card"><div class="cardhead"><h2 id="a-title"></h2></div><svg id="plot"></svg>
+        <label class="check"><input type="checkbox" id="chk-model"> Show the line predicted by F = ma with no friction</label></div>
+      <div class="card"><div class="cardhead"><h2>Best-fit line</h2></div><div id="fit-out"></div></div>
+    </div>
+  </section>
+
+  <!-- DESIGN -->
+  <section id="p-design" role="tabpanel" aria-labelledby="t-design" hidden>
+    <div class="think"><b>Think</b><span>Find a design that meets all the checks. What limits each choice?</span></div>
+    <div class="two">
+      <div class="card">
+        <div class="cardhead"><h2>Design</h2></div>
+        <div class="ctl"><label for="d-nh">Slotted masses on the hanger <b id="od-nh"></b></label><input id="d-nh" type="range" min="0" max="10" step="1" value="5"></div>
+        <div class="ctl"><label for="d-tilt">Tilt of the track <b id="od-tilt"></b></label><input id="d-tilt" type="range" min="0" max="3" step="0.05" value="0"></div>
+        <div class="ctl"><span class="lab">Timer</span><div class="seg" id="dseg-timer" role="group" aria-label="Timer"></div></div>
+        <div class="ctl"><label for="d-x2">Distance to finish <b id="od-x2"></b></label><input id="d-x2" type="range" min="0.4" max="1.8" step="0.1" value="1"></div>
+        <div class="ctl"><label for="d-tgt">Target: % uncertainty in a at most <b id="od-tgt"></b></label><input id="d-tgt" type="range" min="1" max="10" step="0.5" value="5"></div>
+      </div>
+      <div class="card"><div class="cardhead"><h2>Checks</h2></div><div id="d-out"></div></div>
+    </div>
+  </section>
+
+  <div class="about">
+    <p><strong>About this model.</strong> Hanger weight F = m<sub>h</sub>g pulls the trolley and hanger together: a = (F + weight component &minus; friction) &divide; mass moved. Each timing has a random error equal to the biggest single source of error. Uncertainty in a mean is half the range of the readings; repeating does not make a faulty method accurate.</p>
+  </div>
+</div>
+<script src="../shared/sim.js"></script>
+<script src="model.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

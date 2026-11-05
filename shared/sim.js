@@ -131,6 +131,7 @@
 
   /* ---------- results table ----------
      rows: [{key, label}]. Each reading can be crossed out by clicking its chip (it is then ignored by stats).
+     cfg.fields(row) -> [{label, get(reading), dp}] optional: show several quantities per reading.
      cfg.columns: extra columns [{head, cell(row, st) -> Node|string}] where st = Sim.stats of the live readings.
      cfg.res: instrument resolution (for the half-range floor). cfg.dp: decimals for readings. */
   function Results(cfg) {
@@ -139,6 +140,7 @@
   Results.prototype.add = function (key, value, meta) { (this.data[key] = this.data[key] || []).push({ v: value, off: false, meta: meta }); this.changed(); };
   Results.prototype.clear = function () { this.data = {}; this.changed(); };
   Results.prototype.live = function (key) { return (this.data[key] || []).filter(function (r) { return !r.off; }).map(function (r) { return r.v; }); };
+  Results.prototype.liveField = function (key, get) { return (this.data[key] || []).filter(function (r) { return !r.off; }).map(get); };
   Results.prototype.stats = function (key) { return stats(this.live(key), { res: this.cfg.res }); };
   Results.prototype.onChange = function (f) { this.listeners.push(f); };
   Results.prototype.changed = function () { var me = this; this.listeners.forEach(function (f) { f(me); }); };
@@ -148,10 +150,16 @@
     var thead = el('tr', null, heads.map(function (h) { return el('th', { scope: 'col', html: h }); }));
     var rows = cfg.rows.filter(function (r) { return (me.data[r.key] || []).length; }).map(function (r) {
       var st = me.stats(r.key);
-      var chips = el('div', { class: 'chips' }, (me.data[r.key]).map(function (rd) {
+      function chip(rd, text) {
         return el('button', { class: 'chip', type: 'button', 'aria-pressed': rd.off, title: rd.off ? 'Click to include this reading' : 'Click to cross out an anomaly',
-          text: fmt(rd.v, dp), onclick: function () { rd.off = !rd.off; me.changed(); } });
-      }));
+          text: text, onclick: function () { rd.off = !rd.off; me.changed(); } });
+      }
+      var chips;
+      if (cfg.fields) {   // several quantities per reading (e.g. t, u, v): one chip row per field, clicking any chip crosses out the whole reading
+        chips = el('div', { class: 'chiprows' }, cfg.fields(r).map(function (f) {
+          return el('div', { class: 'chips' }, el('span', { class: 'chiplabel', html: f.label }), (me.data[r.key]).map(function (rd) { return chip(rd, fmt(f.get(rd), f.dp === undefined ? dp : f.dp)); }));
+        }));
+      } else chips = el('div', { class: 'chips' }, (me.data[r.key]).map(function (rd) { return chip(rd, fmt(rd.v, dp)); }));
       return el('tr', null, el('td', { html: r.label }), el('td', null, chips),
         (cfg.columns || []).map(function (c) { var out = c.cell(r, st); return el('td', { class: 'num' }, out === null ? '' : out); }));
     });

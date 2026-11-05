@@ -10,3 +10,4 @@ and is self-contained (plain HTML, CSS and JavaScript, no build step).
 
 The landing page (`index.html`) links to each app. To add an app, create a new folder with
 its own `index.html`, then add a card to the landing page.
+| `force-mass-acceleration/` | Force, Mass and Acceleration: Trolley and hanging mass on a flat or tilted track: test F = ma and the SUVAT equations, with uncertainty and friction. |

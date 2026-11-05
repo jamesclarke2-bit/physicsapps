@@ -76,7 +76,7 @@ input[type=range]{width:100%;accent-color:var(--c1);margin:2px 0}
 .rig .htext{fill:var(--accent);font-weight:500;font-size:11px}
 .tablewrap{overflow-x:auto}
 table.data{border-collapse:collapse;width:100%;font-size:14px}
-table.data th{font:500 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+table.data th{font:500 12px var(--f-mono);letter-spacing:0;text-transform:none;color:var(--muted);text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--line);white-space:nowrap}
 table.data td{padding:8px 10px 8px 0;border-bottom:1px solid var(--grid);vertical-align:top;font-variant-numeric:tabular-nums}
 table.data td.num{font-family:var(--f-mono);white-space:nowrap}
 .chips{display:flex;gap:4px;flex-wrap:wrap}
@@ -127,3 +127,7 @@ details summary{cursor:pointer;font-weight:700}
 .steps .eq{font:500 14px/1.45 var(--f-mono);background:var(--surface2);border-radius:6px;padding:6px 10px;overflow-wrap:anywhere}
 .popbox p{margin:0 0 10px;font-size:15px}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+/* multi-field readings in the results table (Sim.Results cfg.fields) */
+.chiprows{display:flex;flex-direction:column;gap:4px}
+.chiplabel{font:500 12px var(--f-mono);color:var(--muted);min-width:3.2em;align-self:center}

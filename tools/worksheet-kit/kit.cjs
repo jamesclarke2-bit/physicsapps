@@ -20,7 +20,7 @@ function rich(s,o={}){
   return out;}
 const P=(s,o={})=>new Paragraph({spacing:{before:o.before??0,after:o.after??100,line:o.line??276},alignment:o.align,keepNext:o.keepNext,keepLines:true,children:rich(s,{size:o.size??21,color:o.color,bold:o.bold,italics:o.italics})});
 const H1=(s,o={})=>new Paragraph({heading:HeadingLevel.HEADING_1,keepNext:true,pageBreakBefore:!!o.newPage,spacing:{before:300,after:140},border:{bottom:{style:BorderStyle.SINGLE,size:10,color:BL,space:3}},children:[new TextRun({text:s,font:FONT,bold:true,size:30,color:BL})]});
-const H2=(s)=>new Paragraph({heading:HeadingLevel.HEADING_2,keepNext:true,spacing:{before:220,after:100},children:[new TextRun({text:s,font:FONT,bold:true,size:24,color:INK})]});
+const H2=(s,o={})=>new Paragraph({heading:HeadingLevel.HEADING_2,keepNext:true,pageBreakBefore:!!o.newPage,spacing:{before:220,after:100},children:[new TextRun({text:s,font:FONT,bold:true,size:24,color:INK})]});
 // numbered question: orange number chip + bold prompt
 const Q=(n,s,o={})=>new Paragraph({keepNext:true,keepLines:true,spacing:{before:o.before??200,after:80,line:276},indent:{left:520,hanging:520},tabStops:[{type:'left',position:520}],
   children:[new TextRun({text:String(n),font:FONT,bold:true,size:24,color:OR}),new TextRun({text:"\t",font:FONT}),...rich(s,{size:21,bold:true,color:INK})]});
