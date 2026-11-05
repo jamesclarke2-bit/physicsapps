@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<style>:root{color-scheme:light}html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Cupcake Case Drop</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a lab bench. Tabbed workspace, rig and data side by side on wide screens, stacked on phones.
+   Orange marks "think" prompts (as in the teacher's own notes), blue and orange are the two main data colours. */
+:root{
+  --bg:#f2f5f9;--surface:#ffffff;--surface2:#e9eef4;--ink:#13202d;--muted:#566678;--line:#d3dce6;--grid:#e5eaf0;
+  --accent:#c24d08;--c1:#2457c5;--c2:#c24d08;--c3:#0c7a84;--c4:#9b2d78;--c5:#6a7410;
+  --good:#17803d;--bad:#b3261e;--btn-bg:#13202d;--btn-fg:#ffffff;--tint:#fff1e6;--scrim:rgba(14,22,30,.55);
+  --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --f-body:'Atkinson Hyperlegible','Segoe UI',system-ui,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e151c;--surface:#16202a;--surface2:#1f2b37;--ink:#e8eef4;--muted:#9aabbc;--line:#2b3947;--grid:#222f3b;
+    --accent:#ff9358;--c1:#8cb0ff;--c2:#ff9358;--c3:#4fd0d8;--c4:#f08bcf;--c5:#c5d04a;
+    --good:#5fd38a;--bad:#ff8a80;--btn-bg:#e8eef4;--btn-fg:#0e151c;--tint:#2a1d14;--scrim:rgba(0,0,0,.65);color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e151c;--surface:#16202a;--surface2:#1f2b37;--ink:#e8eef4;--muted:#9aabbc;--line:#2b3947;--grid:#222f3b;
+  --accent:#ff9358;--c1:#8cb0ff;--c2:#ff9358;--c3:#4fd0d8;--c4:#f08bcf;--c5:#c5d04a;
+  --good:#5fd38a;--bad:#ff8a80;--btn-bg:#e8eef4;--btn-fg:#0e151c;--tint:#2a1d14;--scrim:rgba(0,0,0,.65);color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--f-body);
+  padding-block:20px 56px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1180px;margin:0 auto}
+h1{font:700 clamp(28px,4.4vw,42px)/1.05 var(--f-display);letter-spacing:-.015em;margin:0 0 6px;text-wrap:balance}
+h2{font:700 19px/1.2 var(--f-display);margin:0;letter-spacing:-.005em}
+.sub{color:var(--muted);margin:0;max-width:62ch}
+.tabs{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--line);margin:20px 0 20px}
+.tabs button{background:none;border:0;padding:10px 14px;font:700 15px var(--f-body);color:var(--muted);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;margin-bottom:-1px}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--ink)}
+button{font-family:var(--f-body)}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--c1);outline-offset:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.cardhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+.bench{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:20px;align-items:start}
+.two{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}
+.even{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:860px){.bench,.two,.even{grid-template-columns:minmax(0,1fr)}}
+.reading{font:500 15px var(--f-mono);color:var(--ink);text-align:right}
+.reading b{font-size:22px}
+.clock{font:500 13px var(--f-mono);color:var(--accent);min-height:20px;margin:2px 0 0}
+.fine{font-size:13px;color:var(--muted);margin:6px 0 0}
+.ctl{margin-bottom:14px;min-width:0}
+.ctl label,.lab{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:14px;margin-bottom:4px}
+.ctl label b{font:500 14px var(--f-mono)}
+input[type=range]{width:100%;accent-color:var(--c1);margin:2px 0}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--surface);color:var(--ink);padding:7px 12px;font-size:14px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--btn-bg);color:var(--btn-fg)}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:9px 14px;font-size:15px;font-weight:700;cursor:pointer}
+.btn.primary{background:var(--btn-bg);color:var(--btn-fg);border-color:var(--btn-bg)}
+.btn:disabled{opacity:.45;cursor:default}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;margin-top:6px}
+.ctl label.check{justify-content:flex-start;font-weight:400}
+.think{display:flex;gap:10px;align-items:baseline;background:var(--tint);border-radius:8px;padding:10px 12px;margin:0 0 16px}
+.think b{font:500 11px var(--f-mono);letter-spacing:.14em;color:var(--accent);text-transform:uppercase;flex:none}
+.think span{min-width:0}
+.rig{width:100%;height:auto;display:block}
+.rig .floor,.rig .rule{stroke:var(--muted);stroke-width:1.4}
+.rig .tick{stroke:var(--muted);stroke-width:1}
+.rig text{font:10px var(--f-mono);fill:var(--muted)}
+.rig .hmark{stroke:var(--accent);stroke-width:1.4;stroke-dasharray:5 4}
+.rig .htext{fill:var(--accent);font-weight:500;font-size:11px}
+.rig .case{fill:var(--surface2);stroke:var(--ink);stroke-width:1.5;stroke-linejoin:round}
+.rig .ghost{fill:none;stroke:var(--c1);stroke-width:1;opacity:.55}
+.rig .plast{fill:var(--c4);stroke:var(--ink);stroke-width:1}
+.tablewrap{overflow-x:auto}
+table.data{border-collapse:collapse;width:100%;font-size:14px}
+table.data th{font:500 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+table.data td{padding:8px 10px 8px 0;border-bottom:1px solid var(--grid);vertical-align:top;font-variant-numeric:tabular-nums}
+table.data td.num{font-family:var(--f-mono);white-space:nowrap}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{font:500 13px var(--f-mono);border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:2px 7px;cursor:pointer}
+.chip[aria-pressed=true]{text-decoration:line-through;color:var(--muted);background:var(--surface2);border-style:dashed}
+.calc{font:500 14px var(--f-mono);background:none;border:0;border-bottom:1.5px dotted var(--c1);color:var(--ink);padding:0;cursor:pointer;white-space:nowrap}
+.calc:hover{background:var(--surface2)}
+.info{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--c1);background:var(--surface);color:var(--c1);font:700 13px/1 var(--f-body);cursor:pointer;padding:0}
+.info:hover{background:var(--c1);color:var(--surface)}
+.sm{color:var(--muted);font-size:12px;display:block}
+.banner{font-size:13px;color:var(--muted);margin:0 0 10px}
+.empty{padding:18px 0;color:var(--muted)}
+.chart{width:100%;height:auto;display:block}
+.chart text{font:11px var(--f-mono);fill:var(--muted)}
+.chart text.lbl{font:500 12px var(--f-body);fill:var(--ink)}
+.chart .grid{stroke:var(--grid);stroke-width:1}
+.chart .ax{stroke:var(--muted);stroke-width:1.2}
+.legend{list-style:none;display:flex;flex-wrap:wrap;gap:6px 16px;padding:0;margin:6px 0 0;font-size:13px}
+.legend li{display:flex;align-items:center;gap:6px}
+.verdict{margin:10px 0 0;font-size:15px}
+.verdict p{margin:4px 0}
+.ok{color:var(--good);font-weight:700}.no{color:var(--bad);font-weight:700}
+.checks{list-style:none;padding:0;margin:0;display:grid;gap:12px}
+.checks li{display:grid;grid-template-columns:22px minmax(0,1fr) 22px;gap:8px;align-items:start}
+.live{margin:10px 0 0;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:14px}
+.fbd{width:100%;height:auto;display:block}
+.fbd text{font:11px var(--f-mono);fill:var(--muted)}
+.fbd .arW{stroke:var(--ink);fill:var(--ink)}.fbd .arD{stroke:var(--c2);fill:var(--c2)}.fbd .arR{stroke:var(--c1);fill:var(--c1)}
+table.kv{border-collapse:collapse;width:100%;font-size:14px}
+table.kv td{padding:3px 0;border-bottom:1px solid var(--grid)}
+table.kv td:not(:first-child){text-align:right;font-family:var(--f-mono)}
+select{font:15px var(--f-body);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:5px 8px;max-width:100%}
+details summary{cursor:pointer;font-weight:700}
+.preds{display:grid;gap:8px;margin-top:10px}
+.preds label{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:15px}
+.about{margin-top:28px;font-size:14px;color:var(--muted);max-width:80ch}
+.about p{margin:8px 0}
+.explain p{margin:0 0 8px;font-size:15px}
+.pop{position:fixed;inset:0;background:var(--scrim);display:flex;align-items:center;justify-content:center;z-index:50;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.pop[hidden]{display:none}
+.popbox{position:relative;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;max-width:540px;width:100%;max-height:100%;overflow:auto;padding:20px 22px 22px}
+.popbox h2{padding-right:34px;margin-bottom:12px}
+.popx{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:20px;line-height:1;cursor:pointer}
+.steps{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:10px}
+.steps li{display:grid;gap:2px}
+.steps .sl{font:700 14px var(--f-body)}
+.steps .eq{font:500 14px/1.45 var(--f-mono);background:var(--surface2);border-radius:6px;padding:6px 10px;overflow-wrap:anywhere}
+.popbox p{margin:0 0 10px;font-size:15px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Cupcake Case Drop</h1>
+    <p class="sub">Change the mass and area, time the fall and see how air resistance and terminal velocity show up in your data.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Simulation sections">
+    <button role="tab" id="t-bench" aria-controls="p-bench" aria-selected="true" data-tab="bench">Bench</button>
+    <button role="tab" id="t-graphs" aria-controls="p-graphs" aria-selected="false" data-tab="graphs">Motion graphs</button>
+    <button role="tab" id="t-analyse" aria-controls="p-analyse" aria-selected="false" data-tab="analyse">Analyse</button>
+    <button role="tab" id="t-design" aria-controls="p-design" aria-selected="false" data-tab="design">Improve the design</button>
+  </nav>
+
+  <!-- BENCH -->
+  <section id="p-bench" role="tabpanel" aria-labelledby="t-bench">
+    <div class="think"><b>Think</b><span>Average speed is height ÷ time, but we want terminal velocity. Try dropping from 0.5 m, then from 3 m. Then try a slow-motion drop and watch where the ghost images stop getting further apart.</span></div>
+    <div class="bench">
+      <div class="card">
+        <div class="cardhead"><h2>Drop rig</h2><div class="reading" id="reading" aria-live="polite">Timer: <b>–</b></div></div>
+        <div id="rigbox"></div>
+        <p class="clock" id="clock" aria-hidden="true"></p>
+        <p class="fine">Cases are drawn larger than life. Ghost images show where the case was at equal time steps.</p>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="ctl"><span class="lab">Add mass with</span>
+            <div class="seg" role="group" aria-label="How mass is added">
+              <button data-mode="cases" aria-pressed="true">Nested cases</button>
+              <button data-mode="plasticine" aria-pressed="false">Plasticine</button>
+            </div></div>
+          <div class="ctl" id="ctl-n"><label for="n">Number of cases <b id="n-out"></b></label><input type="range" id="n" min="1" max="8" step="1" value="3"></div>
+          <div class="ctl" id="ctl-p" hidden><label for="p">Plasticine in one case <b id="p-out"></b></label><input type="range" id="p" min="0" max="6" step="1" value="2"></div>
+          <div class="ctl"><label for="area">Case area (face-on) <b id="area-out"></b></label><input type="range" id="area" min="10" max="80" step="5" value="40"></div>
+          <div class="ctl"><label for="h">Drop height <b id="h-out"></b></label><input type="range" id="h" min="0.3" max="3" step="0.1" value="2"></div>
+          <div class="ctl"><span class="lab">Timing method</span>
+            <div class="seg" role="group" aria-label="Timing method" id="seg-method">
+              <button data-method="stopwatch" aria-pressed="true">Stopwatch</button>
+              <button data-method="video" aria-pressed="false">Phone video</button>
+              <button data-method="gates" aria-pressed="false">Light gates</button>
+            </div>
+            <p class="fine" id="method-note"></p></div>
+          <div class="ctl"><span class="lab">Slow-motion speed</span>
+            <div class="seg" role="group" aria-label="Slow-motion speed" id="seg-speed">
+              <button data-speed="0.25" aria-pressed="true">¼ speed</button>
+              <button data-speed="0.1" aria-pressed="false">1/10 speed</button>
+            </div>
+            <label class="check"><input type="checkbox" id="strobe" checked> Show ghost images</label></div>
+          <div class="btns">
+            <button class="btn primary" id="drop">Drop</button>
+            <button class="btn" id="slow">Slow-mo drop</button>
+            <button class="btn" id="drop3">Drop 3 times (instant)</button>
+            <button class="btn" id="clear">Clear data</button>
+          </div>
+        </div>
+        <details class="card" id="predcard" open>
+          <summary>Your prediction</summary>
+          <div class="preds">
+            <label>As mass increases, the time of fall will <select id="pred-time"><option value="">choose</option><option value="up">increase</option><option value="down">decrease</option><option value="same">stay the same</option></select></label>
+            <label>As mass increases, the average speed will <select id="pred-speed"><option value="">choose</option><option value="up">increase</option><option value="down">decrease</option><option value="same">stay the same</option></select></label>
+          </div>
+          <p class="fine">Make your prediction before you collect data. The Analyse tab checks it against your results.</p>
+        </details>
+        <div class="card">
+          <div class="cardhead"><h2>Results</h2><span class="fine" style="margin:0">Click a time to cross it out. Click a speed to see the calculation.</span></div>
+          <div id="datanote"></div>
+          <div class="tablewrap" id="datatable"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MOTION GRAPHS -->
+  <section id="p-graphs" role="tabpanel" aria-labelledby="t-graphs" hidden>
+    <div class="think"><b>Think</b><span>When does the air resistance D become equal to the weight W? What is the acceleration from then on? Move the time slider to find out. Then give case B a smaller area and see what changes.</span></div>
+    <div class="two">
+      <div class="card">
+        <div class="even" style="margin-bottom:10px">
+          <div>
+            <div class="ctl"><label for="ga">Case A: cases <b id="ga-out"></b></label><input type="range" id="ga" min="1" max="8" step="1" value="2"></div>
+            <div class="ctl" style="margin:0"><label for="gaa">Case A: area <b id="gaa-out"></b></label><input type="range" id="gaa" min="10" max="80" step="5" value="40"></div>
+          </div>
+          <div>
+            <div class="ctl"><label for="gb">Case B: cases <b id="gb-out"></b></label><input type="range" id="gb" min="1" max="8" step="1" value="6"></div>
+            <div class="ctl" style="margin:0"><label for="gba">Case B: area <b id="gba-out"></b></label><input type="range" id="gba" min="10" max="80" step="5" value="40"></div>
+          </div>
+        </div>
+        <div class="even" style="margin-bottom:6px">
+          <div class="ctl" style="margin:0"><label for="gh">Fall length <b id="gh-out"></b></label><input type="range" id="gh" min="0.5" max="10" step="0.5" value="6"></div>
+          <label class="check" style="margin:22px 0 0"><input type="checkbox" id="gcmp" checked> Compare with case B</label>
+        </div>
+        <div id="g-st"></div>
+        <div id="g-vt"></div>
+        <div id="g-at"></div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="cardhead"><h2>Forces on case A</h2></div>
+          <div id="fbd"></div>
+          <div class="ctl" style="margin-top:8px"><label for="gt">Time since release <b id="gt-out"></b></label><input type="range" id="gt" min="0" max="1000" step="1" value="120"></div>
+          <table class="kv" id="gkv"></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALYSE -->
+  <section id="p-analyse" role="tabpanel" aria-labelledby="t-analyse" hidden>
+    <div class="think"><b>Think</b><span>Is average speed against mass a straight line? Switch to speed² and look again. What does that tell you about how terminal velocity depends on mass?</span></div>
+    <div class="two">
+      <div class="card">
+        <div class="cardhead"><h2>Your results</h2>
+          <div class="seg" role="group" aria-label="What to plot" id="seg-y">
+            <button data-y="speed" aria-pressed="true">Average speed</button>
+            <button data-y="time" aria-pressed="false">Time of fall</button>
+            <button data-y="speed2" aria-pressed="false">Speed²</button>
+          </div></div>
+        <div id="an-chart"></div>
+        <label class="check"><input type="checkbox" id="theory"> Show the physics model for each series</label>
+      </div>
+      <div class="stack">
+        <div class="card"><h2>Prediction check</h2><div class="verdict" id="verdict"></div></div>
+        <div class="card"><h2>Reading the graph</h2>
+          <p class="fine" style="font-size:14px">Error bars show half the range of your times. If speed² against mass is a straight line through the origin, then speed is proportional to the square root of mass. If average speed sits below the model, you are not dropping from high enough.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DESIGN -->
+  <section id="p-design" role="tabpanel" aria-labelledby="t-design" hidden>
+    <div class="think"><b>Think</b><span>Which single change would improve this experiment the most: a taller drop, a lighter or larger case, or a better timer? Test each one.</span></div>
+    <div class="two">
+      <div class="stack">
+        <div class="card explain">
+          <h2 style="margin-bottom:8px">What the target means</h2>
+          <p>The experiment works best when the case speeds up quickly, then falls at <b>constant speed for most of the drop</b>. Then average speed (h ÷ t) is almost the same as terminal velocity (TV), which is what we want to measure.</p>
+          <p>The percentage on the first graph is <b>average speed ÷ TV</b>. 100% means constant speed all the way down. A lower value means more of the fall was spent still speeding up. Set the target you want to aim for with the slider.</p>
+          <div class="live" id="d-live"></div>
+        </div>
+        <div class="card">
+          <h2 style="margin-bottom:8px">Is average speed close to terminal velocity?</h2>
+          <div id="d-ratio"></div>
+        </div>
+        <div class="card">
+          <h2 style="margin-bottom:8px">How uncertain is the speed?</h2>
+          <div id="d-unc"></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="ctl"><label for="dn">Cases in the drop <b id="dn-out"></b></label><input type="range" id="dn" min="1" max="8" step="1" value="3"></div>
+          <div class="ctl"><label for="da">Case area (face-on) <b id="da-out"></b></label><input type="range" id="da" min="10" max="80" step="5" value="40"></div>
+          <div class="ctl"><label for="dh">Drop height <b id="dh-out"></b></label><input type="range" id="dh" min="0.3" max="3" step="0.1" value="2"></div>
+          <div class="ctl"><span class="lab">Timing method</span>
+            <div class="seg" role="group" aria-label="Timing method for the design check" id="seg-dm">
+              <button data-dm="stopwatch" aria-pressed="true">Stopwatch</button>
+              <button data-dm="video" aria-pressed="false">Phone video</button>
+              <button data-dm="gates" aria-pressed="false">Light gates</button>
+            </div></div>
+          <div class="ctl"><label for="dt">Constant-speed target <b id="dt-out"></b></label><input type="range" id="dt" min="50" max="99" step="1" value="90"></div>
+          <div class="ctl" style="margin:0"><label for="du">Uncertainty target <b id="du-out"></b></label><input type="range" id="du" min="1" max="10" step="0.5" value="5"></div>
+        </div>
+        <div class="card"><h2 style="margin-bottom:10px">Your design</h2><ul class="checks" id="d-checks"></ul>
+          <p class="fine">Click the i buttons to see each calculation.</p>
+          <div id="d-reps" style="margin-top:12px"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <details class="about">
+    <summary>How this simulation works</summary>
+    <p>The case falls under its weight W = mg and air resistance D = kv². Terminal velocity is reached when W = D, so TV = √(mg ÷ k). The drag constant k = ½ρC<sub>d</sub>A is proportional to the face-on area A of the case. A standard case of 40 cm² has k = 0.0037 kg/m. So TV depends on mass ÷ area: more mass raises it, more area lowers it. Each case is 0.55 g whatever its area. Real cases will differ, so use the model for the shape of the results, not exact numbers.</p>
+    <p>Each timing includes a random error from the method (stopwatch ±0.07 s, phone video ±0.01 s, light gates ±0.003 s), about 3% natural variation from drop to drop, and an occasional anomaly such as a tumbling case or a slow stopwatch press. Because these change from drop to drop they show up as the range of repeated times, and half the range is the uncertainty. The Improve the design checks use the biggest single source of error as a quick first estimate of that half-range.</p>
+  </details>
+</div>
+
+<div class="pop" id="pop" hidden>
+  <div class="popbox" role="dialog" aria-modal="true" aria-labelledby="pop-title" tabindex="-1">
+    <button class="popx" id="pop-x" aria-label="Close">×</button>
+    <h2 id="pop-title"></h2>
+    <div id="pop-body"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var G=9.81,M0=0.00055,REL=0.03,K0=0.0037,A0=40;
+var SIG={stopwatch:0.07,video:0.01,gates:0.003};
+var RES={stopwatch:0.01,video:0.001,gates:0.001};
+var SRC={stopwatch:'Reaction time',video:'Judging the frame',gates:'Gate response'};
+var MN={stopwatch:'Stopwatch',video:'Phone video',gates:'Light gates'};
+var NOTE={stopwatch:'Reaction time gives about ±0.07 s on each timing. Reads to 0.01 s.',
+  video:'Slow motion, frame by frame: about ±0.01 s. Reads to 0.001 s.',
+  gates:'One gate at the release point, one at the floor: about ±0.003 s. Reads to 0.001 s.'};
+function kOf(A){return K0*A/A0;}
+function vT(m,k){return Math.sqrt(m*G/k);}
+function tFall(m,h,k){var v=vT(m,k),x=G*h/(v*v);return v/G*(x+Math.log(1+Math.sqrt(1-Math.exp(-2*x))));}
+function sOf(m,t,k){var v=vT(m,k),z=G*t/v;return v*v/G*(z+Math.log((1+Math.exp(-2*z))/2));}
+function vOf(m,t,k){return vT(m,k)*Math.tanh(G*t/vT(m,k));}
+function aOf(m,t,k){var q=Math.tanh(G*t/vT(m,k));return G*(1-q*q);}
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function gauss(r){var u=0,v;while(!u)u=r();v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function measure(m,h,k,method,r){
+  var t=tFall(m,h,k)*(1+REL*gauss(r));
+  if(r()<0.04)t*=1.1+0.2*r();
+  t+=SIG[method]*gauss(r);
+  if(method==='stopwatch'&&r()<0.06)t+=(r()<0.5?-1:1)*(0.2+0.15*r());
+  t=Math.max(0.05,t);
+  var q=method==='stopwatch'?0.01:0.001;
+  return +(Math.round(t/q)*q).toFixed(3);
+}
+
+var S={tab:'bench',mode:'cases',n:3,p:2,area:40,h:2,method:'stopwatch',speed:0.25,strobe:true,runs:[],nid:1,frame:null,
+  pred:{time:'',speed:''},g:{a:2,aa:40,b:6,ba:40,cmp:true,h:6,f:0.12},an:{y:'speed',theory:false},
+  d:{n:3,A:40,h:2,m:'stopwatch',tgt:90,utgt:5}};
+var anim=null,lastFocus=null,grpCache=[];
+function $(s){return document.querySelector(s);}
+function massKg(){return S.mode==='cases'?S.n*M0:M0+S.p/1000;}
+function massLabel(){return S.mode==='cases'?S.n+(S.n===1?' case':' cases'):'1 case + '+S.p+' g plasticine';}
+function plural(n){return n+(n===1?' case':' cases');}
+function diam(A){return 2*Math.sqrt(A/Math.PI);}
+function areaTxt(A){return A+' cm² (about '+diam(A).toFixed(1)+' cm across)';}
+function sp(f){return f===0.25?'¼ speed':f===0.1?'1/10 speed':'real time';}
+
+/* ---------- charts ---------- */
+function niceStep(raw){var p=Math.pow(10,Math.floor(Math.log10(raw)));var f=raw/p;return(f<1.5?1:f<3?2:f<7?5:10)*p;}
+function ticks(a,b,n){var st=niceStep((b-a)/n),out=[];for(var v=Math.ceil(a/st-1e-9)*st;v<=b+1e-9;v+=st)out.push(+v.toFixed(10));return out;}
+function dec(t){var st=t.length>1?t[1]-t[0]:1;return Math.max(0,Math.ceil(-Math.log10(st)-1e-9));}
+function nmax(v){var st=niceStep(v/5);return Math.ceil(v/st-1e-9)*st;}
+function mark(shape,x,y,col,r){
+  var st='style="fill:'+col+';stroke:var(--surface);stroke-width:1.2"';
+  if(shape==='square')return '<rect x="'+(x-r)+'" y="'+(y-r)+'" width="'+2*r+'" height="'+2*r+'" '+st+'/>';
+  if(shape==='triangle')return '<path d="M'+x+','+(y-r-1)+'L'+(x+r+1)+','+(y+r)+'L'+(x-r-1)+','+(y+r)+'Z" '+st+'/>';
+  if(shape==='diamond')return '<path d="M'+x+','+(y-r-1)+'L'+(x+r+1)+','+y+'L'+x+','+(y+r+1)+'L'+(x-r-1)+','+y+'Z" '+st+'/>';
+  if(shape==='cross')return '<path d="M'+(x-r)+','+(y-r)+'L'+(x+r)+','+(y+r)+'M'+(x-r)+','+(y+r)+'L'+(x+r)+','+(y-r)+'" style="stroke:'+col+';stroke-width:2.4;fill:none"/>';
+  return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" '+st+'/>';
+}
+function legend(items){
+  return '<ul class="legend">'+items.map(function(i){
+    var sw=i.shape?'<svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true">'+mark(i.shape,11,7,i.col,4)+'</svg>'
+      :'<svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true"><path d="M0,7H22" style="stroke:'+i.col+';stroke-width:2.4;fill:none;'+(i.dash?'stroke-dasharray:'+i.dash:'')+'"/></svg>';
+    return '<li>'+sw+'<span>'+i.label+'</span></li>';}).join('')+'</ul>';
+}
+function chart(o){
+  var W=o.w||600,H=o.h||300,mg={l:58,r:o.rm||16,t:12,b:o.xlabel?46:30};
+  var iw=W-mg.l-mg.r,ih=H-mg.t-mg.b;
+  function X(v){return +(mg.l+(v-o.xmin)/(o.xmax-o.xmin)*iw).toFixed(1);}
+  function Y(v){return +(mg.t+ih-Math.max(0,Math.min(1,(v-o.ymin)/(o.ymax-o.ymin)))*ih).toFixed(1);}
+  var xt=ticks(o.xmin,o.xmax,o.xn||6),yt=ticks(o.ymin,o.ymax,o.yn||5),xd=dec(xt),yd=dec(yt);
+  var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+o.aria+'">';
+  yt.forEach(function(v){s+='<line class="grid" x1="'+mg.l+'" x2="'+(W-mg.r)+'" y1="'+Y(v)+'" y2="'+Y(v)+'"/><text x="'+(mg.l-8)+'" y="'+(Y(v)+4)+'" text-anchor="end">'+v.toFixed(yd)+'</text>';});
+  xt.forEach(function(v){s+='<line class="grid" x1="'+X(v)+'" x2="'+X(v)+'" y1="'+mg.t+'" y2="'+(mg.t+ih)+'"/><text x="'+X(v)+'" y="'+(mg.t+ih+16)+'" text-anchor="middle">'+v.toFixed(xd)+'</text>';});
+  s+='<line class="ax" x1="'+mg.l+'" x2="'+(W-mg.r)+'" y1="'+(mg.t+ih)+'" y2="'+(mg.t+ih)+'"/><line class="ax" x1="'+mg.l+'" x2="'+mg.l+'" y1="'+mg.t+'" y2="'+(mg.t+ih)+'"/>';
+  if(o.xlabel)s+='<text class="lbl" x="'+(mg.l+iw/2)+'" y="'+(H-6)+'" text-anchor="middle">'+o.xlabel+'</text>';
+  if(o.ylabel)s+='<text class="lbl" transform="translate(14 '+(mg.t+ih/2)+') rotate(-90)" text-anchor="middle">'+o.ylabel+'</text>';
+  (o.hlines||[]).forEach(function(l){
+    var c=l.col||'var(--muted)';
+    s+='<line x1="'+mg.l+'" x2="'+(W-mg.r)+'" y1="'+Y(l.y)+'" y2="'+Y(l.y)+'" style="stroke:'+c+';stroke-dasharray:4 4;fill:none"/>';
+    if(l.label)s+='<text x="'+(W-mg.r-4)+'" y="'+(Y(l.y)-5)+'" text-anchor="end" style="fill:'+c+'">'+l.label+'</text>';});
+  (o.vlines||[]).forEach(function(l){s+='<line x1="'+X(l.x)+'" x2="'+X(l.x)+'" y1="'+mg.t+'" y2="'+(mg.t+ih)+'" style="stroke:var(--ink);stroke-dasharray:3 3"/>';});
+  (o.series||[]).forEach(function(se){
+    if(se.type==='line'){
+      var d=se.pts.map(function(p,i){return(i?'L':'M')+X(p[0])+','+Y(p[1]);}).join('');
+      s+='<path d="'+d+'" style="fill:none;stroke:'+se.col+';stroke-width:'+(se.w||2.4)+';'+(se.dash?'stroke-dasharray:'+se.dash+';':'')+'stroke-linejoin:round"/>';
+    }else{
+      se.pts.forEach(function(p){
+        if(p[2]!=null&&p[2]>0){var x=X(p[0]);
+          s+='<path d="M'+x+','+Y(p[1]-p[2])+'L'+x+','+Y(p[1]+p[2])+'M'+(x-4)+','+Y(p[1]-p[2])+'L'+(x+4)+','+Y(p[1]-p[2])+'M'+(x-4)+','+Y(p[1]+p[2])+'L'+(x+4)+','+Y(p[1]+p[2])+'" style="stroke:'+se.col+';stroke-width:1.4;fill:none"/>';}
+        s+=mark(se.shape,X(p[0]),Y(p[1]),se.col,se.r||4.5);});
+    }});
+  s+='</svg>';
+  return s+(o.legend?legend(o.legend):'');
+}
+
+/* ---------- pop-up calculations ---------- */
+function steps(list){return '<ol class="steps">'+list.map(function(s){return '<li><span class="sl">'+s[0]+'</span><span class="eq">'+s[1]+'</span></li>';}).join('')+'</ol>';}
+function openPop(title,html,trigger){
+  lastFocus=trigger||document.activeElement;
+  $('#pop-title').textContent=title;$('#pop-body').innerHTML=html;
+  $('#pop').hidden=false;$('#pop').querySelector('.popbox').focus();
+}
+function closePop(){$('#pop').hidden=true;if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+function fmtT(t,method){return t.toFixed(method==='stopwatch'?2:3);}
+function openGroup(i,trigger){
+  var g=grpCache[i];if(!g)return;
+  var used=g.runs.filter(function(r){return!r.skip;}),ts=used.map(function(r){return r.t;}),n=ts.length;
+  if(!n){openPop('Average speed','<p>All times for this row are crossed out. Click a time to bring it back.</p>',trigger);return;}
+  var sum=ts.reduce(function(a,b){return a+b;},0),mean=sum/n,v=g.h/mean;
+  var st=[['1. Mean time','('+ts.map(function(t){return fmtT(t,g.method);}).join(' + ')+') ÷ '+n+' = '+mean.toFixed(3)+' s'],
+    ['2. Average speed','speed = distance ÷ time = h ÷ mean time = '+g.h.toFixed(1)+' ÷ '+mean.toFixed(3)+' = '+v.toFixed(2)+' m/s']];
+  var tail;
+  if(n>1){
+    var half=(Math.max.apply(null,ts)-Math.min.apply(null,ts))/2,ve=v*half/mean;
+    var rg=(Math.max.apply(null,ts)-Math.min.apply(null,ts))/2;
+    st.push(['3. Uncertainty in time','half the range = ('+fmtT(Math.max.apply(null,ts),g.method)+' − '+fmtT(Math.min.apply(null,ts),g.method)+') ÷ 2 = '+rg.toFixed(3)+' s'+(rg<RES[g.method]/2?'. This is smaller than half the timer\'s smallest division (±'+(RES[g.method]/2)+' s), so use that instead: '+half.toFixed(3)+' s.':'')]);
+    st.push(['4. Uncertainty in speed','speed × (time uncertainty ÷ mean time) = '+v.toFixed(2)+' × ('+half.toFixed(3)+' ÷ '+mean.toFixed(3)+') = '+ve.toFixed(2)+' m/s']);
+    st.push(['5. Result',v.toFixed(2)+' ± '+ve.toFixed(2)+' m/s']);
+    tail='<p>The height is measured once, so the speed has the same percentage uncertainty as the time. Crossed-out anomalies are left out of every step.</p>';
+  }else{
+    tail='<p>With one time there is no range to measure. All you can say is that the reading is good to half the timer\'s smallest division (±'+(RES[g.method]/2)+' s), which is far smaller than the real scatter. Repeat the drop to see the true spread.</p>';
+  }
+  openPop('Average speed: '+g.label+', '+g.area+' cm²',steps(st)+tail,trigger);
+}
+function dCalc(){
+  var d=S.d,m=d.n*M0,k=kOf(d.A),t=tFall(m,d.h,k),v=d.h/t,tv=vT(m,k),sg=SIG[d.m];
+  return{d:d,m:m,k:k,t:t,v:v,tv:tv,sg:sg,rp:v/tv*100};
+}
+function openInfo(which,trigger){
+  var c=dCalc(),d=c.d,html,title;
+  if(which==='ratio'){
+    title='Average speed as a % of terminal velocity';
+    html=steps([
+      ['1. Drag constant','k = 0.0037 × area ÷ 40 cm² = 0.0037 × '+d.A+' ÷ 40 = '+c.k.toFixed(4)+' kg/m'],
+      ['2. Terminal velocity','At TV the weight equals the drag, W = D, so TV = √(mg ÷ k) = √('+c.m.toFixed(5)+' × 9.81 ÷ '+c.k.toFixed(4)+') = '+c.tv.toFixed(2)+' m/s'],
+      ['3. Fall time','The simulation solves the motion to get t = '+c.t.toFixed(2)+' s from '+d.h.toFixed(1)+' m. In your own experiment this is your mean time.'],
+      ['4. Average speed','h ÷ t = '+d.h.toFixed(1)+' ÷ '+c.t.toFixed(2)+' = '+c.v.toFixed(2)+' m/s'],
+      ['5. Percentage of TV',c.v.toFixed(2)+' ÷ '+c.tv.toFixed(2)+' × 100 = '+c.rp.toFixed(0)+'%']])
+      +'<p>100% would mean constant speed for the whole fall. Your target is '+d.tgt+'%, so this design '+(c.rp>=d.tgt?'meets it.':'falls short of it. A taller drop, a lighter case or a bigger area all raise the percentage.')+'</p>';
+  }else if(which==='unc'){
+    var nat=REL*c.t,res=RES[d.m]/2,big=biggest(c.t,d.m),pc=big/c.t*100;
+    var bigName=big===c.sg?SRC[d.m].toLowerCase():big===nat?'release and flutter':'timer resolution';
+    title='Uncertainty in the speed';
+    html='<p>These are the possible sources of error in one timing:</p>'+steps([
+      ['A. '+SRC[d.m],'The '+MN[d.m].toLowerCase()+' is off by about ±'+c.sg+' s'],
+      ['B. Release and flutter','The fall varies by about 3% of the time: 0.03 × '+c.t.toFixed(2)+' = ±'+nat.toFixed(3)+' s'],
+      ['C. Timer resolution','Half the smallest division: ±'+res+' s'],
+      ['D. Take the biggest','Biggest = ±'+big.toFixed(3)+' s ('+bigName+'). Use it as a simple first estimate of the uncertainty.'],
+      ['E. As a percentage',big.toFixed(3)+' ÷ '+c.t.toFixed(2)+' × 100 = '+pc.toFixed(1)+'%']])
+      +'<p>In your own results you measure this directly. Sources A and B change from drop to drop, so they show up as the spread of your repeats. <b>Uncertainty = half the range</b>. For three readings in this simulation, half the range comes out close to the biggest source.</p>'
+      +'<p>The height is fixed, so the speed has the same percentage uncertainty as the time.</p>'
+      +'<p>Repeating does not make this smaller. More readings let you measure the range, spot anomalies and calculate a mean. If your method is faulty, for example a mis-measured height, you would get the wrong answer however many times you repeat it.</p>';
+  }else{
+    var need=10*c.sg,ok=c.t>=need;
+    title='Is the fall long enough to time?';
+    html=steps([
+      ['1. Timer error','The '+MN[d.m].toLowerCase()+' is off by about ±'+c.sg+' s on each timing.'],
+      ['2. The rule','Keep the timer error to 10% of one fall or less, so the fall must last at least 10 × '+c.sg+' = '+need.toFixed(2)+' s.'],
+      ['3. Your drop','t = '+c.t.toFixed(2)+' s, which is '+(ok?'at least':'less than')+' '+need.toFixed(2)+' s. '+(ok?'Tick.':'Cross.')]])
+      +'<p>A short fall is hard to time. A 0.07 s reaction error on a 0.3 s fall is 23% of the time, but on a 1.5 s fall it is under 5%. A heavy, small case falls fast, so it needs a taller drop or a better timer.</p>';
+  }
+  openPop(title,html,trigger);
+}
+
+/* ---------- data ---------- */
+function addRun(r){r.id=S.nid++;S.runs.push(r);}
+function loadExample(){
+  S.runs=[];var r=mulberry(21),k=kOf(A0);
+  [1,2,3,4,6].forEach(function(n){for(var i=0;i<3;i++)addRun({label:plural(n),mass:n*M0,area:A0,h:2,method:'stopwatch',t:measure(n*M0,2,k,'stopwatch',r),skip:false,demo:true});});
+}
+function groups(){
+  var map={},arr=[];
+  S.runs.forEach(function(r){var key=r.label+'|'+r.area+'|'+r.h.toFixed(1)+'|'+r.method;
+    if(!map[key]){map[key]={label:r.label,mass:r.mass,area:r.area,h:r.h,method:r.method,runs:[]};arr.push(map[key]);}
+    map[key].runs.push(r);});
+  return arr.sort(function(a,b){return a.h-b.h||a.area-b.area||(a.method<b.method?-1:a.method>b.method?1:0)||a.mass-b.mass;});
+}
+function stats(g){
+  var ts=g.runs.filter(function(r){return!r.skip;}).map(function(r){return r.t;});
+  var n=ts.length;if(!n)return{n:0};
+  var mean=ts.reduce(function(a,b){return a+b;},0)/n;
+  var half=n>1?Math.max((Math.max.apply(null,ts)-Math.min.apply(null,ts))/2,RES[g.method]/2):null;
+  var v=g.h/mean;
+  return{n:n,mean:mean,half:half,v:v,vErr:half==null?null:v*half/mean};
+}
+
+/* ---------- bench ---------- */
+function caseShape(cx,by,L,p,ghost,wide){
+  var w1=wide||17,w2=w1*0.65,hh=18,s='',i,top;
+  if(ghost)return '<path class="ghost" d="M'+(cx-w1)+','+(by-hh)+'L'+(cx+w1)+','+(by-hh)+'L'+(cx+w2)+','+by+'L'+(cx-w2)+','+by+'Z"/>';
+  for(i=L-1;i>=0;i--){top=by-hh-i*2.5;
+    s+='<path class="case" d="M'+(cx-w1)+','+top+'L'+(cx+w1)+','+top+'L'+(cx+w2)+','+by+'L'+(cx-w2)+','+by+'Z"/>';}
+  if(p>0){var r=2+p*0.9;s+='<circle class="plast" cx="'+cx+'" cy="'+(by-r-1)+'" r="'+r+'"/>';}
+  return s;
+}
+function halfW(A){return 8+9*Math.sqrt(A/A0);}
+function drawRig(fr){
+  var m=massKg(),k=kOf(S.area),L=S.mode==='cases'?S.n:1,p=S.mode==='plasticine'?S.p:0,w=halfW(S.area);
+  var h=S.h,floor=392,sc=120,cx=206,top=floor-h*sc;
+  var t=fr?fr.t:0,s=fr?Math.min(sOf(m,t,k),h):0,by=top+s*sc;
+  var o='<svg class="rig" viewBox="0 0 320 410" role="img" aria-label="Cupcake case released '+h.toFixed(1)+' metres above the floor">';
+  var i;
+  for(i=0;i<=30;i++){var y=floor-i*12,len=i%10===0?14:i%5===0?10:5;
+    o+='<line class="tick" x1="'+(64-len)+'" x2="64" y1="'+y+'" y2="'+y+'"/>';
+    if(i%5===0)o+='<text x="'+(64-len-4)+'" y="'+(y+3)+'" text-anchor="end">'+(i/10).toFixed(1)+'</text>';}
+  o+='<line class="rule" x1="64" x2="64" y1="'+(floor-360)+'" y2="'+floor+'"/>';
+  o+='<text x="14" y="18">m</text>';
+  o+='<line class="floor" x1="64" x2="310" y1="'+floor+'" y2="'+floor+'"/>';
+  o+='<line class="hmark" x1="64" x2="310" y1="'+top+'" y2="'+top+'"/>';
+  o+='<text class="htext" x="308" y="'+(top<24?top+14:top-6)+'" text-anchor="end">h = '+h.toFixed(1)+' m</text>';
+  if(fr&&S.strobe){var dt=fr.tT<1?0.05:0.1;
+    for(var q=1;q*dt<=t+1e-9;q++){var sk=Math.min(sOf(m,q*dt,k),h);o+=caseShape(cx,top+sk*sc,1,0,true,w);}}
+  o+=caseShape(cx,by,L,p,false,w);
+  o+='</svg>';
+  $('#rigbox').innerHTML=o;
+}
+function setBusy(b){['drop','slow','drop3','clear','n','p','h','area'].forEach(function(id){$('#'+id).disabled=b;});}
+function startDrop(f){
+  if(anim)return;
+  var m=massKg(),h=S.h,k=kOf(S.area),tT=tFall(m,h,k);
+  anim={tT:tT,start:performance.now(),f:f,m:m,h:h,k:k,area:S.area,label:massLabel(),method:S.method};
+  setBusy(true);$('#reading').innerHTML='Timer: <b>…</b>';
+  requestAnimationFrame(step);
+}
+function step(now){
+  if(!anim)return;
+  var t=(now-anim.start)/1000*anim.f;
+  if(t>=anim.tT){finishDrop();return;}
+  drawRig({t:t,tT:anim.tT});
+  $('#clock').textContent='Clock '+t.toFixed(2)+' s'+(anim.f<1?' · playing at '+sp(anim.f):'');
+  requestAnimationFrame(step);
+}
+function finishDrop(){
+  var a=anim;anim=null;
+  var tm=measure(a.m,a.h,a.k,a.method,Math.random);
+  addRun({label:a.label,mass:a.m,area:a.area,h:a.h,method:a.method,t:tm,skip:false});
+  S.frame={t:a.tT,tT:a.tT};drawRig(S.frame);$('#clock').textContent='';
+  $('#reading').innerHTML='Timer: <b>'+fmtT(tm,a.method)+' s</b><br>h ÷ t = '+(a.h/tm).toFixed(2)+' m/s';
+  setBusy(false);renderTable();
+}
+function dropThree(){
+  var m=massKg(),h=S.h,k=kOf(S.area);
+  for(var i=0;i<3;i++)addRun({label:massLabel(),mass:m,area:S.area,h:h,method:S.method,t:measure(m,h,k,S.method,Math.random),skip:false});
+  S.frame={t:tFall(m,h,k),tT:tFall(m,h,k)};drawRig(S.frame);
+  $('#reading').innerHTML='Timer: <b>3 new times</b>';renderTable();
+}
+function renderTable(){
+  grpCache=groups();var box=$('#datatable'),note=$('#datanote');
+  var hasDemo=S.runs.some(function(r){return r.demo;});
+  note.innerHTML=hasDemo?'<p class="banner">Example data from a stopwatch at 2.0 m. Press Clear data to start your own.</p>':'';
+  if(!grpCache.length){box.innerHTML='<div class="empty">No results yet. Press Drop to take your first reading, or <button class="btn" id="loadex">load example data</button>.</div>';return;}
+  var h='<table class="data"><thead><tr><th>Mass (g)</th><th>Area (cm²)</th><th>Height (m)</th><th>Timing</th><th>Times (s)</th><th>Mean t (s)</th><th>Speed (m/s)</th></tr></thead><tbody>';
+  grpCache.forEach(function(g,i){
+    var st=stats(g);
+    h+='<tr><td class="num"><b>'+(g.mass*1000).toFixed(2)+'</b><span class="sm">'+g.label+'</span></td>'
+      +'<td class="num">'+g.area+'</td><td class="num">'+g.h.toFixed(1)+'</td><td>'+MN[g.method]+'</td>'
+      +'<td><div class="chips">'+g.runs.map(function(r){return '<button class="chip" data-id="'+r.id+'" aria-pressed="'+r.skip+'" title="Click to cross out as an anomaly">'+fmtT(r.t,g.method)+'</button>';}).join('')+'</div></td>'
+      +'<td class="num">'+(st.n?fmtT(st.mean,g.method):'–')+'</td>'
+      +'<td class="num">'+(st.n?'<button class="calc" data-grp="'+i+'" title="Show the calculation">'+st.v.toFixed(2)+(st.vErr!=null?' ± '+st.vErr.toFixed(2):'')+'</button>':'–')+'</td></tr>';});
+  h+='</tbody></table>';
+  box.innerHTML=h;
+}
+function syncBench(){
+  $('#n-out').textContent=S.n+' → '+(S.n*M0*1000).toFixed(2)+' g';
+  $('#p-out').textContent=S.p+' g → '+((M0+S.p/1000)*1000).toFixed(2)+' g total';
+  $('#area-out').textContent=areaTxt(S.area);
+  $('#h-out').textContent=S.h.toFixed(1)+' m';
+  $('#ctl-n').hidden=S.mode!=='cases';$('#ctl-p').hidden=S.mode!=='plasticine';
+  $('#method-note').textContent=NOTE[S.method];
+  document.querySelectorAll('[data-mode]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.mode===S.mode);});
+  document.querySelectorAll('[data-method]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.method===S.method);});
+  document.querySelectorAll('[data-speed]').forEach(function(b){b.setAttribute('aria-pressed',+b.dataset.speed===S.speed);});
+}
+function renderBench(){syncBench();drawRig(S.frame);renderTable();}
+
+/* ---------- motion graphs ---------- */
+function arrow(x,y0,y1,cls){
+  var d=y1>y0?1:-1,hd=9;
+  return '<line class="'+cls+'" x1="'+x+'" x2="'+x+'" y1="'+y0+'" y2="'+(y1-d*hd)+'" style="stroke-width:3"/><path class="'+cls+'" d="M'+x+','+y1+'L'+(x-6)+','+(y1-d*hd)+'L'+(x+6)+','+(y1-d*hd)+'Z"/>';
+}
+function renderGraphs(){
+  var g=S.g,H=g.h,items=[{n:g.a,A:g.aa,col:'var(--c1)',lab:'A: '+plural(g.a)+', '+g.aa+' cm²'}];
+  if(g.cmp)items.push({n:g.b,A:g.ba,col:'var(--c2)',dash:'7 4',lab:'B: '+plural(g.b)+', '+g.ba+' cm²'});
+  items.forEach(function(it){it.m=it.n*M0;it.k=kOf(it.A);it.tE=tFall(it.m,H,it.k);it.vT=vT(it.m,it.k);});
+  var tmax=Math.max.apply(null,items.map(function(i){return i.tE;}));
+  var xmax=nmax(tmax*1.02),N=120;
+  function pts(it,fn){var o=[];for(var i=0;i<=N;i++){var t=it.tE*i/N;o.push([t,fn(it.m,t,it.k)]);}return o;}
+  var A=items[0],tA=g.f*Math.min(A.tE,1.5);
+  var vl=[{x:tA}];
+  var leg=items.map(function(i){return{col:i.col,dash:i.dash,label:i.lab};});
+  var base={xmin:0,xmax:xmax,xlabel:'Time since release (s)',h:200,legend:null};
+  function mk(o){for(var key in base)if(!(key in o))o[key]=base[key];o.vlines=vl;return chart(o);}
+  function dot(fn){return[{type:'points',shape:'circle',col:'var(--ink)',pts:[[tA,fn(A.m,tA,A.k)]]}];}
+  $('#g-st').innerHTML=mk({ymin:0,ymax:H,ylabel:'Distance fallen s (m)',aria:'Distance against time',legend:leg,
+    series:items.map(function(i){return{type:'line',col:i.col,dash:i.dash,pts:pts(i,sOf)};}).concat(dot(sOf))});
+  var vmax=Math.max.apply(null,items.map(function(i){return i.vT;}))*1.1;
+  $('#g-vt').innerHTML=mk({ymin:0,ymax:nmax(vmax),ylabel:'Speed v (m/s)',aria:'Speed against time',
+    hlines:items.map(function(i){return{y:i.vT,col:i.col,label:'terminal velocity '+i.vT.toFixed(2)+' m/s'};}),
+    series:items.map(function(i){return{type:'line',col:i.col,dash:i.dash,pts:pts(i,vOf)};}).concat(dot(vOf))});
+  $('#g-at').innerHTML=mk({ymin:0,ymax:10,ylabel:'Acceleration a (m/s²)',aria:'Acceleration against time',
+    hlines:[{y:G,label:'g = 9.81'}],
+    series:items.map(function(i){return{type:'line',col:i.col,dash:i.dash,pts:pts(i,aOf)};}).concat(dot(aOf))});
+  var v=vOf(A.m,tA,A.k),a=aOf(A.m,tA,A.k),s=sOf(A.m,tA,A.k),W=A.m*G*1000,D=W*Math.pow(v/A.vT,2),R=W-D;
+  var cx=130,by=150,Wl=95,Dl=Wl*D/W,Rl=Wl*R/W;
+  var f='<svg class="fbd" viewBox="0 0 260 260" role="img" aria-label="Free body diagram of case A">'
+    +caseShape(cx,by,A.n,0,false,halfW(A.A))
+    +arrow(cx,by+4,by+4+Wl,'arW')+'<text x="'+(cx+10)+'" y="'+(by+Wl)+'">W</text>';
+  if(Dl>3)f+=arrow(cx,by-24,by-24-Dl,'arD')+'<text x="'+(cx+10)+'" y="'+(by-24-Dl/2)+'">D</text>';
+  else f+='<text x="'+(cx+10)+'" y="'+(by-30)+'">D ≈ 0</text>';
+  if(Rl>3)f+=arrow(cx+78,by-10,by-10+Rl,'arR')+'<text x="'+(cx+88)+'" y="'+(by-10+Rl/2)+'">W − D</text>';
+  else f+='<text x="'+(cx+50)+'" y="'+(by-10)+'">W − D ≈ 0</text>';
+  f+='</svg>';
+  $('#fbd').innerHTML=f;
+  $('#gkv').innerHTML=[['Time t',tA.toFixed(2)+' s'],['Distance fallen s',s.toFixed(2)+' m'],['Speed v',v.toFixed(2)+' m/s'],
+    ['Acceleration a',a.toFixed(2)+' m/s²'],['Weight W',W.toFixed(2)+' mN'],['Air resistance D',D.toFixed(2)+' mN'],['Resultant W − D',R.toFixed(2)+' mN']]
+    .map(function(r){return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>';}).join('');
+  $('#ga-out').textContent=g.a+' → '+(g.a*M0*1000).toFixed(2)+' g';
+  $('#gb-out').textContent=g.b+' → '+(g.b*M0*1000).toFixed(2)+' g';
+  $('#gaa-out').textContent=g.aa+' cm²';$('#gba-out').textContent=g.ba+' cm²';
+  $('#gh-out').textContent=g.h.toFixed(1)+' m';
+  $('#gt-out').textContent=tA.toFixed(2)+' s';
+  $('#gb').disabled=!g.cmp;$('#gba').disabled=!g.cmp;
+}
+
+/* ---------- analyse ---------- */
+var COLS=['var(--c1)','var(--c2)','var(--c3)','var(--c4)','var(--c5)'],SHAPES=['circle','square','triangle','diamond','cross'];
+var YN={speed:['Average speed (m/s)','Average speed against mass'],time:['Time of fall (s)','Time of fall against mass'],speed2:['Average speed² (m²/s²)','Average speed squared against mass']};
+function convert(st,y){
+  if(y==='time')return[st.mean,st.half];
+  if(y==='speed')return[st.v,st.vErr];
+  return[st.v*st.v,st.vErr==null?null:2*st.v*st.vErr];
+}
+function theory(m,h,k,y){var t=tFall(m,h,k),v=h/t;return y==='time'?t:y==='speed'?v:v*v;}
+function seriesData(){
+  var map={},arr=[];
+  groups().forEach(function(g){var st=stats(g);if(!st.n)return;
+    var key=g.h.toFixed(1)+'|'+g.area+'|'+g.method;
+    if(!map[key]){map[key]={h:g.h,area:g.area,method:g.method,pts:[]};arr.push(map[key]);}
+    map[key].pts.push({x:g.mass*1000,st:st});});
+  return arr.sort(function(a,b){return a.h-b.h||a.area-b.area;});
+}
+function renderAnalyse(){
+  var y=S.an.y,sd=seriesData();
+  document.querySelectorAll('[data-y]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.y===y);});
+  $('#theory').checked=S.an.theory;
+  if(!sd.length){$('#an-chart').innerHTML='<div class="empty">No data yet. Take some readings on the Bench tab or load the example data.</div>';$('#verdict').innerHTML='';return;}
+  var xmaxd=0,ymaxd=0;
+  var series=sd.map(function(s,i){
+    var pts=s.pts.map(function(p){var c=convert(p.st,y);xmaxd=Math.max(xmaxd,p.x);ymaxd=Math.max(ymaxd,c[0]+(c[1]||0));return[p.x,c[0],c[1]];});
+    return{type:'points',shape:SHAPES[i%5],col:COLS[i%5],pts:pts};});
+  var xmax=Math.max(4.6,Math.ceil(xmaxd+0.4));
+  var all=series.slice(),th=[];
+  if(S.an.theory){
+    sd.forEach(function(s,i){var pts=[],k=kOf(s.area);for(var q=0;q<=60;q++){var gm=0.3+(xmax-0.3)*q/60;pts.push([gm,theory(gm/1000,s.h,k,y)]);ymaxd=Math.max(ymaxd,pts[q][1]);}
+      th.push({type:'line',col:COLS[i%5],dash:'5 4',w:1.6,pts:pts});});
+    all=th.concat(series);
+  }
+  var leg=sd.map(function(s,i){return{col:COLS[i%5],shape:SHAPES[i%5],label:s.h.toFixed(1)+' m, '+s.area+' cm², '+MN[s.method].toLowerCase()};});
+  if(S.an.theory)leg.push({col:'var(--muted)',dash:'5 4',label:'physics model'});
+  $('#an-chart').innerHTML=chart({xmin:0,xmax:xmax,ymin:0,ymax:nmax(ymaxd*1.12),xlabel:'Mass (g)',ylabel:YN[y][0],aria:YN[y][1],series:all,legend:leg,xn:5});
+  var best=null;sd.forEach(function(s){if(s.pts.length>=3&&(!best||s.pts.length>best.pts.length))best=s;});
+  var v=$('#verdict'),P=S.pred;
+  if(!P.time&&!P.speed){v.innerHTML='<p>Choose your predictions on the Bench tab and they are checked here.</p>';return;}
+  if(!best){v.innerHTML='<p>Take results for at least three different masses with the same height and area to check your prediction.</p>';return;}
+  var ps=best.pts.slice().sort(function(a,b){return a.x-b.x;}),lo=ps[0].st,hi=ps[ps.length-1].st;
+  function dir(a,b){var r=(b-a)/a;return r>0.05?'up':r<-0.05?'down':'same';}
+  var words={up:'increases',down:'decreases',same:'stays about the same'};
+  var dt=dir(lo.mean,hi.mean),ds=dir(lo.v,hi.v),o='<p>Using '+best.h.toFixed(1)+' m, '+best.area+' cm², '+MN[best.method].toLowerCase()+' ('+ps.length+' masses):</p>';
+  if(P.time)o+='<p>Time of fall '+words[dt]+' as mass increases. '+(P.time===dt?'<span class="ok">✓ Matches your prediction.</span>':'<span class="no">✗ Different from your prediction.</span>')+'</p>';
+  if(P.speed)o+='<p>Average speed '+words[ds]+' as mass increases. '+(P.speed===ds?'<span class="ok">✓ Matches your prediction.</span>':'<span class="no">✗ Different from your prediction.</span>')+'</p>';
+  v.innerHTML=o;
+}
+
+/* ---------- design ---------- */
+function ratio(n,h,A){var m=n*M0,k=kOf(A);return h/tFall(m,h,k)/vT(m,k);}
+function biggest(t,method){return Math.max(SIG[method],REL*t,RES[method]/2);}
+function unc(n,h,A,method){var t=tFall(n*M0,h,kOf(A));return biggest(t,method)/t;}
+function renderDesign(){
+  var d=S.d,hs=[];for(var h=0.3;h<=3.0001;h+=0.05)hs.push(+h.toFixed(2));
+  $('#dn-out').textContent=d.n+' → '+(d.n*M0*1000).toFixed(2)+' g';
+  $('#da-out').textContent=areaTxt(d.A);
+  $('#dh-out').textContent=d.h.toFixed(1)+' m';
+  $('#dt-out').textContent=d.tgt+'% of TV';
+  $('#du-out').textContent=d.utgt+'%';
+  document.querySelectorAll('[data-dm]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.dm===d.m);});
+  var c=dCalc(),rp=c.rp;
+  $('#d-ratio').innerHTML=chart({xmin:0,xmax:3,ymin:0,ymax:100,xlabel:'Drop height (m)',ylabel:'Average speed as % of terminal velocity',h:260,xn:6,
+    aria:'Average speed as a percentage of terminal velocity against drop height for '+plural(d.n),
+    hlines:[{y:d.tgt,label:'target '+d.tgt+'%',col:'var(--good)'}],vlines:[{x:d.h}],
+    series:[{type:'line',col:'var(--c1)',pts:hs.map(function(x){return[x,ratio(d.n,x,d.A)*100];})},{type:'points',shape:'circle',col:'var(--c1)',pts:[[d.h,rp]]}],
+    legend:[{col:'var(--c1)',label:plural(d.n)+', '+d.A+' cm² (terminal velocity '+c.tv.toFixed(2)+' m/s)'}]});
+  var ms=['stopwatch','video','gates'];
+  var up=unc(d.n,d.h,d.A,d.m)*100;
+  $('#d-unc').innerHTML=chart({xmin:0,xmax:3,ymin:0,ymax:12,xlabel:'Drop height (m)',ylabel:'Uncertainty in speed (%)',h:260,xn:6,
+    aria:'Percentage uncertainty in speed against drop height for three timing methods',
+    hlines:[{y:d.utgt,label:'target '+d.utgt+'%',col:'var(--good)'}],vlines:[{x:d.h}],
+    series:ms.map(function(m,i){return{type:'line',col:COLS[i],dash:i===1?'7 4':i===2?'2 3':null,pts:hs.map(function(x){return[x,Math.min(12,unc(d.n,x,d.A,m)*100)];})};})
+      .concat([{type:'points',shape:'circle',col:'var(--ink)',pts:[[d.h,Math.min(12,up)]]}]),
+    legend:ms.map(function(m,i){return{col:COLS[i],dash:i===1?'7 4':i===2?'2 3':null,label:MN[m]};})});
+  // live explanation of the constant-speed idea
+  var tacc=c.tv/G*0.5*Math.log((1+0.95)/(1-0.95)),sacc=c.tv*c.tv/G*(-0.5)*Math.log(1-0.95*0.95),live;
+  if(sacc>=d.h)live='With these settings the case never reaches 95% of its terminal velocity before it lands, so none of the fall is at constant speed.';
+  else live='The case needs <b>'+tacc.toFixed(2)+' s</b> and <b>'+sacc.toFixed(2)+' m</b> to reach 95% of TV. It then falls at near-constant speed for the other <b>'+Math.round((1-tacc/c.t)*100)+'%</b> of the fall time.';
+  $('#d-live').innerHTML=live;
+  var ok1=rp>=d.tgt,ok2=up<=d.utgt,need=10*c.sg,ok3=c.t>=need;
+  function li(ok,txt,which){return '<li><span class="'+(ok?'ok':'no')+'" role="img" aria-label="'+(ok?'Pass':'Fail')+'">'+(ok?'✓':'✗')+'</span><span>'+txt+'</span><button class="info" data-info="'+which+'" aria-label="Show the calculation">i</button></li>';}
+  $('#d-checks').innerHTML=
+    li(ok1,'Average speed is <b>'+rp.toFixed(0)+'%</b> of terminal velocity (target '+d.tgt+'%).','ratio')
+   +li(ok2,'Uncertainty in the speed is <b>'+up.toFixed(1)+'%</b> (target '+d.utgt+'%) with the '+MN[d.m].toLowerCase()+'.','unc')
+   +li(ok3,'A single drop takes <b>'+c.t.toFixed(2)+' s</b>. The '+MN[d.m].toLowerCase()+' needs at least '+need.toFixed(2)+' s.','time');
+  var hint='';
+  if(!ok1)hint=rp<d.tgt-25?'Heavier or smaller cases need a much taller drop. Try fewer cases, a larger area or a higher drop.':'A taller drop, a lighter case or a bigger area gives more time at terminal velocity.';
+  else if(!ok2)hint='Try a better timer or a taller drop.';
+  else if(!ok3)hint='Try a taller drop, a lighter case or a faster timer.';
+  $('#d-reps').innerHTML=(hint?'<p class="fine" style="margin:0 0 10px;font-size:14px">'+hint+'</p>':'')+'<p class="fine" style="margin:0;font-size:14px">Repeating does not shrink the uncertainty. It lets you measure it as half the range, spot anomalies and calculate a mean.</p>';
+}
+
+/* ---------- glue ---------- */
+var TABS=['bench','graphs','analyse','design'];
+function showTab(id,fromHash){
+  if(TABS.indexOf(id)<0)id='bench';
+  S.tab=id;
+  TABS.forEach(function(t){$('#p-'+t).hidden=t!==id;$('#t-'+t).setAttribute('aria-selected',t===id);});
+  if(!fromHash&&location.hash!=='#'+id){try{location.hash=id;}catch(e){}}
+  if(id==='bench')renderBench();if(id==='graphs')renderGraphs();if(id==='analyse')renderAnalyse();if(id==='design')renderDesign();
+}
+function idle(){S.frame=null;$('#clock').textContent='';}
+document.addEventListener('click',function(e){
+  if(e.target.id==='pop'){closePop();return;}
+  var b=e.target.closest('button');if(!b)return;
+  if(b.id==='pop-x'){closePop();return;}
+  if(b.dataset.info){openInfo(b.dataset.info,b);return;}
+  if(b.dataset.grp!==undefined){openGroup(+b.dataset.grp,b);return;}
+  if(b.dataset.tab){showTab(b.dataset.tab);return;}
+  if(b.dataset.mode){S.mode=b.dataset.mode;idle();renderBench();return;}
+  if(b.dataset.method){S.method=b.dataset.method;syncBench();return;}
+  if(b.dataset.speed){S.speed=+b.dataset.speed;syncBench();return;}
+  if(b.dataset.y){S.an.y=b.dataset.y;renderAnalyse();return;}
+  if(b.dataset.dm){S.d.m=b.dataset.dm;renderDesign();return;}
+  if(b.id==='drop'){startDrop(1);return;}
+  if(b.id==='slow'){startDrop(S.speed);return;}
+  if(b.id==='drop3'){dropThree();return;}
+  if(b.id==='clear'){S.runs=[];$('#reading').innerHTML='Timer: <b>–</b>';renderTable();return;}
+  if(b.id==='loadex'){loadExample();renderTable();return;}
+  if(b.classList.contains('chip')){var id=+b.dataset.id;S.runs.forEach(function(r){if(r.id===id)r.skip=!r.skip;});renderTable();return;}
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('#pop').hidden)closePop();});
+function on(id,ev,fn){$('#'+id).addEventListener(ev,fn);}
+on('n','input',function(e){S.n=+e.target.value;idle();renderBench();});
+on('p','input',function(e){S.p=+e.target.value;idle();renderBench();});
+on('area','input',function(e){S.area=+e.target.value;idle();renderBench();});
+on('h','input',function(e){S.h=+e.target.value;idle();renderBench();});
+on('strobe','change',function(e){S.strobe=e.target.checked;drawRig(S.frame);});
+on('pred-time','change',function(e){S.pred.time=e.target.value;});
+on('pred-speed','change',function(e){S.pred.speed=e.target.value;});
+on('ga','input',function(e){S.g.a=+e.target.value;renderGraphs();});
+on('gaa','input',function(e){S.g.aa=+e.target.value;renderGraphs();});
+on('gb','input',function(e){S.g.b=+e.target.value;renderGraphs();});
+on('gba','input',function(e){S.g.ba=+e.target.value;renderGraphs();});
+on('gh','input',function(e){S.g.h=+e.target.value;renderGraphs();});
+on('gcmp','change',function(e){S.g.cmp=e.target.checked;renderGraphs();});
+on('gt','input',function(e){S.g.f=+e.target.value/1000;renderGraphs();});
+on('theory','change',function(e){S.an.theory=e.target.checked;renderAnalyse();});
+on('dn','input',function(e){S.d.n=+e.target.value;renderDesign();});
+on('da','input',function(e){S.d.A=+e.target.value;renderDesign();});
+on('dh','input',function(e){S.d.h=+e.target.value;renderDesign();});
+on('dt','input',function(e){S.d.tgt=+e.target.value;renderDesign();});
+on('du','input',function(e){S.d.utgt=+e.target.value;renderDesign();});
+window.addEventListener('hashchange',function(){showTab(location.hash.replace('#',''),true);});
+loadExample();
+showTab(location.hash.replace('#','')||'bench',true);
+})();
+</script>
+</body>
+</html>
