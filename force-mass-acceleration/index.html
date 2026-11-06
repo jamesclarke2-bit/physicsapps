@@ -66,12 +66,19 @@ select.series{max-width:100%;font:inherit;padding:6px 8px;border-radius:8px;bord
           <button class="btn primary" id="b-run3" type="button">Time 3 runs</button>
           <button class="btn" id="b-run1" type="button">Time 1 run</button>
           <button class="btn" id="b-watch" type="button">Watch a run</button>
+          <button class="btn" id="b-reset" type="button">Reset trolley</button>
           <button class="btn" id="b-clear" type="button">Clear data</button>
         </div>
       </div>
       <div class="stack">
         <div class="card"><svg class="rig" id="rig" viewBox="0 0 760 250" role="img" aria-label="Trolley on a track pulled by a hanging mass"></svg>
-          <label class="check"><input type="checkbox" id="c-slow"> Slow motion (one quarter speed)</label></div>
+          <div class="ctl"><span class="lab">Speed</span><div class="seg" id="seg-speed" role="group" aria-label="Playback speed"></div></div>
+          <div class="vecrow" role="group" aria-label="Show on the trolley">
+            <label class="check"><input type="checkbox" id="v-strobe" checked> Strobe (ghost trolleys)</label>
+            <label class="check"><input type="checkbox" id="v-F"> Force</label>
+            <label class="check"><input type="checkbox" id="v-a"> Acceleration</label>
+            <label class="check"><input type="checkbox" id="v-v"> Velocity</label>
+          </div></div>
         <div class="card">
           <div class="cardhead"><h2>Results</h2></div>
           <p class="banner" id="banner"></p>
@@ -95,12 +102,12 @@ select.series{max-width:100%;font:inherit;padding:6px 8px;border-radius:8px;bord
   <section id="p-analyse" role="tabpanel" aria-labelledby="t-analyse" hidden>
     <div class="think"><b>Think</b><span id="a-think"></span></div>
     <div class="card" style="margin-bottom:14px">
-      <div class="ctl"><span class="lab">Graph</span><div class="seg" id="seg-plot" role="group" aria-label="Graph"></div></div>
+      <div id="axes" style="margin-bottom:10px"></div>
       <div class="ctl"><label for="sel-series"><span class="lab">Readings to plot</span></label><select class="series" id="sel-series"></select></div>
     </div>
     <div class="two">
       <div class="card"><div class="cardhead"><h2 id="a-title"></h2></div><svg id="plot"></svg>
-        <label class="check"><input type="checkbox" id="chk-model"> Show the line predicted by F = ma with no friction</label></div>
+        <label class="check" id="model-row"><input type="checkbox" id="chk-model"> Show the line predicted by F = ma with no friction</label></div>
       <div class="card"><div class="cardhead"><h2>Best-fit line</h2></div><div id="fit-out"></div></div>
     </div>
   </section>

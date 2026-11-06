@@ -62,12 +62,13 @@
 
   <!-- ANALYSE -->
   <section id="p-analyse" role="tabpanel" aria-labelledby="t-analyse" hidden>
-    <div class="think"><b>Think</b><span>T&sup2; against L should be a straight line through the origin. Is yours? What does the gradient tell you?</span></div>
+    <div class="think"><b>Think</b><span>Plot T against L. Is it a straight line? Change the axes (1 &divide; it, squared, square root) until it is, then use the gradient. What should it equal?</span></div>
+    <div class="card" style="margin-bottom:14px"><div id="axes"></div></div>
     <div class="two">
       <div class="card">
-        <div class="cardhead"><h2>T&sup2; against L</h2></div>
+        <div class="cardhead"><h2 id="a-title"></h2></div>
         <svg id="plot"></svg>
-        <label class="check"><input type="checkbox" id="chk-model"> Show the line the physics predicts</label>
+        <label class="check" id="model-row"><input type="checkbox" id="chk-model"> Show the line the physics predicts</label>
       </div>
       <div class="card"><div class="cardhead"><h2>Best-fit line</h2></div><div id="fit-out"></div></div>
     </div>

@@ -39,3 +39,9 @@ These come from James's own teaching. They override defaults. If a build seems t
 - Angles come with a reading uncertainty too (protractor, half of 1 degree), so sin(theta) has a bigger percentage uncertainty at a small angle. Show it as error bars on the x axis.
 - "Improve the design" must be rewritten for each experiment: only the controls that matter for that investigation, with checks that explain the worst case.
 - Crossed-out readings must look different (strike-through, dashed) and drop out of the mean.
+
+## Choosing the axes (default in every app)
+- The Analyse tab uses `Sim.axes`: the student picks the quantity on each axis and can change it (as measured, 1 ÷ it, squared, square root, sine). Units of the gradient and intercept are worked out for them and the line quality (r²) is shown.
+- Start each experiment on the raw quantities (for example a against m, or T against L). The skill is choosing the axis change that makes it straight and then interpreting the gradient, so never pre-plot the linear version.
+- Give each known relationship a `known` entry (model line, extra rows such as "g = 4π² ÷ gradient", and a question). Unknown combinations fall back to a generic prompt about units.
+- Animated rigs need a Reset button, real accelerating motion (not a jump), a strobe, and selectable force, acceleration and velocity vectors.

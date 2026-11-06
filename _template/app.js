@@ -74,7 +74,7 @@
       ['Half the range of the readings', 'Δt = ½ (' + fmt(st.max, 3) + ' − ' + fmt(st.min, 3) + ') = ' + fmt(st.half, 3) + ' s' + (st.half > (st.max - st.min) / 2 + 1e-9 ? ' (raised to half the timer’s smallest division)' : '')],
       ['Percentage uncertainty', '% = Δt ÷ t̄ × 100 = ' + fmt(st.half, 3) + ' ÷ ' + fmt(st.mean, 3) + ' × 100 = ' + fmt(st.pct, 1) + '%']]),
       el('p', { text: 'Where could the spread come from?' }),
-      Sim.steps([['A  Timer / reaction', '± ' + fmt(src.timer, 3) + ' s'], ['B  Release and judging the end of a swing', '± ' + fmt(src.release, 3) + ' s (' + fmt(M.REL * 100, 0) + '% of t)'], ['C  Timer resolution', '± ' + fmt(src.resolution, 4) + ' s']]),
+      Sim.steps([['A  Timer / reaction', '± ' + fmt(src.timer, 3) + ' s'], ['B  Release and judging the end of a swing', '± ' + fmt(src.release, 3) + ' s (the same however long the timing)'], ['C  Timer resolution', '± ' + fmt(src.resolution, 4) + ' s']]),
       el('p', { text: 'As a first approximation, take the biggest source of error. Half the range is how the spread in your own readings shows it. Repeating does not shrink it, and it cannot show up a fault that affects every reading, such as a mistake in how L is measured.' })];
   }
   function renderResults() {
@@ -90,26 +90,32 @@
   }
   results.onChange(renderResults);
 
-  /* ---------- analyse ---------- */
+  /* ---------- analyse: the student chooses the axes (Sim.axes) ---------- */
+  var FOURPI2 = 4 * Math.PI * Math.PI;
+  var AX = Sim.axes({
+    mount: $('axes'), x: { q: 'L' }, y: { q: 'T' }, onChange: function () { renderPlot(); },
+    quantities: [{ id: 'L', label: 'L', name: 'Length, L', unit: { m: 1 }, tfs: ['none', 'inv', 'sq', 'sqrt'] }, { id: 'T', label: 'T', name: 'Period, T', unit: { s: 1 }, tfs: ['none', 'inv', 'sq', 'sqrt'] }],
+    get: function (m, id) { var st = results.stats(m.key); if (!st.n) return null; return id === 'L' ? { v: m.L, u: 0 } : { v: st.mean / m.N, u: st.half / m.N }; },
+    known: [
+      { key: 'T:sq|L:none', model: function () { return { slope: FOURPI2 / M.G, intercept: 0 }; }, extras: function (f) { return [['g = 4π² ÷ gradient', fmt(FOURPI2 / f.slope, 2) + ' m s⁻²']]; }, q: 'What should the intercept be? If it is not, what could be wrong with every reading at once?' },
+      { key: 'L:none|T:sq', model: function () { return { slope: M.G / FOURPI2, intercept: 0 }; }, extras: function (f) { return [['g = 4π² × gradient', fmt(FOURPI2 * f.slope, 2) + ' m s⁻²']]; }, q: 'What should the intercept be? What does the gradient tell you about g?' },
+      { key: 'T:none|L:sqrt', model: function () { return { slope: 2 * Math.PI / Math.sqrt(M.G), intercept: 0 }; }, extras: function (f) { return [['g = (2π ÷ gradient)²', fmt(Math.pow(2 * Math.PI / f.slope, 2), 2) + ' m s⁻²']]; }, q: 'T = 2π√(L/g), so T against √L is a straight line. What does the gradient equal?' }
+    ]
+  });
   function renderPlot() {
-    var pts = [], xs = [], ys = [];
-    Object.keys(meta).forEach(function (k) {
-      var m = meta[k], st = results.stats(k); if (!st.n) return;
-      var T = st.mean / m.N, dT = st.half / m.N;
-      pts.push({ x: m.L, y: T * T, ey: 2 * T * dT }); xs.push(m.L); ys.push(T * T);
-    });
-    var lines = [], f = Sim.linfit(xs, ys), out = $('fit-out'); out.textContent = '';
+    var rows = Object.keys(meta).filter(function (k) { return results.stats(k).n; }).map(function (k) { return meta[k]; }), out = $('fit-out'); out.textContent = '';
+    $('a-title').textContent = AX.title();
+    var pts = AX.collect(rows), f = Sim.linfit(pts.map(function (p) { return p.x; }), pts.map(function (p) { return p.y; })), lines = [], kn = AX.known();
+    $('model-row').hidden = !kn;
     if (f) {
-      var x0 = 0, x1 = Math.max.apply(null, xs) * 1.05;
+      var xs = pts.map(function (p) { return p.x; }), x1 = Math.max.apply(null, xs) * 1.05, x0 = Math.min(0, Math.min.apply(null, xs));
       lines.push({ pts: [[x0, f.intercept + f.slope * x0], [x1, f.intercept + f.slope * x1]], colour: '--c1' });
-      if ($('chk-model').checked) lines.push({ pts: [[0, 0], [x1, 4 * Math.PI * Math.PI / M.G * x1]], colour: '--c2', dash: '6 4' });
-      out.appendChild(el('table', { class: 'kv' },
-        el('tr', null, el('td', { text: 'Gradient' }), el('td', { text: fmt(f.slope, 3) + ' s² m⁻¹' })),
-        el('tr', null, el('td', { text: 'Intercept' }), el('td', { text: fmt(f.intercept, 3) + ' s²' })),
-        el('tr', null, el('td', { text: 'g = 4π² ÷ gradient' }), el('td', { text: fmt(4 * Math.PI * Math.PI / f.slope, 2) + ' m s⁻²' }))));
-      out.appendChild(el('p', { class: 'fine', text: 'What should the intercept be? If it is not, what could be wrong with every reading at once?' }));
+      if (kn && $('chk-model').checked) { var ml = kn.model(); lines.push({ pts: [[x0, ml.intercept + ml.slope * x0], [x1, ml.intercept + ml.slope * x1]], colour: '--c2', dash: '6 4' }); }
+      var tbl = AX.fitTable(f); if (kn) kn.extras(f).forEach(function (r) { tbl.appendChild(el('tr', null, el('td', { text: r[0] }), el('td', { text: r[1] }))); });
+      out.appendChild(tbl);
+      out.appendChild(el('p', { class: 'fine', text: kn ? kn.q : 'Is the line straight? If not, change an axis (1 ÷ it, squared, square root) until it is. What does the gradient have units of, and which quantity could that be?' }));
     } else out.appendChild(el('p', { class: 'empty', text: 'Take readings at two or more lengths to see the line.' }));
-    Sim.plot($('plot'), { title: 'T squared against L', xlabel: 'L / m', ylabel: 'T² / s²', zero: true, points: pts, lines: lines });
+    Sim.plot($('plot'), { title: AX.title(), xlabel: AX.xlabel(), ylabel: AX.ylabel(), zero: true, points: pts, lines: lines });
   }
 
   /* ---------- design ---------- */

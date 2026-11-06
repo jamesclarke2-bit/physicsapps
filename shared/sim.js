@@ -38,10 +38,11 @@
   /* Least-squares straight line y = slope*x + intercept. */
   function linfit(xs, ys) {
     var n = xs.length; if (n < 2) return null;
-    var sx = 0, sy = 0, sxx = 0, sxy = 0, i;
-    for (i = 0; i < n; i++) { sx += xs[i]; sy += ys[i]; sxx += xs[i] * xs[i]; sxy += xs[i] * ys[i]; }
+    var sx = 0, sy = 0, sxx = 0, sxy = 0, syy = 0, i;
+    for (i = 0; i < n; i++) { sx += xs[i]; sy += ys[i]; sxx += xs[i] * xs[i]; sxy += xs[i] * ys[i]; syy += ys[i] * ys[i]; }
     var d = n * sxx - sx * sx; if (!d) return null;
-    var slope = (n * sxy - sx * sy) / d; return { slope: slope, intercept: (sy - slope * sx) / n };
+    var slope = (n * sxy - sx * sy) / d, dy = n * syy - sy * sy;
+    return { slope: slope, intercept: (sy - slope * sx) / n, r2: dy ? Math.pow(n * sxy - sx * sy, 2) / (d * dy) : 1 };
   }
   function fmt(x, dp) { if (x === null || x === undefined || !isFinite(x)) return '–'; var s = x.toFixed(dp === undefined ? 2 : dp); return s.replace('-', '−'); }
   function sig(x, n) { if (!isFinite(x)) return '–'; if (x === 0) return '0'; return fmt(+x.toPrecision(n || 3), Math.max(0, (n || 3) - 1 - Math.floor(Math.log10(Math.abs(x))))); }
@@ -233,6 +234,85 @@
   }
 
 
+
+  /* ---------- axes: the student chooses what to plot ----------
+     Sim.axes({mount, quantities:[{id,label,unit:{kg,m,s,N,deg exponents},tfs:[...]}], get(row,id)->{v,u}|null,
+               x:{q,tf}, y:{q,tf}, known:[{key:'a:none|m:inv', slope(ctx)->{slope,intercept}, extras(fit)->[[label,text]], question}], onChange})
+     Transforms: none, inv (1/q), sq, sqrt, sin (angles). Uncertainties are propagated and units are worked out. */
+  var TFNAME = { none: 'as measured', inv: '1 ÷ it', sq: 'squared', sqrt: 'square root', sin: 'sine' };
+  var SUPD = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹', '.': '·' };
+  function uScale(u, p) { var o = {}; for (var k in u) o[k] = u[k] * p; return o; }
+  function uExpand(u) { var o = { kg: u.kg || 0, m: u.m || 0, s: u.s || 0, deg: u.deg || 0 }; o.kg += u.N || 0; o.m += u.N || 0; o.s -= 2 * (u.N || 0); return o; }
+  function uDiv(a, b) { var A = uExpand(a), B = uExpand(b); return { kg: A.kg - B.kg, m: A.m - B.m, s: A.s - B.s, deg: A.deg - B.deg }; }
+  function expStr(n) { if (n === 1) return ''; return String(n).split('').map(function (c) { return SUPD[c] || c; }).join(''); }
+  function uStr(u) {
+    var b = uExpand(u), parts = [], n = 0;
+    if (b.kg > 0 && b.m > 0 && b.s < 0) n = Math.min(b.kg, b.m, -b.s / 2); else if (b.kg < 0 && b.m < 0 && b.s > 0) n = -Math.min(-b.kg, -b.m, b.s / 2);
+    if (n) { parts.push('N' + expStr(n)); b.kg -= n; b.m -= n; b.s += 2 * n; }
+    var rest = ['kg', 'm', 's'].filter(function (k) { return b[k]; }).sort(function (p, q) { return (b[q] > 0) - (b[p] > 0); });
+    rest.forEach(function (k) { parts.push(k + expStr(b[k])); });
+    var s = parts.join(' ');
+    if (b.deg) s = (s ? s + ' ' : '') + (b.deg === 1 ? '°' : 'deg' + expStr(b.deg));
+    return s;
+  }
+  function tfLabel(tf, L) { return { none: L, inv: '1/' + L, sq: L + '²', sqrt: '√' + L, sin: 'sin' + L }[tf]; }
+  function tfValue(tf, v, u) {
+    if (v === null || v === undefined || !isFinite(v)) return null;
+    if (tf === 'inv') return v === 0 ? null : { v: 1 / v, u: u / (v * v) };
+    if (tf === 'sq') return { v: v * v, u: 2 * Math.abs(v) * u };
+    if (tf === 'sqrt') return v <= 0 ? null : { v: Math.sqrt(v), u: u / (2 * Math.sqrt(v)) };
+    if (tf === 'sin') { var r = Math.PI / 180; return { v: Math.sin(v * r), u: Math.cos(v * r) * u * r }; }
+    return { v: v, u: u };
+  }
+  function tfUnit(tf, u) { return tf === 'inv' ? uScale(u, -1) : tf === 'sq' ? uScale(u, 2) : tf === 'sqrt' ? uScale(u, 0.5) : tf === 'sin' ? {} : u; }
+  function axes(cfg) {
+    var st = { x: { q: cfg.x.q, tf: cfg.x.tf || 'none' }, y: { q: cfg.y.q, tf: cfg.y.tf || 'none' } }, boxes = {};
+    function qdef(id) { return cfg.quantities.filter(function (q) { return q.id === id; })[0]; }
+    function unitOf(sel) { return tfUnit(sel.tf, qdef(sel.q).unit || {}); }
+    function labelOf(sel) { return tfLabel(sel.tf, qdef(sel.q).label); }
+    function axisLabel(sel) { var u = uStr(unitOf(sel)); return labelOf(sel) + (u ? ' / ' + u : ''); }
+    function draw() {
+      ['y', 'x'].forEach(function (ax) {
+        var b = boxes[ax]; b.textContent = '';
+        var qs = el('select', { 'aria-label': (ax === 'y' ? 'Vertical' : 'Horizontal') + ' axis quantity', onchange: function (e) { st[ax].q = e.target.value; if (qdef(st[ax].q).tfs.indexOf(st[ax].tf) < 0) st[ax].tf = 'none'; draw(); cfg.onChange && cfg.onChange(); } },
+          cfg.quantities.map(function (q) { return el('option', { value: q.id, text: q.name || q.label, selected: q.id === st[ax].q }); }));
+        var tf = el('select', { 'aria-label': (ax === 'y' ? 'Vertical' : 'Horizontal') + ' axis, how to change it', onchange: function (e) { st[ax].tf = e.target.value; draw(); cfg.onChange && cfg.onChange(); } },
+          qdef(st[ax].q).tfs.map(function (t) { return el('option', { value: t, text: TFNAME[t], selected: t === st[ax].tf }); }));
+        b.appendChild(el('span', { class: 'lab', text: ax === 'y' ? 'Vertical axis (y)' : 'Horizontal axis (x)' }));
+        b.appendChild(el('div', { class: 'axrow' }, qs, tf));
+        b.appendChild(el('span', { class: 'axshow', text: axisLabel(st[ax]) }));
+      });
+    }
+    cfg.mount.textContent = ''; cfg.mount.className = (cfg.mount.className + ' axpick').trim();
+    boxes.y = el('div', { class: 'axcol' }); boxes.x = el('div', { class: 'axcol' }); cfg.mount.appendChild(boxes.y); cfg.mount.appendChild(boxes.x);
+    draw();
+    function key() { return st.y.q + ':' + st.y.tf + '|' + st.x.q + ':' + st.x.tf; }
+    return {
+      get: function () { return { x: { q: st.x.q, tf: st.x.tf }, y: { q: st.y.q, tf: st.y.tf } }; },
+      set: function (x, y) { st.x = { q: x.q, tf: x.tf || 'none' }; st.y = { q: y.q, tf: y.tf || 'none' }; draw(); },
+      title: function () { return labelOf(st.y) + ' against ' + labelOf(st.x); },
+      xlabel: function () { return axisLabel(st.x); }, ylabel: function () { return axisLabel(st.y); },
+      gradUnit: function () { return uStr(uDiv(unitOf(st.y), unitOf(st.x))); }, interceptUnit: function () { return uStr(unitOf(st.y)); },
+      collect: function (rows) {
+        var pts = [];
+        rows.forEach(function (r) {
+          var a = cfg.get(r, st.x.q), b = cfg.get(r, st.y.q); if (!a || !b) return;
+          var X = tfValue(st.x.tf, a.v, a.u), Y = tfValue(st.y.tf, b.v, b.u); if (!X || !Y) return;
+          pts.push({ x: X.v, y: Y.v, ex: X.u, ey: Y.u, row: r });
+        });
+        return pts;
+      },
+      known: function () { var k = key(); return (cfg.known || []).filter(function (e) { return e.key === k; })[0] || null; },
+      fitTable: function (f) {
+        var gu = uStr(uDiv(unitOf(st.y), unitOf(st.x))), iu = uStr(unitOf(st.y));
+        return el('table', { class: 'kv' },
+          el('tr', null, el('td', { text: 'Gradient' }), el('td', { text: sig(f.slope, 3) + (gu ? ' ' + gu : '') })),
+          el('tr', null, el('td', { text: 'Intercept' }), el('td', { text: sig(f.intercept, 3) + (iu ? ' ' + iu : '') })),
+          el('tr', null, el('td', { text: 'How straight (r²)' }), el('td', { text: fmt(f.r2, 3) })));
+      }
+    };
+  }
+
   /* ---------- experiment chooser ----------
      Step 1 of an app with several investigations: a multiple-choice "What are you testing?", then yes/no technique checks,
      then a Change / Measure / Keep the same table. Answering a check applies the set-up and can lock controls.
@@ -277,5 +357,5 @@
     return { choose: choose, current: function () { return def(); }, relock: function () { cfg.lock(locked()); } };
   }
 
-  window.Sim = { rng: rng, stats: stats, linfit: linfit, fmt: fmt, sig: sig, el: el, svgel: svgel, tabs: tabs, pop: pop, steps: steps, Results: Results, calcButton: calcButton, plot: plot, experiment: experiment };
+  window.Sim = { rng: rng, stats: stats, linfit: linfit, fmt: fmt, sig: sig, el: el, svgel: svgel, tabs: tabs, pop: pop, steps: steps, Results: Results, calcButton: calcButton, plot: plot, experiment: experiment, axes: axes };
 })();

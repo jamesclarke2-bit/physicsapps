@@ -20,11 +20,11 @@
 
   /* ---------- rig ---------- */
   var XL = 20, XS = 90, PX = 270, Y0 = 90, XE = XS + M.TRACK * PX;
-  var anim = { x: 0, raf: 0, on: false };
+  var anim = { x: 0, v: 0, t: 0, raf: 0, on: false, ghosts: [] }, vec = { F: false, a: false, v: false, strobe: true }, speed = 2;
   function drawRig() {
     var svg = $('rig'), th = S.tilt, rad = th * Math.PI / 180, s = setup(S);
     svg.textContent = '';
-    svg.setAttribute('viewBox', '0 0 760 ' + Math.round(250 + Math.max(0, M.TRACK * PX * Math.sin(rad))));
+    svg.setAttribute('viewBox', '0 -48 760 ' + Math.round(298 + Math.max(0, M.TRACK * PX * Math.sin(rad))));
     var g = A('g', { transform: 'rotate(' + th + ' ' + XL + ' ' + Y0 + ')' });
     g.appendChild(A('rect', { class: 'track', x: XL, y: Y0, width: XE - XL + 22, height: 8, rx: 2 }));
     for (var i = 0; i <= 20; i++) {
@@ -43,6 +43,7 @@
       g.appendChild(A('line', { class: 'flag', x1: fx, x2: fx, y1: Y0 - 40, y2: Y0 })); g.appendChild(A('text', { class: 'lbl', x: fx, y: Y0 - 44, 'text-anchor': 'middle' }, 'finish'));
     }
     var tx = XS + anim.x * PX; // front of trolley
+    if (vec.strobe) anim.ghosts.forEach(function (gx) { if (Math.abs(gx - anim.x) > 0.015) g.appendChild(A('rect', { class: 'ghost', x: XS + gx * PX - 70, y: Y0 - 26, width: 70, height: 20, rx: 3 })); });
     g.appendChild(A('rect', { class: 'trolley', x: tx - 70, y: Y0 - 26, width: 70, height: 20, rx: 3 }));
     [tx - 54, tx - 16].forEach(function (cx) { g.appendChild(A('circle', { class: 'wheel', cx: cx, cy: Y0 - 3, r: 5 })); });
     var slots = M.slotsOnTrolley(s);
@@ -50,6 +51,7 @@
     for (var b = 0; b < S.k; b++) g.appendChild(A('rect', { class: 'block', x: tx - 66 + b * 13, y: Y0 - 46, width: 12, height: 12 }));
     if (S.hanger) g.appendChild(A('line', { class: 'string', x1: tx, y1: Y0 - 14, x2: XE + 12, y2: Y0 - 14 }));
     g.appendChild(A('circle', { class: 'pulley', cx: XE + 12, cy: Y0 - 6, r: 8 }));
+    vectors(g, tx);
     svg.appendChild(g);
     // pulley position after tilting, then the vertical string and hanger
     var dx = XE + 12 - XL, px, py;
@@ -63,16 +65,32 @@
     }
     if (S.tilt > 0) svg.appendChild(A('text', { class: 'lbl', x: XL + 6, y: Y0 + 56 }, 'tilt ' + fmt(S.tilt, 1) + '°'));
   }
-  function watch() {
+  var VSCALE = { F: 80, a: 36, v: 46 };
+  function vectors(g, tx) {
+    var s = setup(S), mv = M.moves(s), F = mv ? M.netForce(s) : 0, a = mv ? M.accel(s) : 0;
+    var items = [['F', F, 'net force ' + fmt(F, 2) + ' N'], ['a', a, 'acceleration ' + fmt(a, 2) + ' m s⁻²'], ['v', anim.v, 'velocity ' + fmt(anim.v, 2) + ' m s⁻¹']].filter(function (it) { return vec[it[0]]; });
+    items.forEach(function (it, i) {
+      var y = Y0 - 70 - 22 * i, L = Math.min(170, VSCALE[it[0]] * it[1]), x0 = tx - 35;
+      if (L > 2) {
+        g.appendChild(A('line', { class: 'vec vec-' + it[0], x1: x0, y1: y, x2: x0 + L - 6, y2: y }));
+        g.appendChild(A('polygon', { class: 'vech-' + it[0], points: (x0 + L) + ',' + y + ' ' + (x0 + L - 10) + ',' + (y - 5) + ' ' + (x0 + L - 10) + ',' + (y + 5) }));
+      }
+      g.appendChild(A('text', { class: 'vlbl vlbl-' + it[0], x: x0, y: y - 6 }, it[2]));
+    });
+  }
+  function resetRig() { cancelAnimationFrame(anim.raf); anim.x = 0; anim.v = 0; anim.t = 0; anim.on = false; anim.ghosts = []; drawRig(); }
+  function watch(quiet) {
     var s = setup(S), a = M.accel(s);
-    if (!(a > 0)) { $('banner').textContent = 'The trolley does not move: the pull is not enough to overcome friction.'; return; }
-    cancelAnimationFrame(anim.raf); anim.x = 0; anim.on = true;
-    var slow = $('c-slow').checked ? 4 : 1, t0 = 0, x2 = S.x2;
-    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { anim.x = x2; anim.on = false; drawRig(); return; }
+    if (!(a > 0)) { if (quiet !== true) $('banner').textContent = 'The trolley does not move: the pull is not enough to overcome friction.'; return; }
+    resetRig(); anim.on = true;
+    var t0 = 0, x2 = S.x2, tEnd = Math.sqrt(2 * x2 / a), dts = [0.1, 0.2, 0.25, 0.5, 1], dt = dts.filter(function (d) { return tEnd / d <= 8; })[0] || 1, nextS = 0;
     function step(ts) {
-      if (!t0) t0 = ts; var t = (ts - t0) / 1000 / slow, x = 0.5 * a * t * t;
-      if (x >= x2) { anim.x = x2; anim.on = false; drawRig(); setTimeout(function () { anim.x = 0; drawRig(); }, 900); return; }
-      anim.x = x; drawRig(); anim.raf = requestAnimationFrame(step);
+      if (!t0) t0 = ts;
+      var t = Math.min(tEnd, (ts - t0) / 1000 / speed);
+      while (nextS <= t + 1e-9 && nextS < tEnd) { anim.ghosts.push(0.5 * a * nextS * nextS); nextS += dt; }
+      anim.t = t; anim.x = 0.5 * a * t * t; anim.v = a * t; drawRig();
+      if (t >= tEnd) { anim.on = false; return; }
+      anim.raf = requestAnimationFrame(step);
     }
     anim.raf = requestAnimationFrame(step);
   }
@@ -172,68 +190,102 @@
   }
 
   /* ---------- analyse ---------- */
-  var PLOTS = {
-    aF: { name: 'a against F', ok: function (o) { return o.hanger; }, vary: function (o) { return [o.constant, o.k, o.tilt, o.timer, o.x2, o.timer === 'gates' ? o.x1 : 0]; },
-      think: 'With the total mass constant, a against F should be a straight line. Does yours pass through the origin? What does the gradient tell you?' },
-    aInvM: { name: 'a against 1/m', ok: function (o) { return o.hanger; }, vary: function (o) { return [o.nh, o.constant, o.tilt, o.timer, o.x2, o.timer === 'gates' ? o.x1 : 0]; },
-      think: 'With the force constant, a should be proportional to 1/m. What does the gradient represent?' },
-    sT2: { name: 's against t²', ok: function (o) { return o.timer !== 'gates'; }, vary: function (o) { return [o.nh, o.k, o.constant, o.tilt, o.hanger, o.timer]; },
-      think: 's = ½ a t² for a start from rest. What should a graph of s against t² look like, and what does its gradient give you?' },
-    aSin: { name: 'a against sinθ', ok: function (o) { return !o.hanger; }, vary: function (o) { return [o.k, o.timer, o.x2, o.timer === 'gates' ? o.x1 : 0]; },
-      think: 'On a slope with no hanger, a = g sinθ if friction is ignored. What should the gradient be? Does the mass change it?' },
-    v2: { name: 'v² − u² against s', ok: function (o) { return o.timer === 'gates'; }, vary: function (o) { return [o.nh, o.k, o.constant, o.tilt, o.hanger, o.x1]; },
-      think: 'v² = u² + 2as. What should a graph of v² − u² against s look like, and what does its gradient give you?' }
-  };
-  var plotType = 'aF', seriesSel = '';
-  function labelOfSeries(rows, type) {
-    var o = rows[0], parts = [];
-    if (type !== 'aInvM') parts.push('hanger ' + (o.hanger ? o.nh + ' masses' : 'off'));
-    parts.push(o.constant ? 'total mass constant' : 'mass not kept constant');
-    if (type !== 'aInvM') parts.push('extra ' + fmt(0.1 * o.k, 1) + ' kg');
-    parts.push('tilt ' + fmt(o.tilt, 1) + '°', M.TIMERS[o.timer].short);
-    if (type !== 'sT2' && type !== 'v2') parts.push(o.timer === 'gates' ? 'gates ' + fmt(o.x1, 1) + ' to ' + fmt(o.x2, 1) + ' m' : 's = ' + fmt(o.x2, 1) + ' m');
-    return parts.join(' · ') + ' (' + rows.length + ' settings)';
+  /* ---------- analyse: the student chooses the axes ---------- */
+  var QS = [
+    { id: 'F', label: 'F', name: 'Force from the hanger, F', unit: { N: 1 }, tfs: ['none', 'inv', 'sq', 'sqrt'] },
+    { id: 'm', label: 'm', name: 'Total mass, m', unit: { kg: 1 }, tfs: ['none', 'inv', 'sq', 'sqrt'] },
+    { id: 'a', label: 'a', name: 'Acceleration, a', unit: { m: 1, s: -2 }, tfs: ['none', 'inv', 'sq', 'sqrt'] },
+    { id: 't', label: 't', name: 'Time, t', unit: { s: 1 }, tfs: ['none', 'inv', 'sq', 'sqrt'] },
+    { id: 's', label: 's', name: 'Distance, s', unit: { m: 1 }, tfs: ['none', 'inv', 'sq', 'sqrt'] },
+    { id: 'th', label: 'θ', name: 'Tilt angle, θ', unit: { deg: 1 }, tfs: ['none', 'sin'] },
+    { id: 'u', label: 'u', name: 'Speed at gate 1, u', unit: { m: 1, s: -1 }, tfs: ['none', 'inv', 'sq', 'sqrt'] },
+    { id: 'v', label: 'v', name: 'Speed at gate 2, v', unit: { m: 1, s: -1 }, tfs: ['none', 'inv', 'sq', 'sqrt'] }
+  ];
+  function qget(o, id) {
+    var c = calc(o); if (!c) return null; var s = c.s;
+    switch (id) {
+      case 'F': return o.hanger ? { v: M.force(s), u: 0 } : null;
+      case 'm': return { v: M.totalMass(s), u: 0 };
+      case 'a': return { v: c.a, u: c.da };
+      case 't': return { v: c.st.mean, u: c.st.half };
+      case 's': return { v: c.d, u: 0 };
+      case 'th': return { v: o.tilt, u: M.TILT_SIG };
+      case 'u': return c.gates ? { v: c.us.mean, u: c.us.half } : null;
+      case 'v': return c.gates ? { v: c.vs.mean, u: c.vs.half } : null;
+    }
+    return null;
   }
-  function groupsFor(type) {
-    var P = PLOTS[type], g = {};
-    Object.keys(meta).forEach(function (k) { var o = meta[k]; if (!P.ok(o) || !results.stats(k).n) return; var key = P.vary(o).join('|'); (g[key] = g[key] || []).push(o); });
-    return Object.keys(g).map(function (k) { return { key: k, rows: g[k] }; }).filter(function (x) { return x.rows.length >= 2; }).sort(function (a, b) { return b.rows.length - a.rows.length; });
+  var KNOWN = [
+    { key: 'a:none|F:none', model: function (s) { return { slope: 1 / M.totalMass(s), intercept: 0 }; }, extras: function (f) { return [['1 ÷ gradient', fmt(1 / f.slope, 3) + ' kg']]; },
+      q: 'What should the gradient equal? What is the mass of the trolley and hanger? If the line does not pass through the origin, what could cause it?' },
+    { key: 'a:none|m:inv', model: function (s) { return { slope: M.force(s), intercept: 0 }; }, extras: function (f) { return [['Gradient = force', fmt(f.slope, 2) + ' N']]; },
+      q: 'What should the gradient equal? What does a non-zero intercept tell you about every reading?' },
+    { key: 'a:inv|m:none', model: function (s) { return { slope: 1 / M.force(s), intercept: 0 }; }, extras: function (f) { return [['1 ÷ gradient = force', fmt(1 / f.slope, 2) + ' N']]; },
+      q: 'Why is 1/a proportional to m? What does 1 ÷ gradient give you?' },
+    { key: 'F:none|a:none', model: function (s) { return { slope: M.totalMass(s), intercept: 0 }; }, extras: function (f) { return [['Gradient = mass', fmt(f.slope, 3) + ' kg']]; },
+      q: 'F against a: what does the gradient represent? Does it match the total mass?' },
+    { key: 's:none|t:sq', model: function (s) { return { slope: M.idealAccel(s) / 2, intercept: 0 }; }, extras: function (f) { return [['a = 2 × gradient', fmt(2 * f.slope, 3) + ' m s⁻²']]; },
+      q: 'Does the line pass through the origin? What does a straight line show about the acceleration?' },
+    { key: 't:sq|s:none', model: function (s) { return { slope: 2 / M.idealAccel(s), intercept: 0 }; }, extras: function (f) { return [['a = 2 ÷ gradient', fmt(2 / f.slope, 3) + ' m s⁻²']]; },
+      q: 'What does the gradient of t² against s give you? How is it related to a?' },
+    { key: 'v:sq|s:none', model: function (s, o) { return { slope: 2 * M.idealAccel(s), intercept: 2 * M.idealAccel(s) * (o.timer === 'gates' ? o.x1 : 0) }; },
+      extras: function (f) { var r = [['a = gradient ÷ 2', fmt(f.slope / 2, 3) + ' m s⁻²']]; if (f.intercept > 0) r.push(['u = √intercept', fmt(Math.sqrt(f.intercept), 3) + ' m s⁻¹']); return r; },
+      q: 'v² = u² + 2as. What does the gradient give you? What does the intercept represent?' },
+    { key: 'a:none|th:sin', model: function () { return { slope: M.G, intercept: 0 }; }, extras: function (f) { return [['g = gradient', fmt(f.slope, 2) + ' m s⁻²'], ['% uncertainty in sinθ at the smallest tilt', 'see the design tab']]; },
+      q: 'What should the gradient equal? Does an intercept below zero suggest friction? Repeat with extra mass: does the line change?' }
+  ];
+  var AX = Sim.axes({ mount: $('axes'), quantities: QS, get: qget, x: { q: 'F' }, y: { q: 'a' }, known: KNOWN, onChange: function () { renderPlot(); } });
+  var seriesSel = '', prefDim = 'nh';
+  var DIMS = [['nh', 'masses on the hanger'], ['k', 'extra mass on the trolley'], ['x2', 'distance (or second gate)'], ['tilt', 'tilt of the track'], ['x1', 'first gate position']];
+  var KEYS = ['nh', 'k', 'constant', 'tilt', 'hanger', 'timer', 'x2', 'x1'];
+  function vstr(o, k) { return k === 'tilt' || k === 'x2' || k === 'x1' ? o[k].toFixed(1) : String(o[k]); }
+  function seriesLabel(rows, dim) {
+    var o = rows[0], parts = [];
+    if (dim !== 'nh') parts.push('hanger ' + (o.hanger ? o.nh + ' masses' : 'off'));
+    parts.push(o.constant ? 'total mass constant' : 'mass not kept constant');
+    if (dim !== 'k') parts.push('extra ' + fmt(0.1 * o.k, 1) + ' kg');
+    if (dim !== 'tilt') parts.push('tilt ' + fmt(o.tilt, 1) + '°');
+    parts.push(M.TIMERS[o.timer].short);
+    if (dim !== 'x2') parts.push(o.timer === 'gates' ? 'second gate ' + fmt(o.x2, 1) + ' m' : 's = ' + fmt(o.x2, 1) + ' m');
+    if (o.timer === 'gates' && dim !== 'x1') parts.push('first gate ' + fmt(o.x1, 1) + ' m');
+    var dn = DIMS.filter(function (d) { return d[0] === dim; })[0][1];
+    return 'Changing ' + dn + ' (' + rows.length + ' settings) · ' + parts.join(' · ');
+  }
+  function groups() {
+    var res = [];
+    DIMS.forEach(function (d) {
+      var g = {};
+      Object.keys(meta).forEach(function (k) {
+        var o = meta[k]; if (!results.stats(k).n) return;
+        var key = d[0] + '#' + KEYS.filter(function (x) { return x !== d[0] && !(x === 'x1' && o.timer !== 'gates'); }).map(function (x) { return vstr(o, x); }).join('|');
+        (g[key] = g[key] || []).push(o);
+      });
+      Object.keys(g).forEach(function (key) { var vals = {}; g[key].forEach(function (r) { vals[vstr(r, d[0])] = 1; }); if (Object.keys(vals).length >= 2) res.push({ key: key, dim: d[0], rows: g[key] }); });
+    });
+    return res.sort(function (p, q) { return (q.dim === prefDim) - (p.dim === prefDim) || q.rows.length - p.rows.length; });
   }
   function renderPlot() {
-    var P = PLOTS[plotType], gs = groupsFor(plotType), sel = $('sel-series'); sel.textContent = '';
-    $('a-think').textContent = P.think; $('a-title').textContent = P.name.replace(/^a against/, 'Acceleration against').replace('s against t²', 'Distance against time squared');
-    if (!gs.length) { sel.appendChild(el('option', { text: 'No suitable readings yet' })); Sim.plot($('plot'), { title: P.name, xlabel: '', ylabel: '', points: [] }); $('fit-out').textContent = ''; $('fit-out').appendChild(el('p', { class: 'empty', text: 'Take readings at two or more settings for this graph. Change ' + { aF: 'the number of masses on the hanger', aInvM: 'the extra mass on the trolley', sT2: 'the distance to the finish (stopwatch or video)', v2: 'the second gate position (light gates)', aSin: 'the tilt of the track (hanger removed)' }[plotType] + '.' })); return; }
-    gs.forEach(function (x) { sel.appendChild(el('option', { value: x.key, text: labelOfSeries(x.rows, plotType), selected: x.key === seriesSel })); });
+    var gs = groups(), sel = $('sel-series'), out = $('fit-out'); sel.textContent = ''; out.textContent = '';
+    $('a-title').textContent = AX.title();
+    function none(msg) { Sim.plot($('plot'), { title: AX.title(), xlabel: AX.xlabel(), ylabel: AX.ylabel(), points: [] }); out.appendChild(el('p', { class: 'empty', text: msg })); $('model-row').hidden = true; }
+    if (!gs.length) { sel.appendChild(el('option', { text: 'No suitable readings yet' })); none('Take readings at two or more settings where you change only one thing (for example the number of masses on the hanger).'); return; }
+    gs.forEach(function (x) { sel.appendChild(el('option', { value: x.key, text: seriesLabel(x.rows, x.dim), selected: x.key === seriesSel })); });
     if (!gs.some(function (x) { return x.key === seriesSel; })) seriesSel = gs[0].key;
     sel.value = seriesSel;
-    var rows = gs.filter(function (x) { return x.key === seriesSel; })[0].rows, pts = [], xs = [], ys = [], xl, yl;
-    rows.forEach(function (o) {
-      var c = calc(o), s = c.s, x, y, ex = 0, ey = 0;
-      if (plotType === 'aF') { x = M.force(s); y = c.a; ey = c.da; xl = 'F / N'; yl = 'a / m s⁻²'; }
-      else if (plotType === 'aInvM') { x = 1 / M.totalMass(s); y = c.a; ey = c.da; xl = '1/m / kg⁻¹'; yl = 'a / m s⁻²'; }
-      else if (plotType === 'aSin') { x = Math.sin(o.tilt * Math.PI / 180); y = c.a; ex = M.sinTiltUnc(o.tilt); ey = c.da; xl = 'sinθ'; yl = 'a / m s⁻²'; }
-      else if (plotType === 'sT2') { x = c.st.mean * c.st.mean; ex = 2 * c.st.mean * c.st.half; y = o.x2; xl = 't² / s²'; yl = 's / m'; }
-      else { x = c.d; y = c.vs.mean * c.vs.mean - c.us.mean * c.us.mean; ey = 2 * c.vs.mean * c.vs.half + 2 * c.us.mean * c.us.half; xl = 's / m'; yl = 'v² − u² / m² s⁻²'; }
-      pts.push({ x: x, y: y, ex: ex, ey: ey }); xs.push(x); ys.push(y);
-    });
-    var f = Sim.linfit(xs, ys), lines = [], out = $('fit-out'); out.textContent = '';
-    var xmax = Math.max.apply(null, xs) * 1.05, o0 = rows[0], s0 = setup(o0);
+    var rows = gs.filter(function (x) { return x.key === seriesSel; })[0].rows, pts = AX.collect(rows);
+    if (pts.length < 2) { none('These two quantities are not both available for these readings (u and v need the light gates; F needs the hanger). Choose different axes.'); return; }
+    var xs = pts.map(function (p) { return p.x; }), ys = pts.map(function (p) { return p.y; }), f = Sim.linfit(xs, ys), lines = [], kn = AX.known(), o0 = rows[0], s0 = setup(o0);
+    $('model-row').hidden = !kn;
     if (f) {
-      lines.push({ pts: [[0, f.intercept], [xmax, f.intercept + f.slope * xmax]], colour: '--c1' });
-      var ideal = M.idealAccel(s0), slope = { aF: 1 / M.totalMass(s0), aInvM: M.force(s0), sT2: ideal / 2, v2: 2 * ideal, aSin: M.G }[plotType];
-      if ($('chk-model').checked) lines.push({ pts: [[0, 0], [xmax, slope * xmax]], colour: '--c2', dash: '6 4' });
-      var gu = { aF: 'kg⁻¹', aInvM: 'N', sT2: 'm s⁻²', v2: 'm s⁻²', aSin: 'm s⁻²' }[plotType], iu = { aF: 'm s⁻²', aInvM: 'm s⁻²', sT2: 'm', v2: 'm² s⁻²', aSin: 'm s⁻²' }[plotType];
-      var tbl = el('table', { class: 'kv' }, el('tr', null, el('td', { text: 'Gradient' }), el('td', { text: fmt(f.slope, 3) + ' ' + gu })), el('tr', null, el('td', { text: 'Intercept' }), el('td', { text: fmt(f.intercept, 3) + ' ' + iu })));
-      if (plotType === 'aF') tbl.appendChild(el('tr', null, el('td', { text: '1 ÷ gradient' }), el('td', { text: fmt(1 / f.slope, 3) + ' kg' })));
-      if (plotType === 'aInvM') tbl.appendChild(el('tr', null, el('td', { text: 'Gradient = force' }), el('td', { text: fmt(f.slope, 2) + ' N' })));
-      if (plotType === 'sT2') tbl.appendChild(el('tr', null, el('td', { text: 'a = 2 × gradient' }), el('td', { text: fmt(2 * f.slope, 3) + ' m s⁻²' })));
-      if (plotType === 'aSin') { tbl.appendChild(el('tr', null, el('td', { text: 'g = gradient' }), el('td', { text: fmt(f.slope, 2) + ' m s⁻²' }))); tbl.appendChild(el('tr', null, el('td', { text: '% uncertainty in sinθ, smallest tilt' }), el('td', { text: fmt(M.sinTiltPct(Math.min.apply(null, rows.map(function (r) { return r.tilt; }))), 0) + '%' }))); }
-      if (plotType === 'v2') tbl.appendChild(el('tr', null, el('td', { text: 'a = gradient ÷ 2' }), el('td', { text: fmt(f.slope / 2, 3) + ' m s⁻²' })));
+      var xmax = Math.max.apply(null, xs) * 1.05, xmin = Math.min(0, Math.min.apply(null, xs));
+      lines.push({ pts: [[xmin, f.intercept + f.slope * xmin], [xmax, f.intercept + f.slope * xmax]], colour: '--c1' });
+      if (kn && $('chk-model').checked) { var ml = kn.model(s0, o0); lines.push({ pts: [[xmin, ml.intercept + ml.slope * xmin], [xmax, ml.intercept + ml.slope * xmax]], colour: '--c2', dash: '6 4' }); }
+      var tbl = AX.fitTable(f);
+      if (kn) kn.extras(f).forEach(function (r) { tbl.appendChild(el('tr', null, el('td', { text: r[0] }), el('td', { text: r[1] }))); });
       out.appendChild(tbl);
-      var q = { aF: 'What should the gradient equal? What is the mass of the trolley and hanger? If the line does not pass through the origin, what could cause it?', aInvM: 'What should the gradient equal? What does a non-zero intercept tell you about every reading?', sT2: 'Does the line pass through the origin? What does a straight line show about the acceleration?', aSin: 'What should the gradient equal? Does an intercept below zero suggest friction? Repeat with extra mass: does the line change?', v2: 'Compare this value of a with the one from your time readings. Do they agree within the uncertainty?' }[plotType];
-      out.appendChild(el('p', { class: 'fine', text: q }));
+      out.appendChild(el('p', { class: 'fine', text: kn ? kn.q : 'Is the line straight? If not, change an axis (1 ÷ it, squared, square root) until it is. What does the gradient have units of, and which quantity could that be?' }));
     }
-    Sim.plot($('plot'), { title: P.name, xlabel: xl, ylabel: yl, zero: true, points: pts, lines: lines });
+    Sim.plot($('plot'), { title: AX.title(), xlabel: AX.xlabel(), ylabel: AX.ylabel(), zero: true, points: pts, lines: lines });
   }
 
   /* ---------- design (depends on the experiment chosen) ---------- */
@@ -302,17 +354,20 @@
     $('c-nh').disabled = !S.hanger || lockedIds.indexOf('nh') >= 0; $('c-const').disabled = !S.hanger || lockedIds.indexOf('const') >= 0;
     var ro = $('readout'); ro.textContent = '';
     [['Hanger weight, F', S.hanger ? fmt(M.force(s), 2) + ' N' : '0 N'], ['Trolley mass', kg(M.trolleyMass(s))], ['Hanger mass', kg(M.hangerMass(s))], ['Total mass, m', kg(M.totalMass(s))]].forEach(function (p) { ro.appendChild(el('dt', { text: p[0] })); ro.appendChild(el('dd', { text: p[1] })); });
-    drawRig(); renderGraphs();
+    resetRig(); renderGraphs();
   }
   function bind(id, key, num) { $(id).addEventListener('input', function (e) { S[key] = num ? +e.target.value : e.target.checked; if (key === 'x2' && S.timer === 'gates' && S.x2 <= S.x1 + 0.05) S.x2 = Math.round((S.x1 + 0.1) * 10) / 10; if (key === 'x1' && S.x1 >= S.x2) S.x1 = Math.round((S.x2 - 0.1) * 10) / 10; syncBench(); }); }
   bind('c-nh', 'nh', true); bind('c-k', 'k', true); bind('c-tilt', 'tilt', true); bind('c-x2', 'x2', true); bind('c-x1', 'x1', true); bind('c-const', 'constant', false); bind('c-hanger', 'hanger', false);
   function nudge(d) { S.tilt = Math.max(0, Math.min(20, Math.round((S.tilt + d) * 10) / 10)); $('c-tilt').value = S.tilt; syncBench(); }
   $('tilt-').addEventListener('click', function () { nudge(-0.1); }); $('tilt+').addEventListener('click', function () { nudge(0.1); });
   timerDraw = seg('seg-timer', TOPT, function () { return S.timer; }, function (v) { S.timer = v; if (v === 'gates' && S.x2 <= S.x1) S.x2 = Math.min(1.8, S.x1 + 0.7); $('c-x2').value = S.x2; syncBench(); });
-  $('b-run3').addEventListener('click', function () { run(3); }); $('b-run1').addEventListener('click', function () { run(1); });
-  $('b-watch').addEventListener('click', watch);
+  $('b-run3').addEventListener('click', function () { run(3); watch(true); }); $('b-run1').addEventListener('click', function () { run(1); watch(true); });
+  $('b-watch').addEventListener('click', function () { watch(); });
+  $('b-reset').addEventListener('click', resetRig);
+  seg('seg-speed', [[1, 'Real time'], [2, 'Half speed'], [4, 'Quarter speed']], function () { return speed; }, function (v) { speed = v; });
+  ['F', 'a', 'v'].forEach(function (k) { $('v-' + k).addEventListener('change', function (e) { vec[k] = e.target.checked; drawRig(); }); });
+  $('v-strobe').addEventListener('change', function (e) { vec.strobe = e.target.checked; drawRig(); });
   $('b-clear').addEventListener('click', function () { results.clear(); meta = {}; $('banner').textContent = ''; renderResults(); });
-  plotDraw = seg('seg-plot', Object.keys(PLOTS).map(function (k) { return [k, PLOTS[k].name]; }), function () { return plotType; }, function (v) { plotType = v; seriesSel = ''; renderPlot(); });
   $('sel-series').addEventListener('change', function (e) { seriesSel = e.target.value; renderPlot(); });
   $('chk-model').addEventListener('change', renderPlot);
   function dbind(id, key) { $(id).addEventListener('input', function (e) { D[key] = +e.target.value; renderDesign(); }); }
@@ -321,7 +376,7 @@
 
 
   /* ---------- Step 1: what are you testing? ---------- */
-  var timerDraw, plotDraw;
+  var timerDraw;
   var CTL = { nh: ['c-nh'], const: ['c-const'], k: ['c-k'], tilt: ['c-tilt', 'tilt-', 'tilt+'], hanger: ['c-hanger'], timer: ['seg-timer'], x2: ['c-x2'], x1: ['c-x1'] };
   function lock(ids) {
     lockedIds = ids;
@@ -346,17 +401,17 @@
   function opt(label, good, msg, lockIds, set) { return { label: label, good: good, msg: msg, lock: lockIds, apply: set ? function () { setS(set); } : null }; }
   function fresh(o) { return function () { setS(Object.assign({}, BASE, o || {})); }; }
   var EXPS = [
-    { id: 'force', title: 'Force and acceleration', sub: 'Does a depend on F?', plot: 'aF', change: 'force F (masses on the hanger)', measure: 'acceleration a, from the time t over a fixed distance s', keep: ['total mass m', 'distance s', 'track tilt', 'timer'],
+    { id: 'force', title: 'Force and acceleration', sub: 'Does a depend on F?', ax: [{ q: 'F' }, { q: 'a' }], dim: 'nh', ana: 'Plot a against F. Is it a straight line through the origin? What does the gradient tell you?', change: 'force F (masses on the hanger)', measure: 'acceleration a, from the time t over a fixed distance s', keep: ['total mass m', 'distance s', 'track tilt', 'timer'],
       think: 'Predict: if you double the pulling force and keep the total mass the same, what happens to the acceleration?', apply: fresh(),
       checks: [{ q: 'Should the total mass stay the same while you change F?', options: [
         opt('Yes', true, 'Yes. Moving masses from the trolley to the hanger changes F but not the total mass.', except(['nh']), { constant: true }),
         opt('No', false, 'Then the mass being accelerated changes as well as F, so you cannot tell which caused the change in a. Try it, then compare the graph with the constant-mass version.', except(['nh', 'const']), { constant: false })] }] },
-    { id: 'mass', title: 'Mass and acceleration', sub: 'Does a depend on m?', plot: 'aInvM', change: 'total mass m (extra blocks on the trolley)', measure: 'acceleration a, from the time t over a fixed distance s', keep: ['pulling force F', 'distance s', 'track tilt', 'timer'],
+    { id: 'mass', title: 'Mass and acceleration', sub: 'Does a depend on m?', ax: [{ q: 'm' }, { q: 'a' }], dim: 'k', ana: 'Plot a against m. Is it a straight line? Change the x axis until it is, then work out the force from the gradient.', change: 'total mass m (extra blocks on the trolley)', measure: 'acceleration a, from the time t over a fixed distance s', keep: ['pulling force F', 'distance s', 'track tilt', 'timer'],
       think: 'Predict: if you double the total mass and keep the force the same, what happens to the acceleration?', apply: fresh(),
       checks: [{ q: 'Should the pulling force stay the same while you change the mass?', options: [
         opt('Yes', true, 'Yes. Keep the hanger the same and add mass to the trolley.', except(['k'])),
         opt('No', false, 'Then F and m both change, so you cannot tell which one changed a.', except(['k', 'nh']))] }] },
-    { id: 'distance', title: 'Distance and time', sub: 'Does s = ½at² hold?', plot: 'sT2', change: 'distance s to the finish', measure: 'time t from release', keep: ['force F', 'total mass m', 'track tilt', 'timer'],
+    { id: 'distance', title: 'Distance and time', sub: 'Does s = ½at² hold?', ax: [{ q: 't' }, { q: 's' }], dim: 'x2', ana: 'Plot s against t. Is it a straight line? Change the x axis until it is, then use the gradient to find a.', change: 'distance s to the finish', measure: 'time t from release', keep: ['force F', 'total mass m', 'track tilt', 'timer'],
       think: 'Predict: what graph of s against t² should you get if the acceleration is constant?', apply: fresh({ timer: 'video' }),
       checks: [
         { q: 'Should the trolley start from rest every time?', options: [
@@ -365,26 +420,27 @@
         { q: 'Should F and m stay the same while you change s?', options: [
           opt('Yes', true, 'Yes. Then a is constant and only s and t change.', except(['x2', 'timer'])),
           opt('No', false, 'Then a changes between runs, and s against t² will not be a straight line.', except(['x2', 'timer', 'nh', 'k']))] }] },
-    { id: 'suvat', title: 'Equations of motion', sub: 'Do the SUVAT equations agree?', plot: 'v2', change: 'position of gate 2 (distance s between the gates)', measure: 'u, v and t from the light gates', keep: ['force F', 'total mass m', 'gate 1 position', 'track tilt'],
+    { id: 'suvat', title: 'Equations of motion', sub: 'Do the SUVAT equations agree?', ax: [{ q: 's' }, { q: 'v' }], dim: 'x2', ana: 'Plot v against s. Is it a straight line? Change the y axis until it is. What do the gradient and intercept give you?', change: 'position of gate 2 (distance s between the gates)', measure: 'u, v and t from the light gates', keep: ['force F', 'total mass m', 'gate 1 position', 'track tilt'],
       think: 'Predict: will a worked out from v = u + at, s = ut + ½at² and v² = u² + 2as give the same value?', apply: fresh({ timer: 'gates', x1: 0.3, x2: 1.2 }),
       checks: [{ q: 'Should gate 1 stay in the same place while you move gate 2?', options: [
         opt('Yes', true, 'Yes. u stays the same and only the distance between the gates changes.', except(['x2'])),
         opt('No', false, 'Then u and s both change together, which makes the graph harder to interpret.', except(['x2', 'x1']))] }] },
-    { id: 'ramp', title: 'Ramp', sub: 'Does mass matter on a slope?', plot: 'aSin', change: 'tilt of the track, then the mass', measure: 'acceleration a, from the time t over a fixed distance s', keep: ['distance s', 'timer', 'no hanger'],
+    { id: 'ramp', title: 'Ramp', sub: 'Does mass matter on a slope?', ax: [{ q: 'th' }, { q: 'a' }], dim: 'tilt', ana: 'Plot a against θ. Is it a straight line? Change the x axis until it is, then use the gradient to find g.', change: 'tilt of the track, then the mass', measure: 'acceleration a, from the time t over a fixed distance s', keep: ['distance s', 'timer', 'no hanger'],
       think: 'Predict: on a slope with no hanger, does a heavier trolley accelerate faster, slower or at the same rate?', apply: fresh({ hanger: false, tilt: 6 }),
       checks: [{ q: 'Should the hanger stay attached?', options: [
         opt('Yes', false, 'Then the hanger’s weight pulls as well, so a does not depend only on the slope. Try it and see.', except(['tilt', 'hanger', 'k', 'nh']), { hanger: true }),
         opt('No', true, 'Yes, remove it. With only the slope pulling, a = g sinθ and the mass cancels. Then try adding mass to the trolley.', except(['tilt', 'k']), { hanger: false })] }] },
-    { id: 'free', title: 'Free explore', sub: 'Change anything', plot: 'aF', change: 'anything', measure: 'time t (and u, v with the gates)', keep: ['nothing is locked'],
+    { id: 'free', title: 'Free explore', sub: 'Change anything', ax: [{ q: 'F' }, { q: 'a' }], dim: 'nh', ana: 'Choose any two quantities. Try changing an axis (1 ÷ it, squared, square root) to straighten a curve.', change: 'anything', measure: 'time t (and u, v with the gates)', keep: ['nothing is locked'],
       think: 'Try changing one thing at a time. What do you notice?', apply: fresh(), checks: [] }
   ];
   Sim.experiment({ mount: $('exp-card'), defs: EXPS, lock: lock,
     gate: function (on) { $('set-card').inert = on; $('set-card').classList.toggle('gated', on); },
-    onChoose: function (d) { setDesign(d.id); $('think-bench').textContent = d.think; plotType = d.plot; seriesSel = ''; plotDraw(); renderPlot(); } });
+    onChoose: function (d) { setDesign(d.id); $('think-bench').textContent = d.think; AX.set(d.ax[0], d.ax[1]); prefDim = d.dim; seriesSel = ''; $('a-think').textContent = d.ana; renderPlot(); } });
 
   /* example data: a against F with the total mass constant, flat track (friction not compensated), video timing */
   [2, 4, 6, 8, 10].forEach(function (n) { S.nh = n; S.timer = 'video'; run(3); });
   S.nh = 5; S.timer = 'video';
+  $('a-think').textContent = 'Choose an experiment on the Bench tab. Then choose the axes that let you analyse your readings.';
   $('banner').textContent = 'Example data is loaded (a against F, flat track). Press Clear data to start your own.';
   syncBench(); renderResults();
   Sim.tabs(document.querySelector('.tabs'), { onChange: function (n) { if (n === 'graphs') renderGraphs(); } });
