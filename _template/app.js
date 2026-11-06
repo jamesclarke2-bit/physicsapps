@@ -146,7 +146,7 @@
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduce) $('b-swing').disabled = true;
   $('b-swing').addEventListener('click', function () {
-    S.swing = !S.swing; this.setAttribute('aria-pressed', S.swing); lastT = 0; phase = 0;
+    S.swing = !S.swing; this.setAttribute('aria-pressed', String(S.swing)); lastT = 0; phase = 0;
     if (S.swing) raf = requestAnimationFrame(tick); else { cancelAnimationFrame(raf); drawRig(); }
   });
 

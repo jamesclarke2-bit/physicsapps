@@ -33,3 +33,9 @@ These come from James's own teaching. They override defaults. If a build seems t
 
 ## Language
 - UK English. No em dashes. Short sentences. Say "terminal velocity (TV)" and "air resistance"; students have covered skydiving.
+
+## Uncertainty in the models
+- Every uncertainty source in a model is a **fixed amount** (a number of seconds, millimetres or degrees), never a percentage of the reading. A bigger measurement (longer time, longer distance, bigger angle) then has a smaller percentage uncertainty. Teach this: longer measurements are a good way to reduce percentage uncertainty.
+- Angles come with a reading uncertainty too (protractor, half of 1 degree), so sin(theta) has a bigger percentage uncertainty at a small angle. Show it as error bars on the x axis.
+- "Improve the design" must be rewritten for each experiment: only the controls that matter for that investigation, with checks that explain the worst case.
+- Crossed-out readings must look different (strike-through, dashed) and drop out of the mean.

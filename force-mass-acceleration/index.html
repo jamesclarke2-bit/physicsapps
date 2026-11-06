@@ -107,17 +107,23 @@ select.series{max-width:100%;font:inherit;padding:6px 8px;border-radius:8px;bord
 
   <!-- DESIGN -->
   <section id="p-design" role="tabpanel" aria-labelledby="t-design" hidden>
-    <div class="think"><b>Think</b><span>Find a design that meets all the checks. What limits each choice?</span></div>
+    <p class="empty" id="d-none">Choose an experiment on the Bench tab first. The design checks depend on what you are testing.</p>
+    <div id="d-body" hidden>
+    <div class="think"><b>Think</b><span id="think-design"></span></div>
     <div class="two">
       <div class="card">
-        <div class="cardhead"><h2>Design</h2></div>
-        <div class="ctl"><label for="d-nh">Slotted masses on the hanger <b id="od-nh"></b></label><input id="d-nh" type="range" min="0" max="10" step="1" value="5"></div>
-        <div class="ctl"><label for="d-tilt">Tilt of the track <b id="od-tilt"></b></label><input id="d-tilt" type="range" min="0" max="3" step="0.05" value="0"></div>
-        <div class="ctl"><span class="lab">Timer</span><div class="seg" id="dseg-timer" role="group" aria-label="Timer"></div></div>
-        <div class="ctl"><label for="d-x2">Distance to finish <b id="od-x2"></b></label><input id="d-x2" type="range" min="0.4" max="1.8" step="0.1" value="1"></div>
-        <div class="ctl"><label for="d-tgt">Target: % uncertainty in a at most <b id="od-tgt"></b></label><input id="d-tgt" type="range" min="1" max="10" step="0.5" value="5"></div>
+        <div class="cardhead"><h2 id="d-head">Design</h2></div>
+        <p class="fine" id="d-note"></p>
+        <div class="ctl" data-d="nh"><label for="d-nh"><span id="l-dnh">Slotted masses on the hanger</span> <b id="od-nh"></b></label><input id="d-nh" type="range" min="0" max="10" step="1" value="5"></div>
+        <div class="ctl" data-d="k"><label for="d-k"><span id="l-dk">Extra mass on the trolley</span> <b id="od-k"></b></label><input id="d-k" type="range" min="0" max="5" step="1" value="0"></div>
+        <div class="ctl" data-d="tilt"><label for="d-tilt"><span id="l-dtilt">Tilt of the track</span> <b id="od-tilt"></b></label><input id="d-tilt" type="range" min="0" max="3" step="0.05" value="0"></div>
+        <div class="ctl" data-d="timer"><span class="lab">Timer</span><div class="seg" id="dseg-timer" role="group" aria-label="Timer"></div></div>
+        <div class="ctl" data-d="x1"><label for="d-x1">Gate 1 position <b id="od-x1"></b></label><input id="d-x1" type="range" min="0.1" max="1.0" step="0.1" value="0.3"></div>
+        <div class="ctl" data-d="x2"><label for="d-x2"><span id="l-dx2">Distance to finish</span> <b id="od-x2"></b></label><input id="d-x2" type="range" min="0.4" max="1.8" step="0.1" value="1"></div>
+        <div class="ctl" data-d="tgt"><label for="d-tgt">Target: % uncertainty in a at most <b id="od-tgt"></b></label><input id="d-tgt" type="range" min="1" max="10" step="0.5" value="5"></div>
       </div>
       <div class="card"><div class="cardhead"><h2>Checks</h2></div><div id="d-out"></div></div>
+    </div>
     </div>
   </section>
 

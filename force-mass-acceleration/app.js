@@ -4,7 +4,7 @@
   var M = window.ForceModel, el = Sim.el, fmt = Sim.fmt, A = Sim.svgel;
   var $ = function (id) { return document.getElementById(id); };
   var S = { nh: 5, k: 0, constant: true, tilt: 0, hanger: true, timer: 'video', x2: 1.0, x1: 0.3 };
-  var D = { nh: 5, k: 0, constant: true, tilt: 0, hanger: true, timer: 'video', x2: 1.0, x1: 0.3, tgt: 5 };
+  var D = { nh: 5, k: 0, constant: true, tilt: 0, hanger: true, timer: 'video', x2: 1.0, x1: 0.3, tgt: 5 }, DES = null;
   var lockedIds = [], rand = Sim.rng(33), meta = {};
   var results = new Sim.Results({ res: 0.001, dp: 2, rowHead: 'Set-up', empty: 'No readings yet. Press Time 3 runs.' });
   var TOPT = Object.keys(M.TIMERS).map(function (k) { return [k, M.TIMERS[k].short]; });
@@ -116,7 +116,7 @@
   function sourcesNode(o, st) {
     var t = st.mean, src = M.sources(t, o.timer);
     return [el('p', { text: 'Where could the spread in the times come from?' }),
-      Sim.steps([['A  Timer / reaction', '± ' + fmt(src.timer, 3) + ' s'], ['B  Releasing the trolley and judging the finish', '± ' + fmt(src.release, 3) + ' s (' + fmt(M.TIMERS[o.timer].rel * 100, 0) + '% of t)'], ['C  Timer resolution', '± ' + fmt(src.resolution, 4) + ' s']]),
+      Sim.steps([['A  Timer / reaction', '± ' + fmt(src.timer, 3) + ' s'], ['B  Releasing the trolley and judging the finish', '± ' + fmt(src.release, 3) + ' s (the same for any distance)'], ['C  Timer resolution', '± ' + fmt(src.resolution, 4) + ' s']]),
       el('p', { text: 'As a first approximation, take the biggest source. The half range of your readings shows it. Repeating does not shrink it, and it cannot show up a fault in every reading, such as friction.' })];
   }
   function popAccel(o, c) {
@@ -211,7 +211,7 @@
       var c = calc(o), s = c.s, x, y, ex = 0, ey = 0;
       if (plotType === 'aF') { x = M.force(s); y = c.a; ey = c.da; xl = 'F / N'; yl = 'a / m s⁻²'; }
       else if (plotType === 'aInvM') { x = 1 / M.totalMass(s); y = c.a; ey = c.da; xl = '1/m / kg⁻¹'; yl = 'a / m s⁻²'; }
-      else if (plotType === 'aSin') { x = Math.sin(o.tilt * Math.PI / 180); y = c.a; ey = c.da; xl = 'sinθ'; yl = 'a / m s⁻²'; }
+      else if (plotType === 'aSin') { x = Math.sin(o.tilt * Math.PI / 180); y = c.a; ex = M.sinTiltUnc(o.tilt); ey = c.da; xl = 'sinθ'; yl = 'a / m s⁻²'; }
       else if (plotType === 'sT2') { x = c.st.mean * c.st.mean; ex = 2 * c.st.mean * c.st.half; y = o.x2; xl = 't² / s²'; yl = 's / m'; }
       else { x = c.d; y = c.vs.mean * c.vs.mean - c.us.mean * c.us.mean; ey = 2 * c.vs.mean * c.vs.half + 2 * c.us.mean * c.us.half; xl = 's / m'; yl = 'v² − u² / m² s⁻²'; }
       pts.push({ x: x, y: y, ex: ex, ey: ey }); xs.push(x); ys.push(y);
@@ -227,7 +227,7 @@
       if (plotType === 'aF') tbl.appendChild(el('tr', null, el('td', { text: '1 ÷ gradient' }), el('td', { text: fmt(1 / f.slope, 3) + ' kg' })));
       if (plotType === 'aInvM') tbl.appendChild(el('tr', null, el('td', { text: 'Gradient = force' }), el('td', { text: fmt(f.slope, 2) + ' N' })));
       if (plotType === 'sT2') tbl.appendChild(el('tr', null, el('td', { text: 'a = 2 × gradient' }), el('td', { text: fmt(2 * f.slope, 3) + ' m s⁻²' })));
-      if (plotType === 'aSin') tbl.appendChild(el('tr', null, el('td', { text: 'g = gradient' }), el('td', { text: fmt(f.slope, 2) + ' m s⁻²' })));
+      if (plotType === 'aSin') { tbl.appendChild(el('tr', null, el('td', { text: 'g = gradient' }), el('td', { text: fmt(f.slope, 2) + ' m s⁻²' }))); tbl.appendChild(el('tr', null, el('td', { text: '% uncertainty in sinθ, smallest tilt' }), el('td', { text: fmt(M.sinTiltPct(Math.min.apply(null, rows.map(function (r) { return r.tilt; }))), 0) + '%' }))); }
       if (plotType === 'v2') tbl.appendChild(el('tr', null, el('td', { text: 'a = gradient ÷ 2' }), el('td', { text: fmt(f.slope / 2, 3) + ' m s⁻²' })));
       out.appendChild(tbl);
       var q = { aF: 'What should the gradient equal? What is the mass of the trolley and hanger? If the line does not pass through the origin, what could cause it?', aInvM: 'What should the gradient equal? What does a non-zero intercept tell you about every reading?', sT2: 'Does the line pass through the origin? What does a straight line show about the acceleration?', aSin: 'What should the gradient equal? Does an intercept below zero suggest friction? Repeat with extra mass: does the line change?', v2: 'Compare this value of a with the one from your time readings. Do they agree within the uncertainty?' }[plotType];
@@ -236,28 +236,67 @@
     Sim.plot($('plot'), { title: P.name, xlabel: xl, ylabel: yl, zero: true, points: pts, lines: lines });
   }
 
-  /* ---------- design ---------- */
+  /* ---------- design (depends on the experiment chosen) ---------- */
+  var DESIGNS = {
+    force: { show: ['nh', 'tilt', 'timer', 'x2', 'tgt'], labels: { nh: 'Force: slotted masses on the hanger' }, set: {},
+      think: 'Which force is hardest to measure well: the smallest or the largest? Check both.',
+      note: 'You will use several forces. The biggest force gives the shortest time, so the biggest % uncertainty. The smallest force gives the biggest friction effect. Slide the force and watch both.' },
+    mass: { show: ['nh', 'k', 'tilt', 'timer', 'x2', 'tgt'], labels: { nh: 'Force kept the same: masses on the hanger', k: 'Extra mass on the trolley' }, set: { nh: 4 },
+      think: 'The force stays the same. Which trolley is hardest to measure well: the lightest or the heaviest?',
+      note: 'The heaviest trolley accelerates least, so friction is a bigger fraction of the force. The lightest accelerates most, so its time is shortest. Check both ends.' },
+    distance: { show: ['nh', 'tilt', 'timer', 'x2', 'tgt'], labels: { nh: 'Force kept the same: masses on the hanger', x2: 'Shortest distance you will use' }, set: { x2: 0.4 },
+      think: 'Each timer error is a fixed number of seconds. What does that do to the percentage uncertainty as the distance gets longer?',
+      note: 'The timer errors are fixed amounts of time, so a longer time (a longer distance) makes them a smaller percentage. The shortest distance is the hardest one to do well.' },
+    suvat: { show: ['nh', 'tilt', 'x1', 'x2', 'tgt'], labels: { nh: 'Force kept the same: masses on the hanger', x2: 'Gate 2 position' }, set: { timer: 'gates', x1: 0.3, x2: 0.6 },
+      think: 'The gates measure u and v from the card. What happens to v² − u² compared with its uncertainty as the gates move further apart?',
+      note: 'The card width is known to about 1%, so each speed has about 1% uncertainty. A bigger gap between the gates makes v² − u² bigger compared with that.' },
+    ramp: { show: ['k', 'tilt', 'timer', 'x2', 'tgt'], labels: { k: 'Extra mass on the trolley', tilt: 'Smallest tilt you will use' }, set: { hanger: false, tilt: 3 }, tilt: { min: 1, max: 15, step: 0.5 },
+      think: 'The protractor reads to ±0.5°. What does that do to the percentage uncertainty in sinθ at a small tilt and at a large tilt?',
+      note: 'A fixed ±0.5° is a bigger percentage of a small angle. Friction is also a bigger fraction of a small slope force. Check the smallest tilt you plan to use.' },
+    free: { show: ['nh', 'k', 'tilt', 'timer', 'x1', 'x2', 'tgt'], labels: {}, set: {}, think: 'Find a design that meets all the checks. What limits each choice?', note: 'Every control is available.' }
+  };
+  var DBASE = { nh: 5, k: 0, constant: true, tilt: 0, hanger: true, timer: 'video', x2: 1.0, x1: 0.3 };
+  function setDesign(id) {
+    DES = DESIGNS[id]; if (!DES) return;
+    Object.assign(D, DBASE, DES.set);
+    var tl = DES.tilt || { min: 0, max: 3, step: 0.05 };
+    $('d-tilt').min = tl.min; $('d-tilt').max = tl.max; $('d-tilt').step = tl.step;
+    ['nh', 'k', 'tilt', 'x1', 'x2'].forEach(function (k) { $('d-' + k).value = D[k]; });
+    $('l-dnh').textContent = DES.labels.nh || 'Slotted masses on the hanger'; $('l-dk').textContent = DES.labels.k || 'Extra mass on the trolley';
+    $('l-dtilt').textContent = DES.labels.tilt || 'Tilt of the track'; $('l-dx2').textContent = DES.labels.x2 || 'Distance to finish';
+    [].forEach.call(document.querySelectorAll('[data-d]'), function (c) { c.hidden = DES.show.indexOf(c.getAttribute('data-d')) < 0; });
+    $('think-design').textContent = DES.think; $('d-note').textContent = DES.note;
+    $('d-none').hidden = true; $('d-body').hidden = false;
+    dTimerDraw(); renderDesign();
+  }
   function renderDesign() {
-    $('od-nh').textContent = D.nh; $('od-tilt').textContent = fmt(D.tilt, 2) + '°'; $('od-x2').textContent = fmt(D.x2, 1) + ' m'; $('od-tgt').textContent = fmt(D.tgt, 1) + '%';
+    if (!DES) return;
+    $('od-nh').textContent = D.nh; $('od-k').textContent = fmt(0.1 * D.k, 1) + ' kg'; $('od-tilt').textContent = fmt(D.tilt, D.tilt % 1 ? 2 : 1) + '°'; $('od-x1').textContent = fmt(D.x1, 1) + ' m'; $('od-x2').textContent = fmt(D.x2, 1) + ' m'; $('od-tgt').textContent = fmt(D.tgt, 1) + '%';
+    if (D.timer === 'gates' && D.x2 <= D.x1 + 0.05) { D.x2 = Math.round((D.x1 + 0.1) * 10) / 10; $('d-x2').value = D.x2; $('od-x2').textContent = fmt(D.x2, 1) + ' m'; }
     var s = setup(D), out = $('d-out'); out.textContent = '';
-    if (!M.moves(s)) { out.appendChild(el('p', { class: 'empty', text: 'The trolley does not move with these settings. Add mass to the hanger or tilt the track.' })); return; }
-    var a = M.accel(s), x1 = D.timer === 'gates' ? 0.3 : 0, u = M.accelUncPct(s, x1, D.x2, D.timer), fr = M.frictionEffectPct(s);
+    if (!M.moves(s)) { out.appendChild(el('p', { class: 'empty', text: 'The trolley does not move with these settings. ' + (D.hanger ? 'Add mass to the hanger or tilt the track.' : 'Tilt the track more.') })); return; }
+    var a = M.accel(s), x1 = D.timer === 'gates' ? D.x1 : 0, u = M.accelUncPct(s, x1, D.x2, D.timer), fr = M.frictionEffectPct(s);
     var t = D.timer === 'gates' ? M.gateRun(a, x1, D.x2).t : M.timeToDistance(a, D.x2), src = M.sources(t, D.timer);
     function row(ok, text, info) {
       return el('li', null, el('span', { class: ok ? 'ok' : 'no', role: 'img', 'aria-label': ok ? 'passed' : 'not passed', text: ok ? '✓' : '✗' }), el('span', { html: text }),
         info ? el('button', { class: 'info', type: 'button', 'aria-label': 'Explain this check', text: 'i', onclick: function () { Sim.pop.open(info[0], info[1]); } }) : el('span'));
     }
-    out.appendChild(el('ul', { class: 'checks' },
-      row(u <= D.tgt, '% uncertainty in a: <b>' + fmt(u, 1) + '%</b> (target &le; ' + fmt(D.tgt, 1) + '%)', ['Uncertainty in a', [Sim.steps(D.timer === 'gates' ? [['Gate speeds have an uncertainty of about 1% each', 'so v² − u² has about 2% plus a bit more'], ['Percentage uncertainty in a', fmt(u, 1) + '%']] : [['Biggest single source of error in the time', fmt(M.biggest(t, D.timer), 3) + ' s'], ['As a percentage of t = ' + fmt(t, 2) + ' s', fmt(100 * M.biggest(t, D.timer) / t, 1) + '%'], ['a depends on t², so double it', fmt(u, 1) + '%']])]]),
-      row(M.longEnough(s, x1, D.x2, D.timer), 'Timing lasts at least 10 &times; the timer uncertainty: ' + fmt(t, 2) + ' s vs ' + fmt(10 * M.TIMERS[D.timer].sig, 2) + ' s', ['Long enough?', ['A timing that is not much longer than the timer uncertainty gives a large percentage uncertainty. 10 times is a quick rule of thumb. A longer distance or a slower trolley gives a longer time.']]),
-      row(fr <= M.FRICTION_PCT, 'Friction changes a by <b>' + fmt(fr, 1) + '%</b> (target &le; ' + M.FRICTION_PCT + '%)', ['Friction', ['Friction is a systematic error: it is the same in every reading, so repeating cannot remove it, and it shows up as an intercept on your graph. Tilting the track slightly lets the trolley’s weight component cancel the friction.']])));
+    var ul = el('ul', { class: 'checks' });
+    ul.appendChild(row(u <= D.tgt, '% uncertainty in a: <b>' + fmt(u, 1) + '%</b> (target &le; ' + fmt(D.tgt, 1) + '%)', ['Uncertainty in a', [Sim.steps(D.timer === 'gates' ? [['Each gate speed has about 1% uncertainty (card width)', 'so v² − u² has about 2% plus a bit more'], ['Percentage uncertainty in a', fmt(u, 1) + '%']] : [['Biggest single source of error in the time', fmt(M.biggest(t, D.timer), 3) + ' s'], ['As a percentage of t = ' + fmt(t, 2) + ' s', fmt(100 * M.biggest(t, D.timer) / t, 1) + '%'], ['a depends on t², so double it', fmt(u, 1) + '%']]), el('p', { class: 'fine', text: 'The error is a fixed number of seconds, so a longer time makes it a smaller percentage.' })]]));
+    if (DES === DESIGNS.ramp || DES === DESIGNS.free && !D.hanger) {
+      var sp = M.sinTiltPct(D.tilt);
+      ul.appendChild(row(sp <= D.tgt, '% uncertainty in sinθ: <b>' + fmt(sp, 1) + '%</b> (target &le; ' + fmt(D.tgt, 1) + '%)', ['Uncertainty in sinθ', [Sim.steps([['Protractor, 1° divisions: half the smallest division', '± ' + M.TILT_SIG + '°'], ['Uncertainty in sinθ is about cosθ × Δθ (in radians)', '± ' + fmt(M.sinTiltUnc(D.tilt), 4)], ['As a percentage of sinθ = ' + fmt(M.sinTilt(D.tilt), 3), fmt(sp, 1) + '%']]), el('p', { class: 'fine', text: 'The reading error is the same size at every angle, so a bigger angle makes it a smaller percentage.' })]]));
+    }
+    ul.appendChild(row(M.longEnough(s, x1, D.x2, D.timer), 'Timing lasts at least 10 &times; the timer uncertainty: ' + fmt(t, 2) + ' s vs ' + fmt(10 * M.TIMERS[D.timer].sig, 2) + ' s', ['Long enough?', ['A timing that is not much longer than the timer uncertainty gives a large percentage uncertainty. 10 times is a quick rule of thumb. A longer distance or a slower trolley gives a longer time.']]));
+    ul.appendChild(row(fr <= M.FRICTION_PCT, 'Friction changes a by <b>' + fmt(fr, 1) + '%</b> (target &le; ' + M.FRICTION_PCT + '%)', ['Friction', ['Friction is a systematic error: it is the same in every reading, so repeating cannot remove it, and it shows up as an intercept on your graph. ' + (D.hanger ? 'Tilting the track slightly lets the trolley’s weight component cancel the friction.' : 'On a slope it takes a bigger share of the slope force when the angle is small.')]]));
+    out.appendChild(ul);
     out.appendChild(el('p', { class: 'live', html: 'Acceleration ' + fmt(a, 2) + ' m s<sup>-2</sup>. Sources for the time of ' + fmt(t, 2) + ' s: timer ±' + fmt(src.timer, 3) + ' s, release &amp; judging ±' + fmt(src.release, 3) + ' s, resolution ±' + fmt(src.resolution, 4) + ' s. The biggest is used.' }));
   }
 
   /* ---------- wiring ---------- */
   function syncBench() {
     var s = setup(S);
-    $('o-nh').textContent = S.nh; $('o-k').textContent = fmt(0.1 * S.k, 1) + ' kg'; $('o-tilt').textContent = fmt(S.tilt, 1) + '°';
+    $('o-nh').textContent = S.nh; $('o-k').textContent = fmt(0.1 * S.k, 1) + ' kg'; $('o-tilt').textContent = fmt(S.tilt, 1) + '° ± ' + M.TILT_SIG + '°';
     $('l-x2').textContent = S.timer === 'gates' ? 'Second gate position' : 'Distance to finish, s'; $('o-x2').textContent = fmt(S.x2, 1) + ' m';
     $('x1box').hidden = S.timer !== 'gates'; $('o-x1').textContent = fmt(S.x1, 1) + ' m';
     $('c-nh').disabled = !S.hanger || lockedIds.indexOf('nh') >= 0; $('c-const').disabled = !S.hanger || lockedIds.indexOf('const') >= 0;
@@ -277,8 +316,8 @@
   $('sel-series').addEventListener('change', function (e) { seriesSel = e.target.value; renderPlot(); });
   $('chk-model').addEventListener('change', renderPlot);
   function dbind(id, key) { $(id).addEventListener('input', function (e) { D[key] = +e.target.value; renderDesign(); }); }
-  dbind('d-nh', 'nh'); dbind('d-tilt', 'tilt'); dbind('d-x2', 'x2'); dbind('d-tgt', 'tgt');
-  seg('dseg-timer', TOPT, function () { return D.timer; }, function (v) { D.timer = v; renderDesign(); });
+  dbind('d-nh', 'nh'); dbind('d-k', 'k'); dbind('d-tilt', 'tilt'); dbind('d-x1', 'x1'); dbind('d-x2', 'x2'); dbind('d-tgt', 'tgt');
+  var dTimerDraw = seg('dseg-timer', TOPT, function () { return D.timer; }, function (v) { D.timer = v; renderDesign(); });
 
 
   /* ---------- Step 1: what are you testing? ---------- */
@@ -341,12 +380,12 @@
   ];
   Sim.experiment({ mount: $('exp-card'), defs: EXPS, lock: lock,
     gate: function (on) { $('set-card').inert = on; $('set-card').classList.toggle('gated', on); },
-    onChoose: function (d) { $('think-bench').textContent = d.think; plotType = d.plot; seriesSel = ''; plotDraw(); renderPlot(); } });
+    onChoose: function (d) { setDesign(d.id); $('think-bench').textContent = d.think; plotType = d.plot; seriesSel = ''; plotDraw(); renderPlot(); } });
 
   /* example data: a against F with the total mass constant, flat track (friction not compensated), video timing */
   [2, 4, 6, 8, 10].forEach(function (n) { S.nh = n; S.timer = 'video'; run(3); });
   S.nh = 5; S.timer = 'video';
   $('banner').textContent = 'Example data is loaded (a against F, flat track). Press Clear data to start your own.';
-  syncBench(); renderResults(); renderDesign();
+  syncBench(); renderResults();
   Sim.tabs(document.querySelector('.tabs'), { onChange: function (n) { if (n === 'graphs') renderGraphs(); } });
 })();

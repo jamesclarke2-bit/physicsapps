@@ -28,7 +28,7 @@ A 2.0 m track with a trolley pulled by a hanger and slotted masses over a pulley
 - Pulley inertia: gradient about 0.6% low (small; extension question).
 
 ## Uncertainty (teaching rules)
-- Each timing has random error with standard deviation equal to the biggest single source: timer (stopwatch 0.07 s, video 0.01 s, gates 0.003 s), release/judging (2% of the time for hand and video; none for gates), or resolution/2.
+- Each timing has random error with standard deviation equal to the biggest single source: timer (stopwatch 0.07 s, video 0.01 s, gates 0.003 s), release/judging (a fixed 0.03 s by hand, 0.02 s for video, none for gates), or resolution/2.
 - Light-gate speeds come from card time t = 0.100 m / v; error is the bigger of 0.001 s and 1% of the card time.
 - Uncertainty in a mean = half the range. a = 2s/t^2 so percentage uncertainty in a is twice that in t. For (v^2 - u^2) add absolute uncertainties.
 - Anomalies: 4% of runs (string snags, trolley sticks), plus a stopwatch fumble 6%.

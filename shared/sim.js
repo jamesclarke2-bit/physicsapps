@@ -52,6 +52,7 @@
     for (var k in (attrs || {})) {
       if (k === 'ns') continue;
       var val = attrs[k];
+      if (k.slice(0, 5) === 'aria-' && typeof val === 'boolean') { n.setAttribute(k, String(val)); continue; }
       if (val === null || val === undefined || val === false) continue;
       if (k === 'class') n.setAttribute('class', val);
       else if (k === 'text') n.textContent = val;

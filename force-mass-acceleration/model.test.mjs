@@ -67,3 +67,23 @@ test('gate readings: mean u and v close to truth, noise small', () => {
   for (let i = 0; i < n; i++) { const m = M.measureGates(s, 0.3, 1.2, r); su += m.u; sv += m.v; }
   near(su / n, g.u, g.u * 0.03); near(sv / n, g.v, g.v * 0.03);
 });
+
+test('longer timings have a smaller percentage uncertainty (all timers)', () => {
+  const s = S({ nh: 5 });
+  for (const timer of ['stopwatch', 'video', 'gates']) {
+    let prev = Infinity;
+    for (const x2 of [0.6, 0.8, 1.0, 1.4, 1.8]) { const u = M.accelUncPct(s, 0.3, x2, timer); assert.ok(u < prev, timer + ' ' + x2 + ': ' + u + ' vs ' + prev); prev = u; }
+  }
+});
+
+test('a bigger tilt has a smaller percentage uncertainty in sin(theta)', () => {
+  let prev = Infinity;
+  for (const d of [1, 2, 4, 6, 10, 15]) { const p = M.sinTiltPct(d); assert.ok(p < prev); prev = p; }
+  near(M.sinTiltPct(6), 100 * Math.cos(6 * Math.PI / 180) * (0.5 * Math.PI / 180) / Math.sin(6 * Math.PI / 180), 1e-9);
+});
+
+test('with no hanger the ideal acceleration is g sin(theta)', () => {
+  const s = S({ hanger: false, tilt: 6 });
+  near(M.idealAccel(s), M.G * Math.sin(6 * Math.PI / 180), 1e-9);
+  assert.ok(M.moves(s) && M.frictionEffectPct(s) > 0 && M.frictionEffectPct(s) < 20);
+});
