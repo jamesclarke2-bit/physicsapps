@@ -312,9 +312,8 @@
 
 
   /* ---------- Part E: Geiger counter bench (experiment and calculation together) ---------- */
-  var B17 = { bg: 30, net0: 0, unit: 'd', src: { iso: 'custom', T: 2, unit: 'd', name: 'Source Z' }, days: [0], seconds: 60, secondsOptions: [30, 60, 120, 300] };
-  var B19 = { bg: 50, net0: 1600, unit: 'd', src: { iso: 'custom', T: 2, unit: 'd', name: 'Source Z' }, days: [0, 2, 4, 6, 8], seconds: 60, secondsOptions: [30, 60, 120, 300] };
-  var B17b = Object.assign({}, B17, { net0: 800 });
+  var B17 = { bg: 30, unit: 'd', sources: ['Z'], days: [0], distances: [5], absorbers: ['none'], seconds: 60, secondsOptions: [30, 60, 120, 300], view: 'reading' };
+  var B19 = { bg: 50, unit: 'd', sources: ['Z'], days: [0, 2, 4, 6, 8], distances: [5], absorbers: ['none'], seconds: 60, secondsOptions: [30, 60, 120, 300], view: 'decay' };
   function readingsOf(S, ids) { var v = ids.map(function (id) { return S.get(id); }).filter(function (x) { return isFinite(x); }); return v.length >= 3 ? v : []; }
   function meanOf(S, ids) { var v = readingsOf(S, ids); return v.length ? M.mean(v) : NaN; }
   function hrOf(S, ids) { var v = readingsOf(S, ids); return v.length ? M.halfRange(v) : NaN; }
@@ -383,10 +382,10 @@
         N('a3', 'Background reading 3 (counts/min)', null, null, { marks: 0, free: true, grp: 'f' }),
         N('a4', 'Mean background count rate (counts/min)', null, null, { tol: 0.01, note: 'about ' + B19.bg + ' counts/min', ecf: function (S) { return meanOf(S, ['a1', 'a2', 'a3']); } })] },
       { id: 'b', type: 'num', text: 'The source.', marks: 6, inputs: [
-        N('b1', 'Reading with the source, day 0 (counts/min)', null, null, { marks: 0, free: true, grp: 'f', note: 'about ' + (B19.bg + B19.net0) + ' counts/min' }),
-        N('b2', 'Reading with the source, day 8 (counts/min)', null, null, { marks: 0, free: true, grp: 'f', note: 'about ' + Math.round(B19.bg + B19.net0 * M.fraction(8, 2)) + ' counts/min' }),
-        N('b3', 'Net count rate, day 0 (counts/min)', null, null, { tol: 0.015, grp: 'T', note: 'about ' + B19.net0 + ' counts/min', ecf: function (S) { return S.get('b1') - S.get('a4'); } }),
-        N('b4', 'Net count rate, day 8 (counts/min)', null, null, { tol: 0.015, grp: 'T', note: 'about ' + Math.round(B19.net0 * M.fraction(8, 2)) + ' counts/min', ecf: function (S) { return S.get('b2') - S.get('a4'); } }),
+        N('b1', 'Reading with the source, day 0 (counts/min)', null, null, { marks: 0, free: true, grp: 'f', note: 'about ' + (B19.bg + 1600) + ' counts/min' }),
+        N('b2', 'Reading with the source, day 8 (counts/min)', null, null, { marks: 0, free: true, grp: 'f', note: 'about ' + Math.round(B19.bg + 1600 * M.fraction(8, 2)) + ' counts/min' }),
+        N('b3', 'Net count rate, day 0 (counts/min)', null, null, { tol: 0.015, grp: 'T', note: 'about 1600 counts/min', ecf: function (S) { return S.get('b1') - S.get('a4'); } }),
+        N('b4', 'Net count rate, day 8 (counts/min)', null, null, { tol: 0.015, grp: 'T', note: 'about ' + Math.round(1600 * M.fraction(8, 2)) + ' counts/min', ecf: function (S) { return S.get('b2') - S.get('a4'); } }),
         N('b5', 'Number of half-lives in 8 days', null, null, { tol: 0.04, grp: 'T', note: 'about 4', ecf: function (S) { return Math.log(S.get('b3') / S.get('b4')) / Math.LN2; } }),
         N('b6', 'Half-life of source Z', null, 'd', { units: ['h', 'd'], tol: 0.03, grp: 'T', note: 'about 2 days', ecf: function (S) { return 8 / S.get('b5'); } }),
         N('b7', 'Half-life you would get if you forgot to subtract the background', null, 'd', { units: ['h', 'd'], tol: 0.03, grp: 'R', note: 'about 2.3 days (too long)', ecf: function (S) { return 8 / (Math.log(S.get('b1') / S.get('b2')) / Math.LN2); } })],
@@ -402,6 +401,70 @@
         P('the same error is in every reading, so repeating does not remove it (systematic error)', [[/(repeat|again|more readings|more counts).{0,60}(not|n.t|never|cannot).{0,40}(remove|fix|solve|correct|reduce|get rid|help|cure)|systematic|same (error|mistake|amount)|every (reading|count)/]]),
         P('subtract the mean background from each reading to get the net count rate', [[/subtract|take away|take off|minus|remove the background|net/]])],
         { model: 'Background radiation is always present, so every reading includes it. Forgetting it is a systematic error: the same amount is wrong in every reading, so repeating the readings does not remove it. Subtract the mean background from each reading to get the net count rate from the source.' })] });
+
+  var Z0 = 1600;
+  function net(t, T) { return Z0 * M.fraction(t, T); }
+  var B20 = { bg: 40, unit: 'd', sources: ['Z'], days: [0, 2, 4, 6, 8, 10], distances: [5], absorbers: ['none'], seconds: 60, secondsOptions: [60, 120, 300], view: 'decay' };
+  var D20 = [0, 2, 4, 6, 8, 10];
+  Q.push({ id: 'q20', part: 'E', title: 'A whole decay curve, with and without background',
+    intro: 'Source Z is a sealed beta source. In the simulator, measure the background first (source in its box). Then bring the source back and use "Reading every day" to take a 1-minute count each second day for 10 days. The graph shows the raw readings. The background does not decay, so the raw readings never fall below it. Tick "Show the net count rate" once you have measured the background to see the curve you should use.',
+    sim: { tab: 'bench', task: 'Take at least three background counts with the source in its box. Then press "Reading every day" with the source next to the tube. Compare the raw readings with the net count rate. Write the readings in counts per minute.', think: 'Predict first: will the raw readings ever reach zero? What will the net count rate do?',
+      bench: Object.assign({}, B20, { sourceIn: false }) },
+    hint: 'Net count rate = reading − mean background. Between day 0 and day 6, n = log₂(net at day 0 ÷ net at day 6). Half-life = 6 days ÷ n.',
+    parts: [
+      { id: 'a', type: 'num', text: 'Background.', marks: 1, inputs: [
+        N('a1', 'Background reading 1 (counts/min)', null, null, { marks: 0, free: true, grp: 'f' }), N('a2', 'Background reading 2 (counts/min)', null, null, { marks: 0, free: true, grp: 'f' }),
+        N('a3', 'Background reading 3 (counts/min)', null, null, { marks: 0, free: true, grp: 'f' }),
+        N('a4', 'Mean background count rate (counts/min)', null, null, { tol: 0.01, note: 'about ' + B20.bg + ' counts/min', ecf: function (S) { return meanOf(S, ['a1', 'a2', 'a3']); } })] },
+      { id: 'b', type: 'table', text: 'Enter each reading from the simulator, then work out the net count rate.', marks: 3, cellsPerMark: 2,
+        table: { rowHead: 'Day', cols: [{ head: 'Reading, R (counts/min)', kind: 'input', free: true }, { head: 'Net count rate (counts/min)', kind: 'input', ecfCol: true }],
+          rows: D20.map(function (t) { return { label: String(t), cells: [null, net(t, 2)] }; }) },
+        ecf: function (CS, row) { return CS.cell(row, 0) - CS.get('a4'); } },
+      { id: 'c', type: 'num', text: 'Half-life from day 0 and day 6.', marks: 4, inputs: [
+        N('c1', 'Number of half-lives between day 0 and day 6', 3, null, { abs: 0.2, grp: 'T', ecf: function (S) { return Math.log(S.cell('b', 0, 1) / S.cell('b', 3, 1)) / Math.LN2; } }),
+        N('c2', 'Half-life of source Z (days)', null, 'd', { units: ['h', 'd'], tol: 0.04, grp: 'T', note: 'about 2 days', ecf: function (S) { return 6 / S.get('c1'); } }),
+        N('c3', 'Half-life if you use the readings without subtracting the background (days)', null, 'd', { units: ['h', 'd'], tol: 0.04, grp: 'R', note: 'about 2.2 days (too long)', ecf: function (S) { return 6 / (Math.log(S.cell('b', 0, 0) / S.cell('b', 3, 0)) / Math.LN2); } }),
+        N('c4', 'Percentage by which this half-life is too long', null, '%', { tol: 0.1, grp: 'P', note: 'about 8%', ecf: function (S) { return 100 * (S.get('c3') - S.get('c2')) / S.get('c2'); } })] },
+      W('d', 'Describe the shape of the raw readings and of the net count rate, and explain the difference.', 2, [
+        P('the raw readings fall, then level off at the background level and never reach zero', [[/(level|flatten|plateau|flat|constant|stop|never|not (fall|drop|go)|can.t|cannot|won.t).{0,70}(background|zero|0\b|below)|(background|zero).{0,60}(level|flat|never|constant|stop)/]]),
+        P('the net count rate keeps halving towards zero because the background has been subtracted', [[/net|subtract|correct|take away|minus|taking off/, /zero|halv|half|exponential|keeps falling|continu|decay/]])],
+        { model: 'The raw readings fall, then level off at the background count rate because background does not decay, so they never reach zero. After subtracting the background, the net count rate keeps halving every half-life and falls towards zero.' })] });
+
+  var BD = 30, DIST = [5, 10, 20, 40];
+  Q.push({ id: 'q21', part: 'E', title: 'Distance from the source',
+    intro: 'A student moves a gamma source (source C in the simulator) away from the Geiger tube. The background count rate is ' + BD + ' counts/min. The readings are in the table.',
+    sim: { tab: 'bench', task: 'Choose Source C, put it next to the tube, and press "Reading at every distance". Compare with the table. Show the net count rate and look at the Distance graph.', think: 'Predict first: if you double the distance, will the count rate halve?',
+      bench: { bg: BD, unit: 'd', sources: ['C'], days: [0], distances: [2, 5, 10, 20, 40], absorbers: ['none'], seconds: 60, secondsOptions: [60, 120, 300], view: 'dist', sourceIn: false } },
+    hint: 'Net count rate = reading − background. Then multiply by the distance squared.',
+    parts: [
+      { id: 'a', type: 'table', text: 'Complete the table.', marks: 4, cellsPerMark: 2,
+        table: { rowHead: 'Distance, d (cm)', cols: [{ head: 'Reading, R (counts/min)', kind: 'given' }, { head: 'Net count rate (counts/min)', kind: 'input' }, { head: 'Net × d² (counts/min × cm²)', kind: 'input', ecfCol: true }],
+          rows: DIST.map(function (d) { var n = Z0 * Math.pow(5 / d, 2); return { label: String(d), cells: [n + BD, n, n * d * d] }; }) },
+        ecf: function (CS, row) { return CS.cell(row, 1) * DIST[row] * DIST[row]; } },
+      { id: 'b', type: 'num', text: 'Use your net count rates.', marks: 2, inputs: [
+        N('b1', 'Factor by which the net count rate falls when the distance doubles', 4, null, { abs: 0.2, ecf: function (S) { return S.cell('a', 0, 1) / S.cell('a', 1, 1); } }),
+        N('b2', 'Predicted net count rate at 80 cm (counts/min)', Z0 / 256, null, { tol: 0.05, ecf: function (S) { return S.cell('a', 3, 1) / 4; } })] },
+      W('c', 'Explain why you must subtract the background before you look for the pattern.', 2, [
+        P('the background is the same at every distance, so it is in every reading', [[/background.{0,60}(same|constant|always|every|each|all|doesn.t change|does not change|not affected|independent)|(same|always|every|each).{0,40}background/]]),
+        P('so the raw readings do not fall by a factor of 4 when the distance doubles; the net count rate does', [[/(not|n.t|wrong|doesn.t|does not).{0,60}(factor|fall|quarter|4|inverse|pattern|ratio|proportion)|(net|subtract|corrected|after subtract).{0,80}(quarter|factor of 4|4|inverse)/]])],
+        { model: 'The background is the same at every distance, so it is in every reading. If it is not subtracted, the raw readings do not fall by a factor of 4 when the distance doubles. The net count rate does: it follows an inverse square law.' })] });
+
+  Q.push({ id: 'q22', part: 'E', title: 'Which radiation? Absorbers',
+    intro: 'Sources A, B and C each give out one type of radiation (alpha, beta or gamma). Source D gives out two types. A student puts paper, 3 mm of aluminium and 10 mm of lead between source D and the tube, 5 cm away. The background count rate is ' + BD + ' counts/min.',
+    sim: { tab: 'bench', task: 'Press "Reading with each absorber" for sources A, B and C to see what each type of radiation does. Then do the same for source D and compare with the table.', think: 'Predict first: which type of radiation does paper stop? Which needs lead?',
+      bench: { bg: BD, unit: 'd', sources: ['A', 'B', 'C', 'D'], days: [0], distances: [5], absorbers: ['none', 'paper', 'aluminium', 'lead'], seconds: 120, secondsOptions: [60, 120, 300], view: 'abs', sourceIn: false } },
+    hint: 'Alpha is stopped by paper. Beta is stopped by a few mm of aluminium. Gamma is only reduced by lead.',
+    parts: [
+      { id: 'a', type: 'table', text: 'Work out the net count rates.', marks: 2, cellsPerMark: 2,
+        table: { rowHead: 'Absorber', cols: [{ head: 'Reading, R (counts/min)', kind: 'given' }, { head: 'Net count rate (counts/min)', kind: 'input' }],
+          rows: ['none', 'paper', 'aluminium', 'lead'].map(function (a) { var n = M.benchNet({ unit: 'd', src: M.BENCH_SOURCES.D }, 0, 5, a); return { label: M.ABSORBERS[a].short, cells: [n + BD, n] }; }) } },
+      { id: 'b', type: 'choice', text: 'Which radiation does source D give out?', marks: 1, correct: 'bg', options: [
+        { id: 'a', label: 'Alpha only' }, { id: 'b', label: 'Beta only' }, { id: 'bg', label: 'Beta and gamma' }, { id: 'ag', label: 'Alpha and gamma' }] },
+      W('c', 'Use the net count rates to explain your answer.', 3, [
+        P('paper hardly changes the count rate, so there is no alpha', [[/paper/, /(little|slight|small|hardly|barely|not much|no change|almost|only|doesn.t|does not|not stop|no (drop|effect|difference)|same)/]]),
+        P('aluminium reduces the count rate a lot, so there is beta', [[/alumin/, /(lot|big|large|most|great|much|drop|reduc|stop|fall|halv|absorb|block)/]]),
+        P('some radiation still gets through the aluminium but the lead stops it, so there is gamma', [[/lead/, /(stop|block|absorb|reduc|almost|nearly|all)/], [/(still|some|gets? through|passes?|remain|left)/, /alumin/]])],
+        { model: 'Paper hardly changes the count rate, so there is no alpha (alpha is stopped by paper). Aluminium reduces the count rate a lot, so there is beta. A lot of radiation still gets through the aluminium but lead stops almost all of it, so there is gamma. The source gives out beta and gamma.' })] });
 
   /* ---------- marking ---------- */
   function inputsOf(q) {
@@ -421,7 +484,7 @@
       cell: function (partId, row, col) { var p = q.parts.filter(function (x) { return x.id === partId; })[0]; var r = parseNum((ans[cellKey(p, row, col)] || {}).v); return r.v; }
     };
   }
-  function makeCellS(q, p, ans) { return { cell: function (row, col) { return parseNum((ans[cellKey(p, row, col)] || {}).v).v; } }; }
+  function makeCellS(q, p, ans, S) { return { get: S.get, cell: function (row, col) { return parseNum((ans[cellKey(p, row, col)] || {}).v).v; } }; }
 
   function markPart(q, p, ans, S, self) {
     var res = { id: p.id, marks: 0, max: p.marks, items: [], cells: {}, inputs: {} };
@@ -443,9 +506,11 @@
       return res;
     }
     if (p.type === 'table') {
-      var tab = p.table, correct = 0, total = 0, CS = makeCellS(q, p, ans);
+      var tab = p.table, correct = 0, total = 0, CS = makeCellS(q, p, ans, S);
       tab.rows.forEach(function (row, ri) { tab.cols.forEach(function (col, ci) {
-        if (col.kind !== 'input') return; total++;
+        if (col.kind !== 'input') return;
+        if (col.free) { res.cells[cellKey(p, ri, ci)] = 'free'; return; }
+        total++;
         var key = cellKey(p, ri, ci), st = parseNum((ans[key] || {}).v), e = row.cells[ci], status = 'no';
         if (!String((ans[key] || {}).v || '').trim()) status = 'blank';
         else if (within(st.v, e, { tol: 0.02 })) { status = 'yes'; correct++; }
@@ -506,7 +571,7 @@
     q.parts.forEach(function (p) {
       var lines = [];
       if (p.type === 'num') p.inputs.forEach(function (i) { if (!i.free || i.note) lines.push(i.label + ': ' + fmtAns(i)); });
-      if (p.type === 'table') p.table.rows.forEach(function (r) { lines.push('t = ' + r.label + ': ' + r.cells.map(function (c, ci) { return p.table.cols[ci].head.replace(/\s*\(.*\)/, '') + ' = ' + sig(c, 3); }).join(', ')); });
+      if (p.type === 'table') p.table.rows.forEach(function (r) { lines.push(p.table.rowHead.replace(/\s*\(.*\)/, '') + ' ' + r.label + ': ' + r.cells.map(function (c, ci) { return c === null ? null : p.table.cols[ci].head.replace(/\s*\(.*\)/, '') + ' = ' + sig(c, 3); }).filter(Boolean).join(', ')); });
       if (p.type === 'choice') lines.push(p.options.filter(function (o) { return o.id === p.correct; })[0].label.replace(/\s+/g, ' '));
       if (p.type === 'written') { lines.push(p.model); p.points.forEach(function (pt) { lines.push('Mark: ' + pt.text); }); }
       out.push({ id: p.id, text: p.text, marks: p.marks, lines: lines });

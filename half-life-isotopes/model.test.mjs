@@ -78,7 +78,7 @@ function fullAnswers(q) {
   const a = {};
   q.parts.forEach(p => {
     if (p.type === 'num') p.inputs.forEach(i => { if (i.ans !== null) a[i.id] = { v: String(+(+i.ans).toPrecision(4)), u: i.units ? i.units.find(u => u === i.ansUnit) ?? i.units[0] : i.ansUnit }; });
-    if (p.type === 'table') p.table.rows.forEach((r, ri) => p.table.cols.forEach((c, ci) => { if (c.kind === 'input') a[Q.cellKey(p, ri, ci)] = { v: String(+(+r.cells[ci]).toPrecision(4)) }; }));
+    if (p.type === 'table') p.table.rows.forEach((r, ri) => p.table.cols.forEach((c, ci) => { if (c.kind === 'input' && r.cells[ci] !== null) a[Q.cellKey(p, ri, ci)] = { v: String(+(+r.cells[ci]).toPrecision(4)) }; }));
     if (p.type === 'choice') a[p.id] = p.correct;
   });
   return a;
@@ -100,28 +100,34 @@ const GOOD = {
   'q17.b': 'So only the background is detected. Radiation from the source would add to the count and make the background too high',
   'q17.c': 'The counts are random so they differ each time. Repeating lets me spot an anomaly and calculate a mean',
   'q18.c': 'B counted for longer so recorded more counts, so the random scatter is a smaller percentage of the total',
+  'q20.d': 'The raw readings fall then level off at the background and never reach zero. The net count rate keeps halving towards zero because the background has been subtracted',
+  'q21.c': 'The background is the same at every distance so it is in every reading. The raw readings do not fall by a factor of 4 but the net count rate does',
+  'q22.c': 'Paper hardly changes the count rate so there is no alpha. Aluminium reduces it a lot so there is beta. Some still gets through the aluminium but lead stops it so there is gamma',
   'q19.d': 'Background is always present so it is in every reading. Forgetting it is a systematic error, the same in every reading, so repeating does not remove it. Subtract the mean background to get the net count rate'
 };
 function withWritten(q, a) { q.parts.forEach(p => { if (p.type === 'written') a[p.id] = GOOD[q.id + '.' + p.id]; }); return a; }
 
-test('there are 19 questions; every written part has a model answer and key ideas', () => {
-  assert.equal(Q.questions.length, 19);
+test('there are 22 questions; every written part has a model answer and key ideas', () => {
+  assert.equal(Q.questions.length, 22);
   Q.questions.forEach(q => q.parts.forEach(p => { if (p.type === 'written') { assert.ok(p.model && p.points.length); assert.ok(GOOD[q.id + '.' + p.id], q.id + p.id); } }));
 });
 const E17 = { a1: { v: '28' }, a2: { v: '30' }, a3: { v: '33' }, a4: { v: '26' }, a5: { v: '32' }, a6: { v: '29.8' }, a7: { v: '3.5' }, a8: { v: '11.7', u: '%' } };
 const E19 = { a1: { v: '48' }, a2: { v: '52' }, a3: { v: '50' }, a4: { v: '50' }, b1: { v: '1650' }, b2: { v: '150' }, b3: { v: '1600' }, b4: { v: '100' }, b5: { v: '4' }, b6: { v: '2', u: 'd' }, b7: { v: '2.31', u: 'd' }, c1: { v: '5' }, c2: { v: '10', u: 'd' } };
+const E20 = { a1: { v: '38' }, a2: { v: '40' }, a3: { v: '42' }, a4: { v: '40' }, 'b.r0c0': { v: '1640' }, 'b.r0c1': { v: '1600' }, 'b.r1c0': { v: '840' }, 'b.r1c1': { v: '800' }, 'b.r2c0': { v: '440' }, 'b.r2c1': { v: '400' }, 'b.r3c0': { v: '240' }, 'b.r3c1': { v: '200' }, 'b.r4c0': { v: '140' }, 'b.r4c1': { v: '100' }, 'b.r5c0': { v: '90' }, 'b.r5c1': { v: '50' },
+  c1: { v: '3' }, c2: { v: '2', u: 'd' }, c3: { v: '2.166', u: 'd' }, c4: { v: '8.3', u: '%' } };
 test('model answers earn full marks on every question', () => {
   Q.questions.forEach(q => {
     const a = withWritten(q, fullAnswers(q));
     if (q.id === 'q14') { a.a1 = { v: '13', u: 'd' }; a.a2 = { v: '15', u: 'd' }; a.a3 = { v: '14', u: 'd' }; a.a4 = { v: '14', u: 'd' }; a.a5 = { v: '1', u: 'd' }; a.a6 = { v: '7.1', u: '%' }; }
     if (q.id === 'q17') Object.assign(a, E17);
     if (q.id === 'q19') Object.assign(a, E19);
+    if (q.id === 'q20') Object.assign(a, E20);
     const r = Q.markQuestion(q, a); assert.equal(r.total, Q.questionMax(q), q.id + ' got ' + r.total + '/' + r.max + ' ' + JSON.stringify(r.parts));
   });
 });
 test('blank answers earn nothing', () => { Q.questions.forEach(q => assert.equal(Q.markQuestion(q, {}).total, 0, q.id)); });
 test('nonsense written answers earn nothing', () => {
-  [['q1', 'a'], ['q7', 'b'], ['q8', 'c'], ['q12', 'b'], ['q16', 'c'], ['q17', 'b'], ['q17', 'c'], ['q18', 'c'], ['q19', 'd']].forEach(([id, part]) => assert.equal(Q.markQuestion(byId(id), { [part]: 'I do not know' }).parts[part].marks, 0, id));
+  [['q1', 'a'], ['q7', 'b'], ['q8', 'c'], ['q12', 'b'], ['q16', 'c'], ['q17', 'b'], ['q17', 'c'], ['q18', 'c'], ['q19', 'd'], ['q20', 'd'], ['q21', 'c'], ['q22', 'c']].forEach(([id, part]) => assert.equal(Q.markQuestion(byId(id), { [part]: 'I do not know' }).parts[part].marks, 0, id));
 });
 test('half-life is not "the time to decay completely": one mark and a note', () => {
   const r = Q.markQuestion(byId('q1'), { a: 'The time it takes for the sample to decay completely' }).parts.a;
@@ -160,7 +166,7 @@ test('your own readings are marked for the mean, half the range and percentage',
 test('claiming a missed written point is allowed and flagged', () => {
   const r = Q.markQuestion(byId('q7'), { b: 'It is safe', c: '' }, { 'q7.b.0': true }).parts.b; assert.ok(r.items.some(i => i.ok === 'self')); assert.equal(r.marks, 2);
 });
-test('the 19 questions are worth the total shown on the README', () => { assert.equal(Q.totalMarks(), 100); });
+test('the 22 questions are worth the total shown on the README', () => { assert.equal(Q.totalMarks(), 124); });
 
 /* ---------- Geiger counter bench: background, repeating and counting time ---------- */
 const CFG = { bg: 50, net0: 1600, unit: 'd', src: { iso: 'custom', T: 2, unit: 'd', name: 'Z' } };
@@ -215,4 +221,30 @@ test('Q19: forgetting to subtract the background is followed through, and its ha
   const raw = { ...E19, b3: { v: '1650' }, b4: { v: '150' }, b5: { v: '3.46' }, b6: { v: '2.31', u: 'd' }, c1: { v: '5.4' }, c2: { v: '12.5', u: 'd' } };
   const r = Q.markQuestion(q, raw); assert.equal(r.parts.b.inputs.b3.status, 'no'); assert.equal(r.parts.b.inputs.b5.status, 'ecf'); assert.ok(r.parts.b.items.some(i => i.ok === 'no' && /looks wrong/.test(i.text)));
   assert.ok(r.total < Q.questionMax(q));
+});
+
+test('bench physics: inverse square, range of alpha, and absorbers stop the right radiation', () => {
+  const cfg = s => ({ bg: 0, unit: 'd', src: M.BENCH_SOURCES[s] });
+  near(M.benchNet(cfg('C'), 0, 10), 400); near(M.benchNet(cfg('C'), 0, 20), 100); near(M.benchNet(cfg('C'), 0, 40), 25);   // doubling the distance divides by 4
+  assert.equal(M.benchNet(cfg('A'), 0, 10), 0); assert.ok(M.benchNet(cfg('A'), 0, 5) > 0); assert.equal(M.benchNet(cfg('B'), 0, 150), 0);
+  ['paper', 'aluminium', 'lead'].forEach(a => assert.equal(M.benchNet(cfg('A'), 0, 5, a), 0));                          // alpha stopped by paper
+  assert.ok(M.benchNet(cfg('B'), 0, 5, 'paper') > 0.85 * 1600); assert.ok(M.benchNet(cfg('B'), 0, 5, 'aluminium') < 0.05 * 1600); assert.equal(M.benchNet(cfg('B'), 0, 5, 'lead'), 0);   // beta: paper no, aluminium yes
+  assert.ok(M.benchNet(cfg('C'), 0, 5, 'aluminium') > 0.85 * 1600); near(M.benchNet(cfg('C'), 0, 5, 'lead'), 160);       // gamma: lead reduces, never fully
+  [1000, 940, 378, 40].forEach((v, k) => near(M.benchNet(cfg('D'), 0, 5, ['none', 'paper', 'aluminium', 'lead'][k]), v));
+});
+test('bench: the decay curve with background flattens at the background; the net curve keeps halving', () => {
+  const c = { bg: 40, unit: 'd', src: M.BENCH_SOURCES.Z };
+  [0, 2, 4, 6, 8, 10].forEach(t => near(M.benchRate(c, true, t) - M.benchRate(c, false, t), 1600 * Math.pow(0.5, t / 2), 1e-9));
+  assert.ok(M.benchRate(c, true, 40) < 40.01 && M.benchRate(c, true, 40) > 40);
+  const raw = t => M.benchRate(c, true, t); assert.ok(Math.abs(6 / Math.log2(raw(0) / raw(6)) - 2) > 0.1);  // without subtracting, half-life is wrong
+});
+test('Q21 and Q22 tables: raw readings are background plus net; net x d^2 is constant; D data match the model', () => {
+  const t = Q.byId('q21').parts[0].table; t.rows.forEach(r => { near(r.cells[0] - r.cells[1], 30); near(r.cells[2], 40000); });
+  const u = Q.byId('q22').parts[0].table; assert.deepEqual(u.rows.map(r => r.cells[0]), [1030, 970, 408, 70]);
+});
+test('Q20: forgetting the background is followed through and its half-life is longer; wrong net values are flagged', () => {
+  const q = Q.byId('q20'), a = { ...E20 };
+  [0, 1, 2, 3, 4, 5].forEach(r => { a['b.r' + r + 'c1'] = a['b.r' + r + 'c0']; });
+  const r = Q.markQuestion(q, a); assert.equal(r.parts.b.cells['b.r0c1'], 'no'); assert.ok(r.parts.b.marks < 3);
+  assert.equal(Q.markQuestion(q, withWritten(q, { ...E20 })).total, Q.questionMax(q));
 });

@@ -240,10 +240,30 @@
     u1 = Math.max(rand.next(), 1e-12); u2 = rand.next();
     return Math.max(0, Math.round(mean + Math.sqrt(mean) * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)));
   }
-  function benchRate(cfg, sourceIn, t) { return cfg.bg + (sourceIn ? cfg.net0 * fraction(t, halfLifeIn(resolve(cfg.src), cfg.unit)) : 0); }
-  function benchCount(cfg, sourceIn, t, seconds, rand) { return poisson(benchRate(cfg, sourceIn, t) * seconds / 60, rand); }
+  /* Geometry and shielding (GCSE level). Net rates are quoted at the reference distance of 5 cm with no absorber.
+     Beyond 5 cm the rate falls as 1/d^2. Alpha does not reach beyond about 7 cm of air; beta is stopped by about 1 m of air. */
+  var REF_D = 5, RANGE_AIR = { alpha: 7, beta: 100, gamma: Infinity };
+  var ABSORBERS = { none: { name: 'No absorber', short: 'none' }, paper: { name: 'Paper', short: 'paper' }, aluminium: { name: 'Aluminium (3 mm)', short: 'aluminium' }, lead: { name: 'Lead (10 mm)', short: 'lead' } };
+  var TRANS = { alpha: { none: 1, paper: 0, aluminium: 0, lead: 0 }, beta: { none: 1, paper: 0.9, aluminium: 0.03, lead: 0 }, gamma: { none: 1, paper: 1, aluminium: 0.9, lead: 0.1 } };
+  var BENCH_SOURCES = {
+    Z: { iso: 'custom', id: 'Z', name: 'Source Z', emits: ['beta'], shares: [1], T: 2, unit: 'd', net0: 1600 },
+    A: { iso: 'custom', id: 'A', name: 'Source A', emits: ['alpha'], shares: [1], T: 432, unit: 'y', net0: 1600 },
+    B: { iso: 'custom', id: 'B', name: 'Source B', emits: ['beta'], shares: [1], T: 29, unit: 'y', net0: 1600 },
+    C: { iso: 'custom', id: 'C', name: 'Source C', emits: ['gamma'], shares: [1], T: 5.3, unit: 'y', net0: 1600 },
+    D: { iso: 'custom', id: 'D', name: 'Source D', emits: ['beta', 'gamma'], shares: [0.6, 0.4], T: 5.3, unit: 'y', net0: 1000 }
+  };
+  function geom(kind, d) { return d > RANGE_AIR[kind] ? 0 : Math.pow(REF_D / d, 2); }
+  /* net count rate from the source (counts/min) at time t (in cfg.unit), distance d (cm) and absorber */
+  function benchNet(cfg, t, d, abs) {
+    var src = cfg.src, emits = src.emits || ['beta'], shares = src.shares || [1], T = halfLifeIn(resolve(src), cfg.unit), k, tot = 0;
+    d = d || REF_D; abs = abs || 'none';
+    for (k = 0; k < emits.length; k++) tot += shares[k] * (src.net0 !== undefined ? src.net0 : cfg.net0) * geom(emits[k], d) * TRANS[emits[k]][abs];
+    return tot * fraction(t, T);
+  }
+  function benchRate(cfg, sourceIn, t, d, abs) { return cfg.bg + (sourceIn ? benchNet(cfg, t, d, abs) : 0); }
+  function benchCount(cfg, sourceIn, t, seconds, rand, d, abs) { return poisson(benchRate(cfg, sourceIn, t, d, abs) * seconds / 60, rand); }
   function toCpm(counts, seconds) { return counts * 60 / seconds; }
-  return { poisson: poisson, benchRate: benchRate, benchCount: benchCount, toCpm: toCpm, LN2: LN2, YEAR: YEAR, UNITS: UNITS, TIME_UNITS: TIME_UNITS, ISOTOPES: ISOTOPES, ISO: ISO, SCENARIOS: SCENARIOS, SCN: SCN,
+  return { REF_D: REF_D, ABSORBERS: ABSORBERS, TRANS: TRANS, RANGE_AIR: RANGE_AIR, BENCH_SOURCES: BENCH_SOURCES, benchNet: benchNet, poisson: poisson, benchRate: benchRate, benchCount: benchCount, toCpm: toCpm, LN2: LN2, YEAR: YEAR, UNITS: UNITS, TIME_UNITS: TIME_UNITS, ISOTOPES: ISOTOPES, ISO: ISO, SCENARIOS: SCENARIOS, SCN: SCN,
     convert: convert, sameDim: sameDim, bestUnit: bestUnit, sig: sig, supStr: supStr, make: make, resolve: resolve,
     halfLifeSeconds: halfLifeSeconds, halfLifeIn: halfLifeIn, halfLifeText: halfLifeText, radiationText: radiationText, unitWord: unitWord, lambdaPerSecond: lambdaPerSecond,
     halfLives: halfLives, fraction: fraction, after: after, nucleiFromActivity: nucleiFromActivity, activityFromNuclei: activityFromNuclei, displayed: displayed,

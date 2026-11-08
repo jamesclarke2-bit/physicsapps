@@ -80,6 +80,7 @@ details.model .mpart{margin:8px 0 2px}details.model ul{margin:2px 0 4px;padding-
 .xo{font:600 13px var(--f-mono);background:none;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--ink);cursor:pointer}
 tr.off td{text-decoration:line-through;color:var(--muted)}tr.off .xo{text-decoration:none}
 .warn{color:var(--bad);font-weight:700;font-size:14px}
+.bn-abs{stroke:var(--ink);stroke-width:1.5}.bn-abs-paper{fill:var(--surface)}.bn-abs-aluminium{fill:#b9c4d0}.bn-abs-lead{fill:#4b5563}
 @media (prefers-reduced-motion:reduce){#b-play{display:none}}
 </style>
 </head>
@@ -234,9 +235,12 @@ tr.off td{text-decoration:line-through;color:var(--muted)}tr.off .xo{text-decora
         </div>
         <div class="card">
           <div class="cardhead"><h2>Count rates</h2></div>
+          <div class="ctl" id="bn-view"></div>
           <svg id="bn-plot"></svg>
           <ul class="legend" id="bn-legend"></ul>
-          <label class="chk"><input type="checkbox" id="bn-net"> Show the net count rate (reading minus the mean background). Try it yourself first.</label>
+          <label class="chk"><input type="checkbox" id="bn-net"> Show the net count rate (reading minus your mean background). Try it yourself first.</label>
+          <p class="fine" id="bn-gate"></p>
+          <label class="chk"><input type="checkbox" id="bn-theory"> Show the true curves (to check your work)</label>
         </div>
       </div>
     </div>

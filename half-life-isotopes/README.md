@@ -25,7 +25,7 @@ Change: isotope(s), starting value, quantity (activity, count rate, nuclei), bac
 ## Targets (Choose the isotope tab)
 Each job has explicit, adjustable targets: radiation required or ruled out, activity still at least X% at time T, and (for some jobs) activity at most Y% at a later time. The student changes the targets and sees which isotopes pass, with the working in a pop-up.
 
-## Question bank (19 questions, 100 marks; one source in questions.js)
+## Question bank (22 questions, 124 marks; one source in questions.js)
 | Part | Level | Content |
 | --- | --- | --- |
 | A | Easy | 1 define half-life and random decay; 2 complete a halving table (Tc-99m); 3 read a half-life from a graph |
@@ -46,3 +46,11 @@ Physics (all in `model.js`): a Geiger counter records random (Poisson) counts. T
 - **Q18:** 1-minute against 5-minute background counts (given data): longer counts give a smaller percentage uncertainty; multiple choice on why we repeat.
 - **Q19 (hardest):** background first, then source Z on day 0 and day 8, net rates, half-life (chain marked with follow-through from the student's own readings), half-life if background is forgotten (too long), when the net rate falls to background, and why repeating does not fix a forgotten background.
 Tests cover Poisson counts, longer counts, background subtraction, why-repeat marking and the Part E chains.
+
+
+## Added: full decay curves, distance and absorbers (Q20 to Q22, 24 marks)
+Model: net rate = share x net0 x (5/d)^2 x transmission x (1/2)^(t/T), summed over the radiations a source emits. Alpha reaches no further than about 7 cm, beta about 1 m. Paper stops alpha (beta 90% passes); 3 mm aluminium stops beta (3% passes) and passes 90% of gamma; 10 mm lead stops alpha and beta and passes 10% of gamma. Sources: Z beta (2 days, the half-life source), A alpha, B beta, C gamma, D beta and gamma. Background is never shielded or changed by distance.
+- **Bench tab now has:** source choice, day, distance (2 to 40 cm), absorber, counting time, and one-click series ("Reading every day", "at every distance", "with each absorber"). The graph shows decay with time, distance or absorber, as raw readings, and (once the student has at least three background counts) as net count rate. "Show the true curves" is off by default.
+- **Q20:** a whole decay curve. The raw curve flattens at the background, the net curve keeps halving. Half-life from the net rates, from the raw readings (too long), and the percentage error.
+- **Q21:** distance: net x d^2 is constant (inverse square law), and why background must be subtracted first.
+- **Q22:** absorbers: decide that source D gives out beta and gamma.
