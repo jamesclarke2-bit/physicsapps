@@ -70,6 +70,16 @@ details.model .mpart{margin:8px 0 2px}details.model ul{margin:2px 0 4px;padding-
 .prog{margin:0 0 8px}.proghead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.proghead h2{margin:0}
 .progn{font:700 16px var(--f-mono)}
 .bar{height:10px;border-radius:6px;background:var(--line);overflow:hidden;margin:8px 0}.bar span{display:block;height:100%;background:var(--accent)}
+.benchsvg{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.bn-fill{fill:var(--tint,var(--surface));stroke:var(--ink);stroke-width:2}.bn-line{fill:none;stroke:var(--ink);stroke-width:2}
+.bn-win{stroke:var(--accent);stroke-width:3}.bn-lcd{fill:var(--ink)}.bn-num{fill:var(--surface);font:700 28px var(--f-mono)}
+.bn-t{fill:var(--ink);font:13px var(--f-body,sans-serif);text-anchor:middle}.bn-s{font-size:11px}.bn-m{fill:var(--muted)}
+.bn-bgray{stroke:var(--muted);stroke-width:2;stroke-dasharray:4 4}.bn-ray{stroke:var(--accent);stroke-width:2;stroke-dasharray:3 4}
+.bn-src{fill:var(--accent);stroke:var(--ink);stroke-width:2}.bn-dim{stroke:var(--muted);stroke-width:1.5}
+.bn-lead{fill:var(--muted);stroke:var(--ink);stroke-width:2}.bn-leadopen{fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:4 3}
+.xo{font:600 13px var(--f-mono);background:none;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--ink);cursor:pointer}
+tr.off td{text-decoration:line-through;color:var(--muted)}tr.off .xo{text-decoration:none}
+.warn{color:var(--bad);font-weight:700;font-size:14px}
 @media (prefers-reduced-motion:reduce){#b-play{display:none}}
 </style>
 </head>
@@ -85,6 +95,7 @@ details.model .mpart{margin:8px 0 2px}details.model ul{margin:2px 0 4px;padding-
     <button role="tab" id="t-decay" aria-controls="p-decay" aria-selected="false" data-tab="decay">Decay</button>
     <button role="tab" id="t-measure" aria-controls="p-measure" aria-selected="false" data-tab="measure">Measure a half-life</button>
     <button role="tab" id="t-choose" aria-controls="p-choose" aria-selected="false" data-tab="choose">Choose the isotope</button>
+    <button role="tab" id="t-bench" aria-controls="p-bench" aria-selected="false" data-tab="bench">Geiger counter bench</button>
   </nav>
 
   <!-- QUESTIONS (built by quiz.js) -->
@@ -197,6 +208,40 @@ details.model .mpart{margin:8px 0 2px}details.model ul{margin:2px 0 4px;padding-
     </div>
   </section>
 
+  <!-- BENCH -->
+  <section id="p-bench" role="tabpanel" aria-labelledby="t-bench" hidden>
+    <div class="qbanner" id="qb-bench" hidden></div>
+    <div class="think"><b>Think</b><span id="think-bench">Predict first: with the source put away, will the counter read zero? Will every count be the same?</span></div>
+    <div class="two">
+      <div class="stack">
+        <div class="card">
+          <div class="cardhead"><h2>The bench</h2></div>
+          <svg id="bench-svg" class="benchsvg"></svg>
+          <p class="runnote" id="bn-info"></p>
+          <div id="bn-ctl"></div>
+        </div>
+        <div class="card">
+          <div class="cardhead"><h2>Readings</h2></div>
+          <p class="banner" id="bn-banner"></p>
+          <div id="bn-log"></div>
+          <div class="btns"><button class="btn" id="b-bclear" type="button">Clear readings</button></div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="cardhead"><h2>Background so far</h2></div>
+          <div id="bn-sum"></div>
+        </div>
+        <div class="card">
+          <div class="cardhead"><h2>Count rates</h2></div>
+          <svg id="bn-plot"></svg>
+          <ul class="legend" id="bn-legend"></ul>
+          <label class="chk"><input type="checkbox" id="bn-net"> Show the net count rate (reading minus the mean background). Try it yourself first.</label>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="about">
     <p><strong>About this model.</strong> Each nucleus decays at a random time, so a small sample is a little uneven and a large one follows the smooth halving curve. The half-life is the time for the activity (or the number of undecayed nuclei) to halve. Half-lives are rounded GCSE values. A reading read from a graph has a fixed uncertainty, so a longer interval has a smaller percentage uncertainty. Uncertainty in a few readings is half the range. A fault that affects every reading, such as forgetting background, stays wrong however often you repeat it.</p>
   </div>
@@ -205,6 +250,7 @@ details.model .mpart{margin:8px 0 2px}details.model ul{margin:2px 0 4px;padding-
 <script src="model.js"></script>
 <script src="questions.js"></script>
 <script src="app.js"></script>
+<script src="bench.js"></script>
 <script src="quiz.js"></script>
 </body>
 </html>

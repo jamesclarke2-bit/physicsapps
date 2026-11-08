@@ -79,7 +79,8 @@
 
   /* ---------- the questions ---------- */
   var PARTS = { A: { name: 'Part A  Understanding the idea', level: 'Easy' }, B: { name: 'Part B  Calculations', level: 'Medium' },
-    C: { name: 'Part C  Choosing and applying', level: 'Hard' }, D: { name: 'Part D  Very challenging', level: 'Very hard' } };
+    C: { name: 'Part C  Choosing and applying', level: 'Hard' }, D: { name: 'Part D  Very challenging', level: 'Very hard' },
+    E: { name: 'Part E  Experiment and calculation together (Geiger counter bench)', level: 'Hardest' } };
 
   var Q = [];
 
@@ -309,6 +310,99 @@
         P('so the reading never falls below background and takes longer to halve', [[/(never|not|can't|cannot).{0,30}(fall|drop|go) (below|under|to zero)|(longer|slower|more slowly|bigger).{0,40}(halve|half)|(halve|half).{0,40}(longer|slower|more slowly)|takes? longer|doesn't halve|not halve|too (high|big|large)/]])],
         { model: 'Background radiation is always present and does not decay. The readings include it, so the reading never falls below the background and takes longer than the true half-life to halve. This is a systematic error: repeating does not remove it. Subtract the background from every reading first.' })] });
 
+
+  /* ---------- Part E: Geiger counter bench (experiment and calculation together) ---------- */
+  var B17 = { bg: 30, net0: 0, unit: 'd', src: { iso: 'custom', T: 2, unit: 'd', name: 'Source Z' }, days: [0], seconds: 60, secondsOptions: [30, 60, 120, 300] };
+  var B19 = { bg: 50, net0: 1600, unit: 'd', src: { iso: 'custom', T: 2, unit: 'd', name: 'Source Z' }, days: [0, 2, 4, 6, 8], seconds: 60, secondsOptions: [30, 60, 120, 300] };
+  var B17b = Object.assign({}, B17, { net0: 800 });
+  function readingsOf(S, ids) { var v = ids.map(function (id) { return S.get(id); }).filter(function (x) { return isFinite(x); }); return v.length >= 3 ? v : []; }
+  function meanOf(S, ids) { var v = readingsOf(S, ids); return v.length ? M.mean(v) : NaN; }
+  function hrOf(S, ids) { var v = readingsOf(S, ids); return v.length ? M.halfRange(v) : NaN; }
+  var RID = ['a1', 'a2', 'a3', 'a4', 'a5'];
+
+  Q.push({ id: 'q17', part: 'E', title: 'Measuring the background count rate',
+    intro: 'Background radiation comes from rocks, the air, cosmic rays and buildings. It is in every reading from a Geiger counter, so it must be measured before you use a source. In the simulator the source starts next to the Geiger-Müller tube. Set up the bench so that you measure the background only, then count for 1 minute and repeat to take at least three readings (five is better).',
+    figure: 'fig_bench', figureCaption: 'The bench: Geiger-Müller tube and counter, with the source in its lead-lined box.',
+    sim: { tab: 'bench', task: 'Move the source into its lead-lined box, then press Start count. Repeat for at least three counts. Cross out any anomaly. Write each reading in counts per minute.', think: 'Predict first: with the source put away, will the counter read zero? Will every count be the same?',
+      bench: Object.assign({}, B17, { sourceIn: true, secondsOptions: [60], seconds: 60, hideSource: false, note: 'Counts are taken for 1 minute.' }) },
+    hint: 'Uncertainty = half the range = ½ (largest − smallest). Percentage uncertainty = uncertainty ÷ mean × 100. If your readings are in the hundreds, is the source still counting?',
+    parts: [
+      { id: 'a', type: 'num', text: 'Take your background readings (counts per minute) and work out the background count rate.', marks: 4, inputs: [
+        N('a1', 'Reading 1 (counts/min)', null, null, { marks: 0, free: true, grp: 'f' }), N('a2', 'Reading 2 (counts/min)', null, null, { marks: 0, free: true, grp: 'f' }),
+        N('a3', 'Reading 3 (counts/min)', null, null, { marks: 0, free: true, grp: 'f' }), N('a4', 'Reading 4 (counts/min), if you took one', null, null, { marks: 0, free: true, grp: 'f' }),
+        N('a5', 'Reading 5 (counts/min), if you took one', null, null, { marks: 0, free: true, grp: 'f' }),
+        N('a6', 'Mean background count rate (counts/min)', null, null, { tol: 0.01, grp: 'm', note: 'about ' + B17.bg + ' counts/min', ecf: function (S) { return meanOf(S, RID); } }),
+        N('a7', 'Uncertainty (half the range) (counts/min)', null, null, { tol: 0.03, grp: 'u', note: 'about 5 counts/min', ecf: function (S) { return hrOf(S, RID); } }),
+        N('a8', 'Percentage uncertainty', null, '%', { tol: 0.03, grp: 'p', note: 'about 15%', ecf: function (S) { return 100 * hrOf(S, RID) / meanOf(S, RID); } })],
+        extra: function (S) {
+          var v = readingsOf(S, RID), ok = v.length >= 3 && v.every(function (x) { return x >= 10 && x <= 55; });
+          return [{ ok: ok, marks: 1, text: ok ? 'Your readings look like background: a few tens of counts per minute.' : (v.length < 3 ? 'Take at least three readings.' : 'These readings are not background. Is the source still next to the tube? Put it in its lead-lined box and count again.') }];
+        } },
+      W('b', 'Why must the source be removed (and kept in its lead-lined box, away from the tube) when you measure the background?', 2, [
+        P('so that only the background radiation is detected', [[/(only|just|alone).{0,40}(background|natural|surrounding)|background.{0,30}(only|alone)|not.{0,30}(detect|count|measure|pick up|record).{0,30}(source)/]]),
+        P('radiation from the source would add to the count and make the background too high', [[/(source|it|radiation).{0,60}(add|extra|increase|more|higher|too high|too big|contribut|affect|interfer)|(add|extra|increase|higher|too high|too big|too many).{0,40}(source|count)/]])],
+        { model: 'Only the background radiation should be counted. Radiation from the source would add to the count and make the background rate too high.' }),
+      W('c', 'Explain why you repeat the background count.', 3, [
+        P('the counts are random so they are not the same each time (repeating shows the spread)', [[/random|differ|vary|varies|not the same|spread|fluctuat|scatter|change/]]),
+        P('to spot an anomaly (an odd result) and ignore it', [[/anomal|outlier|odd |unusual|rogue|mistake|stand(s)? out|doesn.t fit/]]),
+        P('so you can calculate a mean, which is a better value for the background', [[/mean|average/]])],
+        { model: 'Radioactive decay is random, so each count is slightly different. Repeating shows how much the counts vary, lets you spot and ignore an anomaly, and lets you calculate a mean. Repeating does not remove a faulty method, such as leaving the source in place.',
+          misc: [{ re: /(reduc|smaller|less|lower).{0,25}(uncertaint|error)|more accurate|accuracy|more precise/, msg: 'Repeating shows the spread, finds anomalies and gives a mean. It does not make the uncertainty in each reading smaller, and it cannot fix a faulty method (such as the source still being near the tube). A longer count reduces the percentage uncertainty.' }] })] });
+
+  Q.push({ id: 'q18', part: 'E', title: 'Short counts or long counts?',
+    intro: 'Two students measure the background count rate with the same Geiger counter and no source. Student A counts for 1 minute, three times, and gets 21, 28 and 25 counts. Student B counts for 5 minutes, three times, and gets 118, 131 and 126 counts.',
+    sim: { tab: 'bench', task: 'Put the source away. Take three 1-minute counts, then three 5-minute counts. Compare the percentage uncertainties.', think: 'Predict first: which students will have the smaller percentage uncertainty, the 1-minute counts or the 5-minute counts?',
+      bench: Object.assign({}, B17, { sourceIn: false, secondsOptions: [60, 300], seconds: 60 }) },
+    hint: 'Change Student B\'s counts into counts per minute first (divide by 5).',
+    parts: [
+      { id: 'a', type: 'num', text: 'Work out each student\'s result in counts per minute.', marks: 6, inputs: [
+        N('a1', 'Student A: mean (counts/min)', (21 + 28 + 25) / 3, null, { tol: 0.01, grp: 'A1' }),
+        N('a2', 'Student A: uncertainty (half the range) (counts/min)', 3.5, null, { abs: 0.1, grp: 'A2' }),
+        N('a3', 'Student A: percentage uncertainty', 100 * 3.5 / ((21 + 28 + 25) / 3), '%', { tol: 0.03, grp: 'A3', ecf: function (S) { return 100 * S.get('a2') / S.get('a1'); } }),
+        N('a4', 'Student B: mean (counts/min)', (118 + 131 + 126) / 15, null, { tol: 0.01, grp: 'B1' }),
+        N('a5', 'Student B: uncertainty (half the range) (counts/min)', (131 - 118) / 10, null, { abs: 0.05, grp: 'B2' }),
+        N('a6', 'Student B: percentage uncertainty', 100 * 1.3 / 25, '%', { tol: 0.03, grp: 'B3', ecf: function (S) { return 100 * S.get('a5') / S.get('a4'); } })] },
+      { id: 'b', type: 'choice', text: 'A student says: "Repeating the count makes the background more accurate." Which statement is best?', marks: 1, correct: 'b', options: [
+        { id: 'a', label: 'Repeating removes any fault in the method, so the result becomes accurate.' },
+        { id: 'b', label: 'Repeating shows how much the counts vary, helps spot anomalies and gives a mean. It cannot remove a faulty method.' },
+        { id: 'c', label: 'Repeating makes the uncertainty in each reading smaller.' },
+        { id: 'd', label: 'Repeating is not needed because background is the same every minute.' }] },
+      W('c', 'Explain why Student B\'s percentage uncertainty is smaller.', 2, [
+        P('Student B counted for longer, so recorded a bigger count', [[/longer|5 ?min|five minute|more counts|bigger count|larger count|more time|greater count/]]),
+        P('so the random scatter is a smaller percentage of the total', [[/(smaller|less|lower|reduc).{0,40}(percentage|%|fraction|proportion|relative|uncertaint)|(percentage|fraction|proportion).{0,40}(smaller|less|lower)|(scatter|spread|range|difference|variation).{0,60}(small|less)/]])],
+        { model: 'Student B counted for longer, so recorded many more counts. The random scatter is then a smaller percentage of the total, so the percentage uncertainty is smaller. A longer measurement reduces the percentage uncertainty.' })] });
+
+  Q.push({ id: 'q19', part: 'E', title: 'Half-life of source Z, with background',
+    intro: 'Source Z is a sealed beta source. You will find its half-life with a Geiger counter. Measure the background first (source in its box), then count the source on days 0 and 8 (use the day selector in the simulator). Count for 1 minute, or longer if you want a smaller percentage uncertainty. Give every reading in counts per minute.',
+    sim: { tab: 'bench', task: 'First measure the background (source put away, three counts). Then bring the source back and take a count on day 0 and on day 8. Do not use the "show net count rate" box until you have finished.', think: 'Predict first: should you subtract the background from the readings? What would happen to your half-life if you did not?',
+      bench: Object.assign({}, B19, { sourceIn: true, hideSource: true }) },
+    hint: 'Net count rate = reading − mean background. Number of half-lives n = log₂(net at day 0 ÷ net at day 8). Half-life = 8 days ÷ n.',
+    parts: [
+      { id: 'a', type: 'num', text: 'Background.', marks: 1, inputs: [
+        N('a1', 'Background reading 1 (counts/min)', null, null, { marks: 0, free: true, grp: 'f' }), N('a2', 'Background reading 2 (counts/min)', null, null, { marks: 0, free: true, grp: 'f' }),
+        N('a3', 'Background reading 3 (counts/min)', null, null, { marks: 0, free: true, grp: 'f' }),
+        N('a4', 'Mean background count rate (counts/min)', null, null, { tol: 0.01, note: 'about ' + B19.bg + ' counts/min', ecf: function (S) { return meanOf(S, ['a1', 'a2', 'a3']); } })] },
+      { id: 'b', type: 'num', text: 'The source.', marks: 6, inputs: [
+        N('b1', 'Reading with the source, day 0 (counts/min)', null, null, { marks: 0, free: true, grp: 'f', note: 'about ' + (B19.bg + B19.net0) + ' counts/min' }),
+        N('b2', 'Reading with the source, day 8 (counts/min)', null, null, { marks: 0, free: true, grp: 'f', note: 'about ' + Math.round(B19.bg + B19.net0 * M.fraction(8, 2)) + ' counts/min' }),
+        N('b3', 'Net count rate, day 0 (counts/min)', null, null, { tol: 0.015, grp: 'T', note: 'about ' + B19.net0 + ' counts/min', ecf: function (S) { return S.get('b1') - S.get('a4'); } }),
+        N('b4', 'Net count rate, day 8 (counts/min)', null, null, { tol: 0.015, grp: 'T', note: 'about ' + Math.round(B19.net0 * M.fraction(8, 2)) + ' counts/min', ecf: function (S) { return S.get('b2') - S.get('a4'); } }),
+        N('b5', 'Number of half-lives in 8 days', null, null, { tol: 0.04, grp: 'T', note: 'about 4', ecf: function (S) { return Math.log(S.get('b3') / S.get('b4')) / Math.LN2; } }),
+        N('b6', 'Half-life of source Z', null, 'd', { units: ['h', 'd'], tol: 0.03, grp: 'T', note: 'about 2 days', ecf: function (S) { return 8 / S.get('b5'); } }),
+        N('b7', 'Half-life you would get if you forgot to subtract the background', null, 'd', { units: ['h', 'd'], tol: 0.03, grp: 'R', note: 'about 2.3 days (too long)', ecf: function (S) { return 8 / (Math.log(S.get('b1') / S.get('b2')) / Math.LN2); } })],
+        extra: function (S) {
+          var T = S.get('b6', 'd'), ok = isFinite(T) && T > 1.7 && T < 2.25;
+          return [{ ok: ok, marks: 1, text: ok ? 'Your half-life is a sensible value.' : 'Your half-life looks wrong. Check that the background was measured with the source away and that you subtracted it from both readings.' }];
+        } },
+      { id: 'c', type: 'num', text: 'The source is safe to throw away when its net count rate is no more than the background.', marks: 2, inputs: [
+        N('c1', 'Number of half-lives until the net count rate falls to the background', null, null, { tol: 0.04, grp: 'S', note: 'about 5', ecf: function (S) { return Math.log(S.get('b3') / S.get('a4')) / Math.LN2; } }),
+        N('c2', 'Time until it is safe to throw away', null, 'd', { units: ['h', 'd'], tol: 0.04, grp: 'S', note: 'about 10 days', ecf: function (S) { return S.get('c1') * S.get('b6', 'd'); } })] },
+      W('d', 'Explain why the background must be subtracted, and why repeating the readings does not fix the problem if you forget.', 3, [
+        P('background is always present, so it is included in every reading', [[/background.{0,60}(always|every|each|all|included|part of|there|present|adds|add)|(always|every|each|all).{0,40}background/]]),
+        P('the same error is in every reading, so repeating does not remove it (systematic error)', [[/(repeat|again|more readings|more counts).{0,60}(not|n.t|never|cannot).{0,40}(remove|fix|solve|correct|reduce|get rid|help|cure)|systematic|same (error|mistake|amount)|every (reading|count)/]]),
+        P('subtract the mean background from each reading to get the net count rate', [[/subtract|take away|take off|minus|remove the background|net/]])],
+        { model: 'Background radiation is always present, so every reading includes it. Forgetting it is a systematic error: the same amount is wrong in every reading, so repeating the readings does not remove it. Subtract the mean background from each reading to get the net count rate from the source.' })] });
+
   /* ---------- marking ---------- */
   function inputsOf(q) {
     var out = [];
@@ -403,7 +497,7 @@
 
   /* ---------- the model answers (web feedback and the teacher page) ---------- */
   function fmtAns(inp) {
-    if (inp.ans === null || inp.ans === undefined) return 'from your own readings';
+    if (inp.ans === null || inp.ans === undefined) return 'from your own readings' + (inp.note ? ' (' + inp.note + ')' : '');
     var u = inp.ansUnit; var v = (u === '%') ? sig(inp.ans, 3) : sig(inp.ans, 3);
     return v + (u === '%' ? '%' : (u ? ' ' + M.UNITS[u].label : ''));
   }
@@ -411,7 +505,7 @@
     var out = [];
     q.parts.forEach(function (p) {
       var lines = [];
-      if (p.type === 'num') p.inputs.forEach(function (i) { if (!i.free) lines.push(i.label + ': ' + fmtAns(i)); });
+      if (p.type === 'num') p.inputs.forEach(function (i) { if (!i.free || i.note) lines.push(i.label + ': ' + fmtAns(i)); });
       if (p.type === 'table') p.table.rows.forEach(function (r) { lines.push('t = ' + r.label + ': ' + r.cells.map(function (c, ci) { return p.table.cols[ci].head.replace(/\s*\(.*\)/, '') + ' = ' + sig(c, 3); }).join(', ')); });
       if (p.type === 'choice') lines.push(p.options.filter(function (o) { return o.id === p.correct; })[0].label.replace(/\s+/g, ' '));
       if (p.type === 'written') { lines.push(p.model); p.points.forEach(function (pt) { lines.push('Mark: ' + pt.text); }); }

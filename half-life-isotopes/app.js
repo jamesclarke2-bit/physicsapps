@@ -9,7 +9,8 @@
   var THINK = {
     decay: 'Predict first: after three half-lives, how much of the sample is left? Then press Play and check.',
     measure: 'Predict first: will the three halving times be exactly the same? What could make them differ?',
-    choose: 'Predict first: which type of radiation does the job need, and should the half-life be short or long? Then choose an isotope.'
+    choose: 'Predict first: which type of radiation does the job need, and should the half-life be short or long? Then choose an isotope.',
+    bench: 'Predict first: with the source put away, will the counter read zero? Will every count be the same?'
   };
   var DEFAULT = { unit: 'h', tmax: 36, quantity: 'activity', bg: 0, subtract: false, equalN: false, nGrid: 200, showTheory: false, showSim: true, showMix: false,
     marks: [], sources: [{ iso: 'Tc99m', start: 800 }] };
@@ -364,7 +365,7 @@
 
   /* ---------- presets (from the questions) ---------- */
   function setBanner(info) {
-    ['decay', 'measure', 'choose'].forEach(function (t) {
+    ['decay', 'measure', 'choose', 'bench'].forEach(function (t) {
       var b = $('qb-' + t); b.textContent = '';
       if (!info) { b.hidden = true; return; }
       b.hidden = false;
@@ -382,6 +383,7 @@
       structural(); setPlay(); $('m-banner').textContent = ''; $('m-compare').textContent = '';
     }
     if (spec.scenario) setScenario(spec.scenario);
+    if (spec.bench && HL.bench) HL.bench.apply(spec.bench);
     Object.keys(THINK).forEach(function (k) { $('think-' + k).textContent = (spec.tab === k && spec.think) ? spec.think : THINK[k]; });
     setBanner(info);
     if (HL.tabs) HL.tabs.show(spec.tab, true);
@@ -412,6 +414,6 @@
   if (reduce) { $('b-play').disabled = true; }
 
   HL.sim = { apply: apply, state: function () { return S; }, setClock: setClock, reveal: function (v) { reveal = v; structural(); }, chooser: function () { return CH; }, runs: function () { return runs; } };
-  HL.tabs = Sim.tabs(document.querySelector('.tabs'), { onChange: function (name) { if (name === 'decay') { drawGrids(); } if (name === 'measure') renderMeasure(); } });
+  HL.tabs = Sim.tabs(document.querySelector('.tabs'), { onChange: function (name) { if (name === 'decay') { drawGrids(); } if (name === 'measure') renderMeasure(); if (name === 'bench' && HL.bench) HL.bench.render(); } });
   loadExample(); renderChoose();
 })();

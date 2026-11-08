@@ -25,7 +25,7 @@ Change: isotope(s), starting value, quantity (activity, count rate, nuclei), bac
 ## Targets (Choose the isotope tab)
 Each job has explicit, adjustable targets: radiation required or ruled out, activity still at least X% at time T, and (for some jobs) activity at most Y% at a later time. The student changes the targets and sees which isotopes pass, with the working in a pop-up.
 
-## Question bank (16 questions, 70 marks; one source in questions.js)
+## Question bank (19 questions, 100 marks; one source in questions.js)
 | Part | Level | Content |
 | --- | --- | --- |
 | A | Easy | 1 define half-life and random decay; 2 complete a halving table (Tc-99m); 3 read a half-life from a graph |
@@ -37,3 +37,12 @@ Marking: numeric answers are marked with a tolerance and any equivalent unit, wi
 
 ## Files
 `index.html` + `app.js` (simulator and chooser), `quiz.js` (questions and marking UI), `model.js` (physics), `questions.js` (question bank and marking), `model.test.mjs`, `worksheet/` (`./build.sh`).
+
+
+## Added: Geiger counter bench and Part E (Q17 to Q19, 30 marks)
+Physics (all in `model.js`): a Geiger counter records random (Poisson) counts. True rate = background, plus the net source rate (which halves every half-life) only when the source is next to the tube. Background is a fixed, hidden rate (30 counts/min in Q17, 50 in Q19).
+- **Bench tab:** the picture shows the tube, counter, source on a stand 5 cm away, and the lead-lined box on the shelf. Students move the source away to measure background, choose the counting time (30 s to 5 min) and the day, and press Start count. Readings are logged (cross out an anomaly), with mean, half range and percentage uncertainty (pop-up working). Readings above 100 counts/min with the source "away" give a warning. The "net count rate" tick box is off by default so students do the subtraction themselves.
+- **Q17:** measure background (source starts in place, so they must put it away), mean/half range/percentage from their own readings, why remove the source, why repeat. "Repeating reduces the uncertainty" earns nothing and is corrected (repeating shows the spread, finds anomalies, gives a mean, cannot fix a faulty method).
+- **Q18:** 1-minute against 5-minute background counts (given data): longer counts give a smaller percentage uncertainty; multiple choice on why we repeat.
+- **Q19 (hardest):** background first, then source Z on day 0 and day 8, net rates, half-life (chain marked with follow-through from the student's own readings), half-life if background is forgotten (too long), when the net rate falls to background, and why repeating does not fix a forgotten background.
+Tests cover Poisson counts, longer counts, background subtraction, why-repeat marking and the Part E chains.

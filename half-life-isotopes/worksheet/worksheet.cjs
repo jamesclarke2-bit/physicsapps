@@ -4,7 +4,7 @@ const K = require('../../tools/worksheet-kit/kit.cjs');
 const { P, H1, Q, NOTE, EQ, mr, frac, sub, tbl, lines, gap, img, CAP, BOX, BUL, PW, Paragraph, TextRun, PageBreak, FONT, BL, OR, INK, PageBreak: PB } = K;
 const QB = require('../questions.js'), M = require('../model.js');
 const URL = 'https://jamesclarke2-bit.github.io/physicsapps/half-life-isotopes/';
-const TABS = { decay: 'Decay', measure: 'Measure a half-life', choose: 'Choose the isotope' };
+const TABS = { decay: 'Decay', measure: 'Measure a half-life', choose: 'Choose the isotope', bench: 'Geiger counter bench' };
 const sup = (b, s) => new K.D.MathSuperScript({ children: b, superScript: [mr(s)] });
 const rich = (s, o) => K.rich(s, o);
 const ind = (s, o = {}) => new Paragraph({ spacing: { after: o.after ?? 100, line: 276 }, indent: { left: 520 }, keepNext: o.keepNext, keepLines: true, children: rich(s, { size: 21 }) });
@@ -48,7 +48,8 @@ QB.questions.forEach(q => {
       body.push(tbl([tb.rowHead].concat(tb.cols.map(c => c.head)), tb.rows.map(r => [r.label].concat(tb.cols.map((c, ci) => c.kind === 'input' ? '' : M.sig(r.cells[ci], 3)))),
         [1500].concat(tb.cols.map(() => Math.floor((PW - 1500) / tb.cols.length))), { rowH: 480, keep: true }));
     } else if (p.type === 'choice') {
-      body.push(ind(p.options.map(o => '☐  ' + o.label.replace(/\s{2,}/g, '  ')).join('        '), { after: 60 }));
+      if (p.options.some(o => o.label.length > 36)) p.options.forEach(o => body.push(ind('☐  ' + o.label.replace(/\s{2,}/g, '  '), { after: 50 })));
+      else body.push(ind(p.options.map(o => '☐  ' + o.label.replace(/\s{2,}/g, '  ')).join('        '), { after: 60 }));
     } else if (p.type === 'written') {
       body.push(lines(Math.max(2, p.marks * 2), PW, 430, 960));
     }

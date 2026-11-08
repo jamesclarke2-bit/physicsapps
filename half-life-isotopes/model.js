@@ -230,7 +230,20 @@
   function passes(scn, isoId, targets) { return evaluate(scn, isoId, targets).every(function (c) { return c.ok; }); }
   function passing(scn, targets) { return ISOTOPES.filter(function (i) { return passes(scn, i.id, targets); }).map(function (i) { return i.id; }); }
 
-  return { LN2: LN2, YEAR: YEAR, UNITS: UNITS, TIME_UNITS: TIME_UNITS, ISOTOPES: ISOTOPES, ISO: ISO, SCENARIOS: SCENARIOS, SCN: SCN,
+
+  /* ---------- Geiger counter bench: background and counting ---------- */
+  /* cfg = {bg: true background (counts/min), src: {iso:'custom',T,unit,name}, net0: source net count rate at t = 0 (counts/min), unit: time unit of the days} */
+  function poisson(mean, rand) {
+    var L, k, p, u1, u2;
+    if (!(mean > 0)) return 0;
+    if (mean < 40) { L = Math.exp(-mean); k = 0; p = 1; do { k++; p *= rand.next(); } while (p > L); return k - 1; }
+    u1 = Math.max(rand.next(), 1e-12); u2 = rand.next();
+    return Math.max(0, Math.round(mean + Math.sqrt(mean) * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)));
+  }
+  function benchRate(cfg, sourceIn, t) { return cfg.bg + (sourceIn ? cfg.net0 * fraction(t, halfLifeIn(resolve(cfg.src), cfg.unit)) : 0); }
+  function benchCount(cfg, sourceIn, t, seconds, rand) { return poisson(benchRate(cfg, sourceIn, t) * seconds / 60, rand); }
+  function toCpm(counts, seconds) { return counts * 60 / seconds; }
+  return { poisson: poisson, benchRate: benchRate, benchCount: benchCount, toCpm: toCpm, LN2: LN2, YEAR: YEAR, UNITS: UNITS, TIME_UNITS: TIME_UNITS, ISOTOPES: ISOTOPES, ISO: ISO, SCENARIOS: SCENARIOS, SCN: SCN,
     convert: convert, sameDim: sameDim, bestUnit: bestUnit, sig: sig, supStr: supStr, make: make, resolve: resolve,
     halfLifeSeconds: halfLifeSeconds, halfLifeIn: halfLifeIn, halfLifeText: halfLifeText, radiationText: radiationText, unitWord: unitWord, lambdaPerSecond: lambdaPerSecond,
     halfLives: halfLives, fraction: fraction, after: after, nucleiFromActivity: nucleiFromActivity, activityFromNuclei: activityFromNuclei, displayed: displayed,
