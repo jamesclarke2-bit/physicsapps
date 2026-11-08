@@ -6,8 +6,8 @@
   var $ = function (id) { return document.getElementById(id); };
   var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var ABS_ORDER = ['none', 'paper', 'aluminium', 'lead'], COL = ['--c1', '--c2', '--c3'];
-  var DEF = { bg: 30, unit: 'd', sources: ['Z'], days: [0], distances: [5], absorbers: ['none'], seconds: 60, secondsOptions: [30, 60, 120, 300], sourceIn: true, view: 'reading', note: '' };
-  var EXAMPLE = { bg: 30, unit: 'd', sources: ['Z', 'A', 'B', 'C', 'D'], days: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], distances: [2, 5, 10, 20, 40], absorbers: ABS_ORDER, seconds: 60, secondsOptions: [30, 60, 120, 300], sourceIn: true, view: 'decay', note: '' };
+  var DEF = { bg: 80, unit: 'd', sources: ['Z'], days: [0], distances: [5], absorbers: ['none'], seconds: 60, secondsOptions: [30, 60, 120, 300], sourceIn: true, view: 'reading', note: '' };
+  var EXAMPLE = { bg: 80, unit: 'd', sources: ['Z', 'A', 'B', 'C', 'D'], days: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], distances: [2, 5, 10, 20, 40], absorbers: ABS_ORDER, seconds: 60, secondsOptions: [30, 60, 120, 300], sourceIn: true, view: 'decay', note: '' };
   var C = EXAMPLE, st = {}, log = [], idx = 0, base = 4242, busy = false, showNet = false, showTheory = false, exampleOn = false, nodes = {};
 
   function src(id) { return M.BENCH_SOURCES[id || st.srcId]; }
@@ -210,9 +210,56 @@
     if (opts.length > 1) { var g = el('div', { class: 'seg', role: 'group', 'aria-label': 'Graph shows' }); opts.forEach(function (o) { g.appendChild(el('button', { type: 'button', text: o[1], 'aria-pressed': String(st.view === o[0]), onclick: function () { st.view = o[0]; renderPlot(); } })); }); vb.appendChild(el('span', { class: 'lab', text: 'Graph shows' })); vb.appendChild(g); }
   }
 
+  /* ---------- the two obvious curves: with and without background ---------- */
+  function renderTwo() {
+    var bm = bgMean(), ok = netOK(), groups = {}, order = [], msg = $('bn-two-msg'), lg = $('bn-two-legend'); lg.textContent = '';
+    log.forEach(function (r) { if (r.off || !r.src) return; var k = r.sid + '|' + r.d + '|' + r.abs; if (!groups[k]) { groups[k] = []; order.push(k); } groups[k].push(r); });
+    var best = null; order.forEach(function (k) { var days = {}; groups[k].forEach(function (r) { days[r.day] = 1; }); if (Object.keys(days).length > 1) best = k; });
+    var pts = [], lines = [], xmax = Math.max.apply(null, C.days.concat([1])), ymax = 50, ymin = 0, rows = [];
+    if (!best) msg.textContent = 'Put the source next to the tube and press "Reading every day" to see the decay curve.';
+    else {
+      rows = groups[best].slice().sort(function (a, b) { return a.day - b.day; }); var r0 = rows[0];
+      msg.textContent = 'Orange: what the counter shows (with background). Blue: the source alone, after subtracting your mean background. ' + seriesLabel(r0, 'decay')+ '.';
+      lines.push({ pts: rows.map(function (r) { return [r.day, rate(r)]; }), colour: '--c2' });
+      rows.forEach(function (r) { pts.push({ x: r.day, y: rate(r), colour: '--c2' }); if (rate(r) * 1.1 > ymax) ymax = rate(r) * 1.1; });
+      if (ok) {
+        lines.push({ pts: rows.map(function (r) { return [r.day, rate(r) - bm]; }), colour: '--c1' });
+        rows.forEach(function (r) { pts.push({ x: r.day, y: rate(r) - bm, colour: '--c1' }); if (rate(r) - bm < ymin) ymin = (rate(r) - bm) * 1.2; });
+      } else msg.textContent += ' The blue curve appears once you have measured the background: take at least three counts with the source in its box.';
+      if (showTheory) {
+        var cf = { bg: C.bg, unit: C.unit, src: src(r0.sid) }, raw = [], nt = [], i, x, v;
+        for (i = 0; i <= 80; i++) { x = xmax * i / 80; v = M.benchNet(cf, x, r0.d, r0.abs); raw.push([x, C.bg + v]); nt.push([x, v]); }
+        lines.push({ pts: raw, colour: '--c2', dash: '6 4' }); if (ok) lines.push({ pts: nt, colour: '--c1', dash: '6 4' });
+      }
+    }
+    if (isFinite(bm)) lines.push({ pts: [[0, bm], [xmax, bm]], colour: '--muted', dash: '5 4' });
+    Sim.plot($('bn-two'), { title: 'Decay curve with and without background', desc: 'Orange curve: count rate including background, which levels off at the background. Blue curve: net count rate after subtracting your mean background, which keeps falling.', xlabel: 'day, t / ' + dayWord(), ylabel: 'count rate, R / counts per min', zero: true, xmin: 0, xmax: xmax, ymin: ymin, ymax: ymax, points: pts, lines: lines });
+    var two = $('bn-two'), NS = 'http://www.w3.org/2000/svg', n = rows.length;
+    if (best && n > 1) {
+      var cs = [].slice.call(two.querySelectorAll('circle')), raw = cs.slice(0, n), net = ok ? cs.slice(n, 2 * n) : [];
+      function pt(c) { return [+c.getAttribute('cx'), +c.getAttribute('cy')]; }
+      if (net.length === n) {
+        var poly = document.createElementNS(NS, 'polygon'), a = raw.map(pt), z = net.map(pt).reverse();
+        poly.setAttribute('points', a.concat(z).map(function (p) { return p.join(','); }).join(' '));
+        poly.setAttribute('fill', 'var(--c2)'); poly.setAttribute('opacity', '0.3');
+        two.insertBefore(poly, two.firstChild);
+      }
+      function tag(c, txt, col, dx, dy) {
+        var p = pt(c), t = document.createElementNS(NS, 'text');
+        t.setAttribute('x', p[0] + dx); t.setAttribute('y', p[1] + dy); t.setAttribute('style', 'fill:var(' + col + ');font:700 13px var(--f-body)'); t.textContent = txt; two.appendChild(t);
+      }
+      var k = Math.min(2, n - 1);
+      tag(raw[k], 'WITH background', '--c2', 14, -14);
+      if (net.length === n) tag(net[k], 'WITHOUT background', '--c1', 14, 24);
+    }
+    lg.appendChild(el('li', { style: 'color:var(--c2)' }, el('span', { class: 'sol' }), el('span', { style: 'color:var(--ink)', text: 'WITH background (raw readings)' })));
+    lg.appendChild(el('li', { style: 'color:var(--c1)' }, el('span', { class: 'sol' }), el('span', { style: 'color:var(--ink)', text: ok ? 'WITHOUT background (net = reading − mean background)' : 'WITHOUT background (measure the background first)' })));
+    if (isFinite(bm)) lg.appendChild(el('li', { style: 'color:var(--muted);font-weight:400', text: 'dashed line = your mean background, ' + d1(bm) + ' counts/min' }));
+  }
+
   /* ---------- render and apply ---------- */
   function render() {
-    drawBench(String(0), 'time 0 s'); buildControls(); renderLog(); renderSummary(); renderPlot();
+    drawBench(String(0), 'time 0 s'); buildControls(); renderLog(); renderSummary(); renderTwo(); renderPlot();
     $('bn-info').textContent = 'The Geiger-Müller tube counts the particles that reach it. Choose the settings, then press Start count. Always measure the background first, with the source in its box. ' + (C.note || '');
     $('bn-banner').textContent = exampleOn ? 'Example data loaded: three background counts and a decay curve for Source Z. Press Clear readings to start your own.' : '';
     var nb = $('bn-net'), ok = netOK(); nb.disabled = !ok; nb.checked = showNet && ok; if (!ok) showNet = false;
@@ -233,8 +280,8 @@
 
   $('b-bclear').addEventListener('click', function () { if (busy) return; log = []; exampleOn = false; render(); });
   $('bn-net').addEventListener('change', function (e) { showNet = e.target.checked; render(); });
-  $('bn-theory').addEventListener('change', function (e) { showTheory = e.target.checked; renderPlot(); });
-  window.addEventListener('resize', function () { if (!busy) renderPlot(); });
+  $('bn-theory').addEventListener('change', function (e) { showTheory = e.target.checked; renderTwo(); renderPlot(); });
+  window.addEventListener('resize', function () { if (!busy) { renderTwo(); renderPlot(); } });
   HL.bench = { apply: apply, render: render, state: function () { return { C: C, st: st, log: log }; } };
   loadExample();
 })();

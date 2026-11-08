@@ -81,6 +81,7 @@ details.model .mpart{margin:8px 0 2px}details.model ul{margin:2px 0 4px;padding-
 tr.off td{text-decoration:line-through;color:var(--muted)}tr.off .xo{text-decoration:none}
 .warn{color:var(--bad);font-weight:700;font-size:14px}
 .bn-abs{stroke:var(--ink);stroke-width:1.5}.bn-abs-paper{fill:var(--surface)}.bn-abs-aluminium{fill:#b9c4d0}.bn-abs-lead{fill:#4b5563}
+.twocard{border:2px solid var(--accent)}.legend.big li{font-size:15px;font-weight:700}.legend.big .sol{border-top-width:5px}
 @media (prefers-reduced-motion:reduce){#b-play{display:none}}
 </style>
 </head>
@@ -229,6 +230,12 @@ tr.off td{text-decoration:line-through;color:var(--muted)}tr.off .xo{text-decora
         </div>
       </div>
       <div class="stack">
+        <div class="card twocard">
+          <div class="cardhead"><h2>Decay curve: with and without background</h2></div>
+          <p class="fine" id="bn-two-msg"></p>
+          <svg id="bn-two"></svg>
+          <ul class="legend big" id="bn-two-legend"></ul>
+        </div>
         <div class="card">
           <div class="cardhead"><h2>Background so far</h2></div>
           <div id="bn-sum"></div>
