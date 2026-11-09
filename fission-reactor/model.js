@@ -1,51 +1,83 @@
-/* Pendulum model: the SINGLE SOURCE OF TRUTH for this app's physics.
-   The simulation (app.js), the worksheet figures, the teacher answers and the tests all read this file.
-   Never copy these formulas anywhere else. UMD: loads in the browser (window.PendulumModel) and in Node (require).
+/* Fission reactor model: the SINGLE SOURCE OF TRUTH for this app's physics.
+   The simulator (app.js) and the tests read this file. UMD: window.ReactorModel or require().
 
-   ASSUMPTIONS (also listed in README.md, keep both in step):
-   - Point-mass pendulum of length L (pivot to centre of bob), small damping ignored.
-   - Period T = 2*pi*sqrt(L/g) * (1 + th0^2/16 + 11*th0^4/3072), th0 = amplitude in radians (series to 4th order).
-   - A timing of N oscillations has random error with standard deviation equal to the BIGGEST single source:
-       timer (reaction/instrument), release and judging the end-points (a fixed REL seconds), or resolution/2.
-     So the half-range of a few repeats is, on average, about the biggest source (teaching rule: uncertainty = half the range).
-   - Occasional anomalies: miscounting by one oscillation (3%), stopwatch fumble (5%).
-   - Systematic error: measuring length to the TOP of the bob instead of its centre makes L too short by BOB_R. */
+   A deliberately simple, qualitative model (GCSE level). Time is SLOWED so cause and effect can be seen.
+   ASSUMPTIONS (also in README.md, keep both in step):
+   - Water is both moderator and coolant (as in a pressurised water reactor). Other designs exist.
+   - Control rods inserted fraction i (0 out, 1 fully in). Each fission causes k further fissions on average:
+       k = 0.88 + 0.16 (1 - i), so k = 1 (critical) with the rods 25 % in. Without the moderator k is multiplied by 0.6.
+   - Relative neutron population n (1 = full power):  dn/dt = (k - 1) n / TAU + a small source. TAU = 0.2 s (real: far shorter).
+   - Thermal power P = 900 MW x n. Energy per fission 3.2e-11 J, so fissions per second = P / 3.2e-11.
+   - Decay heat: 6 % of the power, dying away with a time constant of 60 s here (about 10 minutes in a real reactor).
+   - Heat: C dT/dt = 0.94 P + decay heat - Q (6 % of the energy of each fission is released later as decay heat, so at steady power the heat made equals P), Q = H x pump x (T - 20 C). H is chosen so full power with the pump at full flow sits at 300 C.
+   - Electrical power = 0.35 x Q when the turbine is connected (thermal efficiency 35 %). The rest is wasted as heat.
+   - Limits: alarm 340 C, automatic shutdown (SCRAM) 350 C, fuel damage above 600 C, meltdown above 900 C.
+   - No temperature feedback and no delayed neutrons: not needed here. */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
-  else root.PendulumModel = factory();
+  else root.ReactorModel = factory();
 })(typeof self !== 'undefined' ? self : this, function () {
-  var G = 9.81, REL = 0.02, BOB_R = 0.025;
-  var TIMERS = {
-    stopwatch: { name: 'Hand stopwatch', short: 'Stopwatch', sig: 0.07, res: 0.01 },
-    video: { name: 'Video, frame by frame', short: 'Video', sig: 0.01, res: 0.001 },
-    gates: { name: 'Light gate', short: 'Light gate', sig: 0.003, res: 0.001 }
-  };
-  var TARGET_PCT = 5, SMALL_ANGLE_PCT = 1;
+  var P_FULL = 900, E_FISSION = 3.2e-11, EFFICIENCY = 0.35;
+  var K_MIN = 0.88, K_SPAN = 0.16, NO_MODERATOR = 0.6, TAU = 0.2, N_MIN = 0.001, N_MAX = 5;
+  var SOURCE = N_MIN * (1 - K_MIN) / TAU, N_SRC_OFF = 0.01;
+  var T_AMB = 20, C = 60, H = P_FULL / (300 - T_AMB);
+  var DECAY_FRAC = 0.06, DECAY_TAU = 60;
+  var T_ALARM = 340, T_SCRAM = 350, T_DAMAGE = 600, T_MELT = 900;
+  var CRITICAL_BAND = 0.005;
 
-  function period(L, thDeg) { var th = thDeg * Math.PI / 180; return 2 * Math.PI * Math.sqrt(L / G) * (1 + th * th / 16 + 11 * Math.pow(th, 4) / 3072); }
-  function periodSmall(L) { return 2 * Math.PI * Math.sqrt(L / G); }
-  function smallAnglePct(thDeg) { var th = thDeg * Math.PI / 180; return 100 * (th * th / 16 + 11 * Math.pow(th, 4) / 3072); }
-  /* the length a student reads off the ruler -> the true pivot-to-centre length */
-  function trueLength(Lmeasured, where) { return Lmeasured + (where === 'top' ? BOB_R : 0); }
-  function sources(tTrue, timer) { var t = TIMERS[timer]; return { timer: t.sig, release: REL, resolution: t.res / 2 }; }
-  function biggest(tTrue, timer) { var s = sources(tTrue, timer); return Math.max(s.timer, s.release, s.resolution); }
-  /* % uncertainty in T (= % uncertainty in the timed total, for N oscillations) */
-  function uncPct(Lmeasured, thDeg, N, timer, where) {
-    var T = period(trueLength(Lmeasured, where), thDeg), t = N * T; return 100 * biggest(t, timer) / t;
+  function create() {
+    return { t: 0, n: N_MIN, T: T_AMB, pd: 0, rods: 1, pump: 0.6, turbine: true, auto: true,
+      missing: { moderator: false, rods: false, coolant: false, shield: false },
+      scrammed: false, damaged: false, melted: false };
   }
-  /* One simulated reading of the time for N oscillations. rand = Sim.rng(...) */
-  function measure(Lmeasured, thDeg, N, timer, where, rand) {
-    var T = period(trueLength(Lmeasured, where), thDeg), t = N * T, tm = TIMERS[timer];
-    var x = t + rand.gauss() * biggest(t, timer);
-    var r = rand.next();
-    if (r < 0.03) x += (rand.next() < 0.5 ? -1 : 1) * T;
-    else if (timer === 'stopwatch' && r < 0.08) x += (rand.next() < 0.5 ? -1 : 1) * (0.2 + 0.15 * rand.next());
-    return Math.round(x / tm.res) * tm.res;
+  function insertion(s) { return s.missing.rods ? 0 : (s.scrammed ? 1 : s.rods); }
+  function kEff(s) {
+    var k = K_MIN + K_SPAN * (1 - insertion(s));
+    return s.missing.moderator ? k * NO_MODERATOR : k;
   }
-  /* Teaching check: the timing should last at least 10 x the timer uncertainty */
-  function longEnough(Lmeasured, thDeg, N, timer, where) { var t = N * period(trueLength(Lmeasured, where), thDeg); return t >= 10 * TIMERS[timer].sig; }
+  function flow(s) { return s.missing.coolant ? 0 : s.pump; }
+  function heatRemoved(s) { return H * flow(s) * Math.max(0, s.T - T_AMB); }
+  function statusOf(s) {
+    var k = kEff(s);
+    if (s.melted) return 'Meltdown';
+    if (s.damaged) return 'Fuel damage';
+    if (s.scrammed) return 'Emergency shutdown (SCRAM)';
+    if (k < 1 - CRITICAL_BAND) return 'Subcritical';
+    if (k <= 1 + CRITICAL_BAND) return 'Critical';
+    return 'Supercritical';
+  }
+  function trend(s) {
+    var k = kEff(s);
+    return k < 1 - CRITICAL_BAND ? 'falling' : k <= 1 + CRITICAL_BAND ? 'steady' : 'rising';
+  }
+  function derive(s) {
+    var P = P_FULL * s.n, Q = heatRemoved(s), Pe = s.turbine && s.T > 100 ? EFFICIENCY * Q : 0;
+    return { k: kEff(s), status: statusOf(s), trend: trend(s), P: P, fissions: P * 1e6 / E_FISSION,
+      Q: Q, Pe: Pe, waste: Q - Pe, pd: s.pd, steam: Math.min(1, Math.max(0, (s.T - 100) / 200)),
+      dose: s.n * (s.missing.shield ? 1 : 0.001), alarm: s.T >= T_ALARM, insertion: insertion(s) };
+  }
+  function step(s, dt) {
+    if (s.melted) return s;
+    var k = kEff(s), r = (k - 1) / TAU;
+    s.n = Math.min(N_MAX, Math.max(N_MIN, s.n * Math.exp(r * dt) + SOURCE * Math.max(0, 1 - s.n / N_SRC_OFF) * dt));
+    var P = P_FULL * s.n;
+    s.pd += (DECAY_FRAC * P - s.pd) / DECAY_TAU * dt;
+    s.T += (P * (1 - DECAY_FRAC) + s.pd - heatRemoved(s)) / C * dt;
+    if (s.T < T_AMB) s.T = T_AMB;
+    if (s.auto && !s.scrammed && s.T >= T_SCRAM) s.scrammed = true;
+    if (s.T > T_DAMAGE) s.damaged = true;
+    if (s.T > T_MELT) s.melted = true;
+    s.t += dt;
+    return s;
+  }
+  function run(s, seconds, dt) { dt = dt || 0.05; var n = Math.round(seconds / dt), i; for (i = 0; i < n; i++) step(s, dt); return s; }
+  function reset(s) { var f = create(); Object.keys(f).forEach(function (k) { s[k] = f[k]; }); return s; }
 
-  return { G: G, REL: REL, BOB_R: BOB_R, TIMERS: TIMERS, TARGET_PCT: TARGET_PCT, SMALL_ANGLE_PCT: SMALL_ANGLE_PCT,
-    period: period, periodSmall: periodSmall, smallAnglePct: smallAnglePct, trueLength: trueLength, sources: sources, biggest: biggest,
-    uncPct: uncPct, measure: measure, longEnough: longEnough };
+  /* fissions per second from a power in MW and an energy per fission in J (used by the calculation tab) */
+  function fissionsPerSecond(powerMW, energyJ) { return powerMW * 1e6 / (energyJ || E_FISSION); }
+
+  return { P_FULL: P_FULL, E_FISSION: E_FISSION, EFFICIENCY: EFFICIENCY, K_MIN: K_MIN, K_SPAN: K_SPAN, TAU: TAU, N_MIN: N_MIN, N_MAX: N_MAX,
+    T_AMB: T_AMB, T_ALARM: T_ALARM, T_SCRAM: T_SCRAM, T_DAMAGE: T_DAMAGE, T_MELT: T_MELT, DECAY_FRAC: DECAY_FRAC, DECAY_TAU: DECAY_TAU,
+    CRITICAL_INSERTION: 1 - (1 - K_MIN) / K_SPAN, create: create, step: step, run: run, reset: reset, derive: derive, kEff: kEff, insertion: insertion,
+    heatRemoved: heatRemoved, fissionsPerSecond: fissionsPerSecond, statusOf: statusOf };
 });

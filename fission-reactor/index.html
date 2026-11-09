@@ -9,88 +9,177 @@
 <link rel="stylesheet" href="../shared/sim.css">
 <style>
 /* App-specific styles only. Anything reusable belongs in shared/sim.css. */
-.rig .bob{fill:var(--c2);stroke:var(--ink);stroke-width:1.5}
-.rig .string{stroke:var(--ink);stroke-width:1.5}
-.rig .pivot{fill:var(--ink)}
-.rig .dim{stroke:var(--c1);stroke-width:1.4}
-.rig .dimtext{fill:var(--c1);font-weight:500;font-size:11px}
-.rig .ref{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 4}
+.rx{width:100%;height:auto;display:block}
+.rx text{font:12px var(--f-body);fill:var(--ink);paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+.rx .shield{fill:var(--surface2);stroke:var(--muted);stroke-width:2}
+.rx .water{fill:var(--c1);opacity:.28}
+.rx .hot{fill:var(--c2);opacity:0}
+.rx .fuel{fill:var(--c5);stroke:var(--ink);stroke-width:1}
+.rx .ctrl{fill:var(--ink);stroke:var(--surface);stroke-width:1}
+.rx .pipe{fill:none;stroke-width:9;stroke-linecap:butt}
+.rx .flow{fill:none;stroke:var(--surface);stroke-width:2.5;stroke-dasharray:6 10;opacity:.9}
+.rx .box{fill:var(--surface);stroke:var(--ink);stroke-width:1.6}
+.rx .coil{fill:none;stroke:var(--c2);stroke-width:3}
+.rx .part{cursor:pointer;outline:none}
+.rx .part:hover .hl,.rx .part:focus-visible .hl,.rx .part.on .hl{opacity:1}
+.rx .hl{fill:none;stroke:var(--accent);stroke-width:3;stroke-dasharray:7 5;opacity:0}
+.rx .gone{opacity:.25}
+.rx .neutron.fast{fill:var(--c2)}.rx .neutron.slow{fill:var(--ink)}
+.rx .flash{fill:none;stroke:var(--accent);stroke-width:2}
+.rx .puddle{fill:var(--bad);opacity:0}
+.rx .bulb{fill:var(--surface);stroke:var(--ink);stroke-width:1.6}
+.rx .ray{stroke:var(--accent);stroke-width:2.5;stroke-linecap:round}
+.rx .blade{stroke:var(--ink);stroke-width:4;stroke-linecap:round}
+.chip{display:inline-block;padding:4px 12px;border-radius:99px;font:700 15px var(--f-body);border:2px solid var(--line)}
+.chip.good{border-color:var(--good);color:var(--good)}.chip.warn{border-color:var(--accent);color:var(--accent)}.chip.bad{border-color:var(--bad);color:var(--bad)}
+.gauges{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px 18px;margin-top:10px}
+.gauge .gl{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:14px}
+.gauge .gv{font:500 14px var(--f-mono);text-align:right}
+.meter{position:relative;height:14px;border:1px solid var(--line);border-radius:8px;background:var(--surface2);overflow:hidden;margin-top:4px}
+.meter i{position:absolute;left:0;top:0;bottom:0;background:var(--c1);width:0}
+.meter u{position:absolute;top:0;bottom:0;width:2px;background:var(--bad)}
+.meter u.w{background:var(--accent)}
+.verdict{border-left:4px solid var(--accent);background:var(--tint);border-radius:6px;padding:10px 12px;margin:10px 0 0;font-size:15px}
+.verdict.bad{border-left-color:var(--bad)}
+.partinfo h3{font:700 16px var(--f-display);margin:14px 0 2px}
+.partinfo p{margin:0}
+.partinfo details{margin-top:12px;font-size:14px}
+.tg{margin:12px 0 0}
+.flowrow{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
+.fbox{flex:1 1 130px;min-width:120px;border:2px solid var(--line);border-radius:10px;padding:10px;background:var(--surface);font-size:14px}
+.fbox b{display:block;font-size:14px}
+.fbox .num{font:500 15px var(--f-mono);color:var(--accent);margin-top:4px;min-height:20px}
+.farrow{flex:0 0 auto;align-self:center;text-align:center;font-size:12px;color:var(--muted);width:70px}
+.farrow span{display:block;font-size:22px;line-height:1;color:var(--ink)}
+.farrow.go span{animation:nudge 1.2s ease-in-out infinite}
+@keyframes nudge{50%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.farrow.go span{animation:none}}
+@media (max-width:700px){.farrow{width:100%;transform:rotate(90deg);height:34px}.farrow small{display:inline-block;transform:rotate(-90deg)}}
+.sankey{display:flex;height:34px;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin-top:8px;font:500 13px var(--f-mono)}
+.sankey div{display:flex;align-items:center;justify-content:center;color:#fff;white-space:nowrap;overflow:hidden}
+.k-el{background:var(--c1)}.k-w{background:var(--muted)}
+.mini{width:100%;max-width:420px;height:auto}
+.mini text{font:12px var(--f-body);fill:var(--ink)}
+.stepsx{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.stepsx li{border-left:4px solid var(--c1);padding:6px 10px;background:var(--surface2);border-radius:4px}
+.stepsx .sl{display:block;font-size:13px;color:var(--muted)}
+.stepsx .eq{font:500 16px var(--f-mono);overflow-wrap:anywhere}
+.other{font-size:13px;color:var(--muted);margin:10px 0 0}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1>Nuclear fission reactor</h1>
-    <p class="sub">Change the length, amplitude and timing method, take readings, and see how the period and its uncertainty respond.</p>
+    <p class="sub">Run a reactor. Move the control rods, watch the chain reaction respond, and follow the energy from the uranium to the electricity.</p>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Simulation sections">
-    <button role="tab" id="t-bench" aria-controls="p-bench" aria-selected="true" data-tab="bench">Bench</button>
-    <button role="tab" id="t-analyse" aria-controls="p-analyse" aria-selected="false" data-tab="analyse">Analyse</button>
-    <button role="tab" id="t-design" aria-controls="p-design" aria-selected="false" data-tab="design">Improve the design</button>
+    <button role="tab" id="t-explore" aria-controls="p-explore" aria-selected="true" data-tab="explore">Explore the parts</button>
+    <button role="tab" id="t-run" aria-controls="p-run" aria-selected="false" data-tab="run">Run the reactor</button>
+    <button role="tab" id="t-energy" aria-controls="p-energy" aria-selected="false" data-tab="energy">Energy transfers</button>
+    <button role="tab" id="t-calc" aria-controls="p-calc" aria-selected="false" data-tab="calc">Power calculation</button>
   </nav>
 
-  <!-- BENCH -->
-  <section id="p-bench" role="tabpanel" aria-labelledby="t-bench">
-    <div class="think"><b>Think</b><span>Predict first: what happens to the period if you double the length? Then test it.</span></div>
-    <div class="bench">
+  <!-- EXPLORE -->
+  <section id="p-explore" role="tabpanel" aria-labelledby="t-explore">
+    <div class="think"><b>Think</b><span>Pick a part and predict what the reactor would do without it. Then take it away and check on the "Run the reactor" tab.</span></div>
+    <div class="two">
       <div class="card">
-        <div class="cardhead"><h2>Set up</h2></div>
-        <div class="ctl"><label for="c-L">Length, L <b id="o-L"></b></label><input id="c-L" type="range" min="0.2" max="1.2" step="0.05" value="0.5"></div>
-        <div class="ctl"><label for="c-amp">Amplitude <b id="o-amp"></b></label><input id="c-amp" type="range" min="2" max="40" step="1" value="10"></div>
-        <div class="ctl"><span class="lab">Oscillations timed, N</span><div class="seg" id="seg-N" role="group" aria-label="Oscillations timed"></div></div>
-        <div class="ctl"><span class="lab">Timer</span><div class="seg" id="seg-timer" role="group" aria-label="Timer"></div></div>
-        <div class="ctl"><span class="lab">Length measured to</span><div class="seg" id="seg-where" role="group" aria-label="Length measured to"></div></div>
-        <div class="btns">
-          <button class="btn primary" id="b-run3" type="button">Time 3 runs</button>
-          <button class="btn" id="b-run1" type="button">Time 1 run</button>
-          <button class="btn" id="b-swing" type="button" aria-pressed="false">Watch it swing</button>
-          <button class="btn" id="b-clear" type="button">Clear data</button>
+        <div class="cardhead"><h2>Inside the reactor</h2><span class="fine">Click a part (or press Tab, then Enter)</span></div>
+        <svg class="rx" id="rx-e" viewBox="0 0 780 440" role="group" aria-label="Cross-section of a nuclear reactor"></svg>
+        <p class="other">This is a pressurised water reactor, where water is both the moderator and the coolant. Other designs exist: graphite or heavy water can be the moderator, and gas or liquid metal can be the coolant.</p>
+      </div>
+      <div class="card partinfo" id="info" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- RUN -->
+  <section id="p-run" role="tabpanel" aria-labelledby="t-run" hidden>
+    <div class="think"><b>Think</b><span>Predict first: what happens to the number of neutrons if you raise the control rods a little? What if you raise them a lot?</span></div>
+    <div class="bench">
+      <div class="stack">
+        <div class="card">
+          <div class="cardhead"><h2>Controls</h2></div>
+          <div class="ctl"><label for="c-rods">Control rods inserted <b id="o-rods"></b></label><input id="c-rods" type="range" min="0" max="100" step="1" value="100" aria-describedby="rodnote"></div>
+          <p class="fine" id="rodnote">Rods in: neutrons are absorbed. Rods out: more neutrons cause fission.</p>
+          <div class="ctl" style="margin-top:12px"><label for="c-pump">Coolant pump <b id="o-pump"></b></label><input id="c-pump" type="range" min="0" max="100" step="5" value="60"></div>
+          <label class="check"><input type="checkbox" id="c-turb" checked> Turbine connected to the generator</label>
+          <label class="check"><input type="checkbox" id="c-auto" checked> Automatic safety shutdown (SCRAM) at 350 °C</label>
+          <p class="fine">Real reactors cannot switch the safety shutdown off. It is here so you can see why it matters.</p>
+          <div class="btns" style="margin-top:12px">
+            <button class="btn primary" id="b-scram" type="button">SCRAM: drop all rods</button>
+            <button class="btn" id="b-rearm" type="button">Reset safety trip</button>
+            <button class="btn" id="b-pause" type="button" aria-pressed="false">Pause</button>
+            <button class="btn" id="b-reset" type="button">Cold restart</button>
+          </div>
+          <div class="ctl" style="margin-top:12px"><span class="lab">Speed</span><div class="seg" id="seg-speed" role="group" aria-label="Speed"></div></div>
+          <p class="fine">Time is slowed down so you can see cause and effect. Real reactors respond much faster.</p>
+        </div>
+        <div class="card">
+          <div class="cardhead"><h2>What if we take a part away?</h2></div>
+          <label class="check"><input type="checkbox" id="m-rods"> Take away the control rods</label>
+          <label class="check"><input type="checkbox" id="m-moderator"> Take away the moderator effect</label>
+          <label class="check"><input type="checkbox" id="m-coolant"> Take away the coolant flow</label>
+          <label class="check"><input type="checkbox" id="m-shield"> Take away the shielding</label>
         </div>
       </div>
       <div class="stack">
-        <div class="card"><svg class="rig" id="rig" viewBox="0 0 400 300" role="img" aria-label="Pendulum set-up"></svg></div>
         <div class="card">
-          <div class="cardhead"><h2>Results</h2></div>
-          <p class="banner" id="banner"></p>
-          <div id="results"></div>
-          <p class="fine">Click a time to cross out an anomaly. Click an underlined value to see how it is worked out.</p>
+          <svg class="rx" id="rx-r" viewBox="0 0 780 440" role="img" aria-label="Animated reactor: neutrons, control rods, coolant loop, turbine and generator"></svg>
+          <p class="verdict" id="verdict"></p>
+        </div>
+        <div class="card">
+          <div class="cardhead"><h2>Reactor readings</h2><span class="chip" id="status"></span></div>
+          <p class="fine" id="kline"></p>
+          <div class="gauges" id="gauges"></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ANALYSE -->
-  <section id="p-analyse" role="tabpanel" aria-labelledby="t-analyse" hidden>
-    <div class="think"><b>Think</b><span>Plot T against L. Is it a straight line? Change the axes (1 &divide; it, squared, square root) until it is, then use the gradient. What should it equal?</span></div>
-    <div class="card" style="margin-bottom:14px"><div id="axes"></div></div>
-    <div class="two">
+  <!-- ENERGY -->
+  <section id="p-energy" role="tabpanel" aria-labelledby="t-energy" hidden>
+    <div class="think"><b>Think</b><span>Predict first: out of every 100 J of nuclear energy released in the core, how much ends up as electrical energy? Tick the box to check.</span></div>
+    <div class="card">
+      <div class="cardhead"><h2>Where does the energy go?</h2></div>
+      <div class="flowrow" id="flow"></div>
+      <label class="check" style="margin-top:12px"><input type="checkbox" id="e-nums"> Show the energy numbers for the reactor you are running</label>
+      <div id="sankey" hidden></div>
+    </div>
+    <div class="two" style="margin-top:16px">
       <div class="card">
-        <div class="cardhead"><h2 id="a-title"></h2></div>
-        <svg id="plot"></svg>
-        <label class="check" id="model-row"><input type="checkbox" id="chk-model"> Show the line the physics predicts</label>
+        <div class="cardhead"><h2>Why does the water heat up?</h2></div>
+        <svg class="mini" id="coll" viewBox="0 0 420 130" role="img" aria-label="A fast neutron hits a water particle. The neutron slows down and the water particle speeds up."></svg>
+        <p><b>The neutrons transfer energy to particles in the water through collisions.</b></p>
+        <p><b>The water heats up because its particles gain kinetic energy.</b></p>
       </div>
-      <div class="card"><div class="cardhead"><h2>Best-fit line</h2></div><div id="fit-out"></div></div>
+      <div class="card"><div class="cardhead"><h2>Check yourself</h2></div><div id="e-q"></div></div>
     </div>
   </section>
 
-  <!-- DESIGN -->
-  <section id="p-design" role="tabpanel" aria-labelledby="t-design" hidden>
-    <div class="think"><b>Think</b><span>Find a design with under 5% uncertainty in T that also keeps the small-angle formula valid.</span></div>
+  <!-- CALC -->
+  <section id="p-calc" role="tabpanel" aria-labelledby="t-calc" hidden>
+    <div class="think"><b>Think</b><span>Predict first: roughly how many nuclei split each second in a 900 MW reactor? 10⁹, 10¹⁵ or 10²⁰? Then work it out.</span></div>
     <div class="two">
       <div class="card">
-        <div class="cardhead"><h2>Design</h2></div>
-        <div class="ctl"><label for="d-L">Length <b id="od-L"></b></label><input id="d-L" type="range" min="0.2" max="1.2" step="0.05" value="0.5"></div>
-        <div class="ctl"><label for="d-amp">Amplitude <b id="od-amp"></b></label><input id="d-amp" type="range" min="2" max="40" step="1" value="10"></div>
-        <div class="ctl"><span class="lab">Oscillations timed, N</span><div class="seg" id="dseg-N" role="group" aria-label="Oscillations timed"></div></div>
-        <div class="ctl"><span class="lab">Timer</span><div class="seg" id="dseg-timer" role="group" aria-label="Timer"></div></div>
+        <div class="cardhead"><h2>Reactor power</h2></div>
+        <div class="ctl"><label for="x-p">Thermal power <b id="ox-p"></b></label><input id="x-p" type="range" min="100" max="1500" step="50" value="900"></div>
+        <div class="ctl"><label for="x-e">Energy released per fission <b id="ox-e"></b></label><input id="x-e" type="range" min="1" max="6" step="0.1" value="3.2"></div>
+        <div class="ctl"><label for="x-f">Thermal efficiency <b id="ox-f"></b></label><input id="x-f" type="range" min="20" max="60" step="1" value="35"></div>
+        <div class="btns"><button class="btn" id="x-live" type="button">Use the power of the reactor I am running</button><button class="btn" id="x-def" type="button">Back to 900 MW</button></div>
+        <p class="fine">Back-of-envelope: every fission releases the same energy and all of the thermal power comes from fission.</p>
       </div>
-      <div class="card"><div class="cardhead"><h2>Checks</h2></div><div id="d-out"></div></div>
+      <div class="card">
+        <div class="cardhead"><h2>Working</h2></div>
+        <div class="btns"><button class="btn primary" id="x-next" type="button">Show the next step</button><button class="btn" id="x-all" type="button">Show all</button><button class="btn" id="x-hide" type="button">Hide</button></div>
+        <ol class="stepsx" id="x-steps"></ol>
+      </div>
     </div>
   </section>
 
   <div class="about">
-    <p><strong>About this model.</strong> Period T = 2&pi;&radic;(L/g) with a small correction for large amplitude. Each timing has a random error equal to the biggest single source of error. Uncertainty in a mean time is half the range of the readings; repeating does not make a faulty method accurate.</p>
+    <p><strong>About this model.</strong> A simple, qualitative model. Each fission causes k more fissions on average, and k is set by the control rods. If k is below 1 the chain reaction dies away, if k is 1 the power is steady, and if k is above 1 the power grows. Heat made in the core is carried away by water, which boils water in a second loop to turn a turbine. Thermal efficiency is 35 %. After shutdown the core still makes some heat (decay heat), so cooling must continue. Numbers are chosen for teaching, and time is slowed down.</p>
   </div>
 </div>
 <script src="../shared/sim.js"></script>

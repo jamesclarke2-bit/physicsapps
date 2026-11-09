@@ -1,4 +1,4 @@
-# Nuclear fission reactor (DRAFT: physics to be agreed before any code)
+# Nuclear fission reactor (version 1 built; physics agreed in outline by James)
 
 ## Learning goal and misconceptions
 Students run a reactor and discover why each part is there, and follow the energy from the nuclear store to electricity.
@@ -14,18 +14,17 @@ Water is both moderator and coolant (as in a pressurised water reactor). This ke
 All in `model.js`, stepped with a fixed time step. Time is slowed so cause and effect is visible. This is stated on screen.
 
 **Chain reaction.** Control rod withdrawal w from 0 (fully in) to 1 (fully out).
-- Multiplication factor k = 0.90 + 0.12 w − 0.0004 (T − 300), with T the core temperature in °C. The last term is the real effect that hotter water slows neutrons less well, so k falls as T rises (negative feedback). It is shown as an explained extra, not hidden.
-- Critical (k = 1) at w of about 0.83 when T = 300 °C. The display shows k.
-- Relative neutron population n: dn/dt = (k − 1) n / τ, with τ = 4 s (real: a fraction of a second between neutron generations, slowed for the screen). A small neutron source keeps n above 10⁻⁴.
+- Kept qualitative (James: the temperature feedback is beyond the syllabus, so it is dropped). Rod insertion i from 0 (out) to 1 (in): k = 0.88 + 0.16 (1 − i). Critical (k = 1) with the rods 25 % in. Without the moderator k is multiplied by 0.6. The screen says "each fission causes about k more fissions".
+- Relative neutron population n: dn/dt = (k − 1) n / τ, with τ = 0.2 s (real: a fraction of a second between neutron generations, slowed for the screen). A small neutron source keeps n above 10⁻⁴.
 - Labels: k below 0.995 Subcritical, 0.995 to 1.005 Critical, above 1.005 Supercritical.
 
 **Power and fissions.**
 - Thermal power P = n × 900 MW (n = 1 is full power).
 - Energy per fission 3.2 × 10⁻¹¹ J (200 MeV), so 900 MW is 2.8 × 10¹⁹ fissions per second.
-- Decay heat: after a shutdown the fission products still release 6 % of the previous full power, falling with a time constant of 10 minutes (slowed with the same factor). Cooling is still needed after shutdown.
+- Decay heat: 6 % of the energy of each fission is released later (time constant 60 s here, about 10 minutes in reality), so steady heat made equals P and after shutdown the core still makes heat. Cooling is still needed.
 
 **Heat.**
-- Core heat capacity C (scaled): C dT/dt = P + P_decay − Q, with Q = h × f × (T − 150 °C), f the coolant pump flow from 0 to 1 and h chosen so that full power at f = 1 sits at 300 °C.
+- Core heat capacity C = 60 MW s/°C: C dT/dt = 0.94 P + P_decay − Q, with Q = h × f × (T − 20 °C), f the coolant pump flow from 0 to 1 and h chosen so that full power at f = 1 sits at 300 °C.
 - Steam fraction = share of Q that boils water, shown as steam in the loop.
 - Electrical output = 0.35 × Q × turbine on (thermal efficiency 35 %). The other 65 % is wasted as heat to the cooling tower or sea.
 
@@ -52,3 +51,6 @@ Not applicable (no measurement experiment). Readings are model values, to 2 or 3
 
 ## Assumptions to confirm
 Numbers above are mine: k formula, τ = 4 s, 35 % efficiency, 6 % decay heat, temperature thresholds, 900 MW.
+
+## Built (version 1)
+Tabs: Explore the parts (click a part, what/does/without, take-away switches), Run the reactor (rod and pump sliders, SCRAM, live gauges, animated neutrons, meltdown), Energy transfers (pathway with optional numbers, collision animation, check questions), Power calculation (step-by-step, adjustable). Not yet: missions, waste and ethics, teacher mode, worksheet, questions.
