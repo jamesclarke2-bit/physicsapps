@@ -3,8 +3,8 @@
   'use strict';
   var M = window.ForceModel, el = Sim.el, fmt = Sim.fmt, A = Sim.svgel;
   var $ = function (id) { return document.getElementById(id); };
-  var S = { nh: 5, k: 0, constant: true, tilt: 0, hanger: true, timer: 'video', x2: 1.0, x1: 0.3 };
-  var D = { nh: 5, k: 0, constant: true, tilt: 0, hanger: true, timer: 'video', x2: 1.0, x1: 0.3, tgt: 5 }, DES = null;
+  var S = { nh: 5, k: 0, constant: true, tilt: 0, hanger: true, timer: 'video', x2: 1.0, x1: 0.3, track: 2.0 };
+  var D = { nh: 5, k: 0, constant: true, tilt: 0, hanger: true, timer: 'video', x2: 1.0, x1: 0.3, tgt: 5, track: 2.0 }, DES = null;
   var lockedIds = [], rand = Sim.rng(33), meta = {};
   var results = new Sim.Results({ res: 0.001, dp: 2, rowHead: 'Set-up', empty: 'No readings yet. Press Time 3 runs.' });
   var TOPT = Object.keys(M.TIMERS).map(function (k) { return [k, M.TIMERS[k].short]; });
@@ -19,18 +19,20 @@
   function kg(x) { return fmt(x, 3) + ' kg'; }
 
   /* ---------- rig ---------- */
-  var XL = 20, XS = 90, PX = 270, Y0 = 90, XE = XS + M.TRACK * PX;
+  var XL = 20, XS = 90, PX = 270, Y0 = 90, XE = XS + 540;
   var anim = { x: 0, v: 0, t: 0, raf: 0, on: false, ghosts: [] }, vec = { F: false, a: false, v: false, strobe: true }, speed = 2;
   function drawRig() {
     var svg = $('rig'), th = S.tilt, rad = th * Math.PI / 180, s = setup(S);
+    PX = 540 / S.track; XE = XS + 540;
     svg.textContent = '';
-    svg.setAttribute('viewBox', '0 -48 760 ' + Math.round(298 + Math.max(0, M.TRACK * PX * Math.sin(rad))));
+    svg.setAttribute('viewBox', '0 -48 760 ' + Math.round(298 + Math.max(0, 540 * Math.sin(rad))));
     var g = A('g', { transform: 'rotate(' + th + ' ' + XL + ' ' + Y0 + ')' });
     g.appendChild(A('rect', { class: 'track', x: XL, y: Y0, width: XE - XL + 22, height: 8, rx: 2 }));
-    for (var i = 0; i <= 20; i++) {
+    var nt = Math.round(S.track * 10);
+    for (var i = 0; i <= nt; i++) {
       var X = XS + i * 0.1 * PX, big = i % 5 === 0;
       g.appendChild(A('line', { class: 'tick', x1: X, x2: X, y1: Y0 + 8, y2: Y0 + 8 + (big ? 9 : 5) }));
-      if (big) g.appendChild(A('text', { class: 'ticklbl', x: X, y: Y0 + 30, 'text-anchor': 'middle' }, fmt(i * 0.1, 1) + (i === 20 ? ' m' : '')));
+      if (big) g.appendChild(A('text', { class: 'ticklbl', x: X, y: Y0 + 30, 'text-anchor': 'middle' }, fmt(i * 0.1, 1) + (i === nt ? ' m' : '')));
     }
     g.appendChild(A('line', { class: 'flag', x1: XS, x2: XS, y1: Y0 - 40, y2: Y0 }));
     g.appendChild(A('text', { class: 'lbl', x: XS, y: Y0 - 44, 'text-anchor': 'middle' }, 'start'));
@@ -290,24 +292,24 @@
 
   /* ---------- design (depends on the experiment chosen) ---------- */
   var DESIGNS = {
-    force: { show: ['nh', 'tilt', 'timer', 'x2', 'tgt'], labels: { nh: 'Force: slotted masses on the hanger' }, set: {},
+    force: { show: ['nh', 'tilt', 'timer', 'track', 'x2', 'tgt'], labels: { nh: 'Force: slotted masses on the hanger' }, set: {},
       think: 'Which force is hardest to measure well: the smallest or the largest? Check both.',
       note: 'You will use several forces. The biggest force gives the shortest time, so the biggest % uncertainty. The smallest force gives the biggest friction effect. Slide the force and watch both.' },
-    mass: { show: ['nh', 'k', 'tilt', 'timer', 'x2', 'tgt'], labels: { nh: 'Force kept the same: masses on the hanger', k: 'Extra mass on the trolley' }, set: { nh: 4 },
+    mass: { show: ['nh', 'k', 'tilt', 'timer', 'track', 'x2', 'tgt'], labels: { nh: 'Force kept the same: masses on the hanger', k: 'Extra mass on the trolley' }, set: { nh: 4 },
       think: 'The force stays the same. Which trolley is hardest to measure well: the lightest or the heaviest?',
       note: 'The heaviest trolley accelerates least, so friction is a bigger fraction of the force. The lightest accelerates most, so its time is shortest. Check both ends.' },
-    distance: { show: ['nh', 'tilt', 'timer', 'x2', 'tgt'], labels: { nh: 'Force kept the same: masses on the hanger', x2: 'Shortest distance you will use' }, set: { x2: 0.4 },
+    distance: { show: ['nh', 'tilt', 'timer', 'track', 'x2', 'tgt'], labels: { nh: 'Force kept the same: masses on the hanger', x2: 'Shortest distance you will use' }, set: { x2: 0.4 },
       think: 'Each timer error is a fixed number of seconds. What does that do to the percentage uncertainty as the distance gets longer?',
       note: 'The timer errors are fixed amounts of time, so a longer time (a longer distance) makes them a smaller percentage. The shortest distance is the hardest one to do well.' },
-    suvat: { show: ['nh', 'tilt', 'x1', 'x2', 'tgt'], labels: { nh: 'Force kept the same: masses on the hanger', x2: 'Gate 2 position' }, set: { timer: 'gates', x1: 0.3, x2: 0.6 },
+    suvat: { show: ['nh', 'tilt', 'track', 'x1', 'x2', 'tgt'], labels: { nh: 'Force kept the same: masses on the hanger', x2: 'Gate 2 position' }, set: { timer: 'gates', x1: 0.3, x2: 0.6 },
       think: 'The gates measure u and v from the card. What happens to v² − u² compared with its uncertainty as the gates move further apart?',
       note: 'The card width is known to about 1%, so each speed has about 1% uncertainty. A bigger gap between the gates makes v² − u² bigger compared with that.' },
-    ramp: { show: ['k', 'tilt', 'timer', 'x2', 'tgt'], labels: { k: 'Extra mass on the trolley', tilt: 'Smallest tilt you will use' }, set: { hanger: false, tilt: 3 }, tilt: { min: 1, max: 15, step: 0.5 },
+    ramp: { show: ['k', 'tilt', 'timer', 'track', 'x2', 'tgt'], labels: { k: 'Extra mass on the trolley', tilt: 'Smallest tilt you will use' }, set: { hanger: false, tilt: 3 }, tilt: { min: 1, max: 15, step: 0.5 },
       think: 'The protractor reads to ±0.5°. What does that do to the percentage uncertainty in sinθ at a small tilt and at a large tilt?',
       note: 'A fixed ±0.5° is a bigger percentage of a small angle. Friction is also a bigger fraction of a small slope force. Check the smallest tilt you plan to use.' },
-    free: { show: ['nh', 'k', 'tilt', 'timer', 'x1', 'x2', 'tgt'], labels: {}, set: {}, think: 'Find a design that meets all the checks. What limits each choice?', note: 'Every control is available.' }
+    free: { show: ['nh', 'k', 'tilt', 'timer', 'track', 'x1', 'x2', 'tgt'], labels: {}, set: {}, think: 'Find a design that meets all the checks. What limits each choice?', note: 'Every control is available.' }
   };
-  var DBASE = { nh: 5, k: 0, constant: true, tilt: 0, hanger: true, timer: 'video', x2: 1.0, x1: 0.3 };
+  var DBASE = { nh: 5, k: 0, constant: true, tilt: 0, hanger: true, timer: 'video', x2: 1.0, x1: 0.3, track: 2.0 };
   function setDesign(id) {
     DES = DESIGNS[id]; if (!DES) return;
     Object.assign(D, DBASE, DES.set);
@@ -319,7 +321,7 @@
     [].forEach.call(document.querySelectorAll('[data-d]'), function (c) { c.hidden = DES.show.indexOf(c.getAttribute('data-d')) < 0; });
     $('think-design').textContent = DES.think; $('d-note').textContent = DES.note;
     $('d-none').hidden = true; $('d-body').hidden = false;
-    dTimerDraw(); renderDesign();
+    applyTrack(D, 'd-'); dTrackDraw(); dTimerDraw(); renderDesign();
   }
   function renderDesign() {
     if (!DES) return;
@@ -342,7 +344,7 @@
     ul.appendChild(row(M.longEnough(s, x1, D.x2, D.timer), 'Timing lasts at least 10 &times; the timer uncertainty: ' + fmt(t, 2) + ' s vs ' + fmt(10 * M.TIMERS[D.timer].sig, 2) + ' s', ['Long enough?', ['A timing that is not much longer than the timer uncertainty gives a large percentage uncertainty. 10 times is a quick rule of thumb. A longer distance or a slower trolley gives a longer time.']]));
     ul.appendChild(row(fr <= M.FRICTION_PCT, 'Friction changes a by <b>' + fmt(fr, 1) + '%</b> (target &le; ' + M.FRICTION_PCT + '%)', ['Friction', ['Friction is a systematic error: it is the same in every reading, so repeating cannot remove it, and it shows up as an intercept on your graph. ' + (D.hanger ? 'Tilting the track slightly lets the trolley’s weight component cancel the friction.' : 'On a slope it takes a bigger share of the slope force when the angle is small.')]]));
     out.appendChild(ul);
-    out.appendChild(el('p', { class: 'live', html: 'Acceleration ' + fmt(a, 2) + ' m s<sup>-2</sup>. Sources for the time of ' + fmt(t, 2) + ' s: timer ±' + fmt(src.timer, 3) + ' s, release &amp; judging ±' + fmt(src.release, 3) + ' s, resolution ±' + fmt(src.resolution, 4) + ' s. The biggest is used.' }));
+    out.appendChild(el('p', { class: 'live', html: 'Acceleration ' + fmt(a, 2) + ' m s<sup>-2</sup>. Sources for the time of ' + fmt(t, 2) + ' s: timer ±' + fmt(src.timer, 3) + ' s, release &amp; judging ±' + fmt(src.release, 3) + ' s, resolution ±' + fmt(src.resolution, 4) + ' s. The biggest is used.' + (D.x2 < D.track - 0.2 - 1e-9 ? ' Using the whole ' + fmt(D.track, 1) + ' m track (s = ' + fmt(D.track - 0.2, 1) + ' m) would give ' + fmt(M.accelUncPct(s, x1, D.track - 0.2, D.timer), 1) + '% uncertainty in a.' : ' You are using the whole track.') }));
   }
 
   /* ---------- wiring ---------- */
@@ -360,6 +362,14 @@
   bind('c-nh', 'nh', true); bind('c-k', 'k', true); bind('c-tilt', 'tilt', true); bind('c-x2', 'x2', true); bind('c-x1', 'x1', true); bind('c-const', 'constant', false); bind('c-hanger', 'hanger', false);
   function nudge(d) { S.tilt = Math.max(0, Math.min(20, Math.round((S.tilt + d) * 10) / 10)); $('c-tilt').value = S.tilt; syncBench(); }
   $('tilt-').addEventListener('click', function () { nudge(-0.1); }); $('tilt+').addEventListener('click', function () { nudge(0.1); });
+  var TRACKS = [[1, '1.0 m'], [1.5, '1.5 m'], [2, '2.0 m'], [2.5, '2.5 m'], [3, '3.0 m']];
+  function applyTrack(o, p) {
+    var mx = Math.round((o.track - 0.2) * 10) / 10, mx1 = Math.min(1.5, Math.round((o.track - 0.4) * 10) / 10);
+    $(p + 'x2').max = mx; $(p + 'x1').max = mx1;
+    if (o.x2 > mx) o.x2 = mx; if (o.x1 > mx1) o.x1 = mx1;
+    $(p + 'x2').value = o.x2; $(p + 'x1').value = o.x1;
+  }
+  var trackDraw = seg('seg-track', TRACKS, function () { return S.track; }, function (v) { S.track = v; applyTrack(S, 'c-'); syncBench(); });
   timerDraw = seg('seg-timer', TOPT, function () { return S.timer; }, function (v) { S.timer = v; if (v === 'gates' && S.x2 <= S.x1) S.x2 = Math.min(1.8, S.x1 + 0.7); $('c-x2').value = S.x2; syncBench(); });
   $('b-run3').addEventListener('click', function () { run(3); watch(true); }); $('b-run1').addEventListener('click', function () { run(1); watch(true); });
   $('b-watch').addEventListener('click', function () { watch(); });
@@ -372,6 +382,7 @@
   $('chk-model').addEventListener('change', renderPlot);
   function dbind(id, key) { $(id).addEventListener('input', function (e) { D[key] = +e.target.value; renderDesign(); }); }
   dbind('d-nh', 'nh'); dbind('d-k', 'k'); dbind('d-tilt', 'tilt'); dbind('d-x1', 'x1'); dbind('d-x2', 'x2'); dbind('d-tgt', 'tgt');
+  var dTrackDraw = seg('dseg-track', TRACKS, function () { return D.track; }, function (v) { D.track = v; applyTrack(D, 'd-'); renderDesign(); });
   var dTimerDraw = seg('dseg-timer', TOPT, function () { return D.timer; }, function (v) { D.timer = v; renderDesign(); });
 
 
@@ -391,26 +402,31 @@
     });
   }
   function setS(o) {
-    Object.assign(S, o);
+    Object.assign(S, o); applyTrack(S, 'c-'); trackDraw();
     $('c-nh').value = S.nh; $('c-const').checked = S.constant; $('c-k').value = S.k; $('c-tilt').value = S.tilt; $('c-hanger').checked = S.hanger; $('c-x2').value = S.x2; $('c-x1').value = S.x1;
     timerDraw(); syncBench();
   }
-  var BASE = { nh: 5, k: 0, constant: true, tilt: 0, hanger: true, timer: 'video', x2: 1.0, x1: 0.3 };
+  var BASE = { nh: 5, k: 0, constant: true, tilt: 0, hanger: true, timer: 'video', x2: 1.0, x1: 0.3, track: 2.0 };
   var ALL = ['nh', 'const', 'k', 'tilt', 'hanger', 'timer', 'x2', 'x1'];
   function except(list) { return ALL.filter(function (x) { return list.indexOf(x) < 0; }); }
   function opt(label, good, msg, lockIds, set) { return { label: label, good: good, msg: msg, lock: lockIds, apply: set ? function () { setS(set); } : null }; }
   function fresh(o) { return function () { setS(Object.assign({}, BASE, o || {})); }; }
+  function trackCheck(longX2) {
+    return { q: 'Should you use the longest track you can?', options: [
+      opt('Yes', true, 'Yes. A longer track allows a longer timing. The timer errors are fixed amounts of time, so they become a smaller percentage. The limit is the space you have in the lab.', [], longX2 ? { track: 3, x2: longX2 } : { track: 3 }),
+      opt('No', false, 'A short track gives a short timing, so the same timer error is a bigger percentage and the readings are less reliable. Try it and look at the % uncertainty in a.', [], longX2 ? { track: 1, x2: 0.8 } : { track: 1 })] };
+  }
   var EXPS = [
     { id: 'force', title: 'Force and acceleration', sub: 'Does a depend on F?', ax: [{ q: 'F' }, { q: 'a' }], dim: 'nh', ana: 'Plot a against F. Is it a straight line through the origin? What does the gradient tell you?', change: 'force F (masses on the hanger)', measure: 'acceleration a, from the time t over a fixed distance s', keep: ['total mass m', 'distance s', 'track tilt', 'timer'],
       think: 'Predict: if you double the pulling force and keep the total mass the same, what happens to the acceleration?', apply: fresh(),
       checks: [{ q: 'Should the total mass stay the same while you change F?', options: [
         opt('Yes', true, 'Yes. Moving masses from the trolley to the hanger changes F but not the total mass.', except(['nh']), { constant: true }),
-        opt('No', false, 'Then the mass being accelerated changes as well as F, so you cannot tell which caused the change in a. Try it, then compare the graph with the constant-mass version.', except(['nh', 'const']), { constant: false })] }] },
+        opt('No', false, 'Then the mass being accelerated changes as well as F, so you cannot tell which caused the change in a. Try it, then compare the graph with the constant-mass version.', except(['nh', 'const']), { constant: false })] }, trackCheck(2.8)] },
     { id: 'mass', title: 'Mass and acceleration', sub: 'Does a depend on m?', ax: [{ q: 'm' }, { q: 'a' }], dim: 'k', ana: 'Plot a against m. Is it a straight line? Change the x axis until it is, then work out the force from the gradient.', change: 'total mass m (extra blocks on the trolley)', measure: 'acceleration a, from the time t over a fixed distance s', keep: ['pulling force F', 'distance s', 'track tilt', 'timer'],
       think: 'Predict: if you double the total mass and keep the force the same, what happens to the acceleration?', apply: fresh(),
       checks: [{ q: 'Should the pulling force stay the same while you change the mass?', options: [
         opt('Yes', true, 'Yes. Keep the hanger the same and add mass to the trolley.', except(['k'])),
-        opt('No', false, 'Then F and m both change, so you cannot tell which one changed a.', except(['k', 'nh']))] }] },
+        opt('No', false, 'Then F and m both change, so you cannot tell which one changed a.', except(['k', 'nh']))] }, trackCheck(2.8)] },
     { id: 'distance', title: 'Distance and time', sub: 'Does s = ½at² hold?', ax: [{ q: 't' }, { q: 's' }], dim: 'x2', ana: 'Plot s against t. Is it a straight line? Change the x axis until it is, then use the gradient to find a.', change: 'distance s to the finish', measure: 'time t from release', keep: ['force F', 'total mass m', 'track tilt', 'timer'],
       think: 'Predict: what graph of s against t² should you get if the acceleration is constant?', apply: fresh({ timer: 'video' }),
       checks: [
@@ -419,17 +435,17 @@
           opt('No', false, 'Then u is not zero and s = ½at² is not enough. Use two light gates (the equations of motion experiment).', [])] },
         { q: 'Should F and m stay the same while you change s?', options: [
           opt('Yes', true, 'Yes. Then a is constant and only s and t change.', except(['x2', 'timer'])),
-          opt('No', false, 'Then a changes between runs, and s against t² will not be a straight line.', except(['x2', 'timer', 'nh', 'k']))] }] },
+          opt('No', false, 'Then a changes between runs, and s against t² will not be a straight line.', except(['x2', 'timer', 'nh', 'k']))] }, trackCheck(null)] },
     { id: 'suvat', title: 'Equations of motion', sub: 'Do the SUVAT equations agree?', ax: [{ q: 's' }, { q: 'v' }], dim: 'x2', ana: 'Plot v against s. Is it a straight line? Change the y axis until it is. What do the gradient and intercept give you?', change: 'position of gate 2 (distance s between the gates)', measure: 'u, v and t from the light gates', keep: ['force F', 'total mass m', 'gate 1 position', 'track tilt'],
       think: 'Predict: will a worked out from v = u + at, s = ut + ½at² and v² = u² + 2as give the same value?', apply: fresh({ timer: 'gates', x1: 0.3, x2: 1.2 }),
       checks: [{ q: 'Should gate 1 stay in the same place while you move gate 2?', options: [
         opt('Yes', true, 'Yes. u stays the same and only the distance between the gates changes.', except(['x2'])),
-        opt('No', false, 'Then u and s both change together, which makes the graph harder to interpret.', except(['x2', 'x1']))] }] },
+        opt('No', false, 'Then u and s both change together, which makes the graph harder to interpret.', except(['x2', 'x1']))] }, trackCheck(null)] },
     { id: 'ramp', title: 'Ramp', sub: 'Does mass matter on a slope?', ax: [{ q: 'th' }, { q: 'a' }], dim: 'tilt', ana: 'Plot a against θ. Is it a straight line? Change the x axis until it is, then use the gradient to find g.', change: 'tilt of the track, then the mass', measure: 'acceleration a, from the time t over a fixed distance s', keep: ['distance s', 'timer', 'no hanger'],
       think: 'Predict: on a slope with no hanger, does a heavier trolley accelerate faster, slower or at the same rate?', apply: fresh({ hanger: false, tilt: 6 }),
       checks: [{ q: 'Should the hanger stay attached?', options: [
         opt('Yes', false, 'Then the hanger’s weight pulls as well, so a does not depend only on the slope. Try it and see.', except(['tilt', 'hanger', 'k', 'nh']), { hanger: true }),
-        opt('No', true, 'Yes, remove it. With only the slope pulling, a = g sinθ and the mass cancels. Then try adding mass to the trolley.', except(['tilt', 'k']), { hanger: false })] }] },
+        opt('No', true, 'Yes, remove it. With only the slope pulling, a = g sinθ and the mass cancels. Then try adding mass to the trolley.', except(['tilt', 'k']), { hanger: false })] }, trackCheck(2.8)] },
     { id: 'free', title: 'Free explore', sub: 'Change anything', ax: [{ q: 'F' }, { q: 'a' }], dim: 'nh', ana: 'Choose any two quantities. Try changing an axis (1 ÷ it, squared, square root) to straighten a curve.', change: 'anything', measure: 'time t (and u, v with the gates)', keep: ['nothing is locked'],
       think: 'Try changing one thing at a time. What do you notice?', apply: fresh(), checks: [] }
   ];

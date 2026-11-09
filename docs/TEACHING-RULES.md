@@ -48,3 +48,6 @@ These come from James's own teaching. They override defaults. If a build seems t
 
 ## Model lines
 - A dashed model line always states the assumption it makes in the legend and checkbox (for example "the case always falls at terminal velocity"), never just "the physics model". Where the data leaves the line, the assumption has failed and the investigation is about why (method, drop height, mass range). Say how far the data is from it.
+
+## Apparatus size
+- Where the length of the run matters (track, drop height), let the student choose it (Bench and Improve the design) and add a yes/no check "Should you use the longest you can?". A longer run gives a longer timing and a smaller percentage uncertainty; the limit is lab space, not the model.
