@@ -147,11 +147,11 @@
     sim: { tab: 'decay', task: 'The detector reading is shown with background. Tick "Subtract background" and see what changes.', think: 'Predict first: should you use the readings as they are, or correct them first?',
       state: { unit: 'd', tmax: 5, quantity: 'count', bg: BG, subtract: false, nGrid: 500, showTheory: true, sources: [{ iso: 'custom', T: TBG, unit: 'd', name: 'Isotope X', start: NET0, mystery: true }] } },
     hint: 'Only the count rate from the source halves. Background does not.',
-    parts: [{ id: 'a', type: 'num', text: 'Find the half-life of the source.', marks: 4, inputs: [
+    parts: [{ id: 'a', type: 'num', text: 'Find the corrected half-life of the source (remove the background first).', marks: 4, inputs: [
       N('a1', 'Net count rate at the start', NET0, 'counts/min', { units: ['counts/min'], tol: 0.01 }),
       N('a2', 'Net count rate after 3 days', rawAt(3) - BG, 'counts/min', { units: ['counts/min'], tol: 0.01 }),
       N('a3', 'Number of half-lives in 3 days', 3, null, { abs: 0.05, ecf: function (S) { return Math.log(S.get('a1') / S.get('a2')) / Math.LN2; } }),
-      N('a4', 'Half-life', 1, 'd', { units: ['h', 'd'], tol: 0.03, ecf: function (S) { return 3 / S.get('a3'); } })] }] });
+      N('a4', 'Corrected half-life of the source', 1, 'd', { units: ['h', 'd'], tol: 0.03, ecf: function (S) { return 3 / S.get('a3'); } })] }] });
 
   var SMOKE_C = ['Tc99m', 'Sr90', 'Am241', 'Co60', 'Po210'];
   Q.push({ id: 'q7', part: 'B', title: 'Choosing the smoke-alarm isotope',
@@ -304,7 +304,7 @@
     parts: [{ id: 'a', type: 'table', text: 'Complete the table.', marks: 2, cellsPerMark: 2,
       table: { rowHead: 't (days)', cols: [{ head: 'Reading, R (counts/min)', kind: 'given' }, { head: 'Net count rate (counts/min)', kind: 'input' }],
         rows: [0, 1, 2, 3].map(function (t) { return { label: String(t), cells: [rawAt(t), rawAt(t) - BG] }; }) } },
-      { id: 'b', type: 'num', text: 'Use your net count rates.', marks: 1, inputs: [N('b1', 'Half-life of the source', 1, 'd', { units: ['h', 'd'], tol: 0.03 })] },
+      { id: 'b', type: 'num', text: 'Use your net count rates to find the corrected half-life of the source.', marks: 1, inputs: [N('b1', 'Corrected half-life of the source', 1, 'd', { units: ['h', 'd'], tol: 0.03 })] },
       W('c', 'Explain why the readings, as they are, give a half-life that is too long.', 2, [
         P('background is always there and does not decay', [[/background.{0,60}(constant|always|stays|same|does not|doesn't|never|not (decay|change))|(constant|always|never).{0,30}background|doesn't decay|does not decay|not part of the (source|decay)/]]),
         P('so the reading never falls below background and takes longer to halve', [[/(never|not|can't|cannot).{0,30}(fall|drop|go) (below|under|to zero)|(longer|slower|more slowly|bigger).{0,40}(halve|half)|(halve|half).{0,40}(longer|slower|more slowly)|takes? longer|doesn't halve|not halve|too (high|big|large)/]])],
@@ -381,13 +381,13 @@
         N('a1', 'Background reading 1 (counts/min)', null, null, { marks: 0, free: true, grp: 'f' }), N('a2', 'Background reading 2 (counts/min)', null, null, { marks: 0, free: true, grp: 'f' }),
         N('a3', 'Background reading 3 (counts/min)', null, null, { marks: 0, free: true, grp: 'f' }),
         N('a4', 'Mean background count rate (counts/min)', null, null, { tol: 0.01, note: 'about ' + B19.bg + ' counts/min', ecf: function (S) { return meanOf(S, ['a1', 'a2', 'a3']); } })] },
-      { id: 'b', type: 'num', text: 'The source.', marks: 6, inputs: [
+      { id: 'b', type: 'num', text: 'Find the corrected half-life of the source.', marks: 6, inputs: [
         N('b1', 'Reading with the source, day 0 (counts/min)', null, null, { marks: 0, free: true, grp: 'f', note: 'about ' + (B19.bg + 1600) + ' counts/min' }),
         N('b2', 'Reading with the source, day 8 (counts/min)', null, null, { marks: 0, free: true, grp: 'f', note: 'about ' + Math.round(B19.bg + 1600 * M.fraction(8, 2)) + ' counts/min' }),
         N('b3', 'Net count rate, day 0 (counts/min)', null, null, { tol: 0.015, grp: 'T', note: 'about 1600 counts/min', ecf: function (S) { return S.get('b1') - S.get('a4'); } }),
         N('b4', 'Net count rate, day 8 (counts/min)', null, null, { tol: 0.015, grp: 'T', note: 'about ' + Math.round(1600 * M.fraction(8, 2)) + ' counts/min', ecf: function (S) { return S.get('b2') - S.get('a4'); } }),
         N('b5', 'Number of half-lives in 8 days', null, null, { tol: 0.04, grp: 'T', note: 'about 4', ecf: function (S) { return Math.log(S.get('b3') / S.get('b4')) / Math.LN2; } }),
-        N('b6', 'Half-life of source Z', null, 'd', { units: ['h', 'd'], tol: 0.03, grp: 'T', note: 'about 2 days', ecf: function (S) { return 8 / S.get('b5'); } }),
+        N('b6', 'Corrected half-life of source Z (background subtracted)', null, 'd', { units: ['h', 'd'], tol: 0.03, grp: 'T', note: 'about 2 days', ecf: function (S) { return 8 / S.get('b5'); } }),
         N('b7', 'Half-life you would get if you forgot to subtract the background', null, 'd', { units: ['h', 'd'], tol: 0.03, grp: 'R', note: 'about 2.3 days (too long)', ecf: function (S) { return 8 / (Math.log(S.get('b1') / S.get('b2')) / Math.LN2); } })],
         extra: function (S) {
           var T = S.get('b6', 'd'), ok = isFinite(T) && T > 1.7 && T < 2.25;
@@ -420,9 +420,9 @@
         table: { rowHead: 'Day', cols: [{ head: 'Reading, R (counts/min)', kind: 'input', free: true }, { head: 'Net count rate (counts/min)', kind: 'input', ecfCol: true }],
           rows: D20.map(function (t) { return { label: String(t), cells: [null, net(t, 2)] }; }) },
         ecf: function (CS, row) { return CS.cell(row, 0) - CS.get('a4'); } },
-      { id: 'c', type: 'num', text: 'Half-life from day 0 and day 6.', marks: 4, inputs: [
+      { id: 'c', type: 'num', text: 'Find the corrected half-life of source Z from day 0 and day 6.', marks: 4, inputs: [
         N('c1', 'Number of half-lives between day 0 and day 6', 3, null, { abs: 0.2, grp: 'T', ecf: function (S) { return Math.log(S.cell('b', 0, 1) / S.cell('b', 3, 1)) / Math.LN2; } }),
-        N('c2', 'Half-life of source Z (days)', null, 'd', { units: ['h', 'd'], tol: 0.04, grp: 'T', note: 'about 2 days', ecf: function (S) { return 6 / S.get('c1'); } }),
+        N('c2', 'Corrected half-life of source Z (background subtracted) (days)', null, 'd', { units: ['h', 'd'], tol: 0.04, grp: 'T', note: 'about 2 days', ecf: function (S) { return 6 / S.get('c1'); } }),
         N('c3', 'Half-life if you use the readings without subtracting the background (days)', null, 'd', { units: ['h', 'd'], tol: 0.04, grp: 'R', note: 'about 2.2 days (too long)', ecf: function (S) { return 6 / (Math.log(S.cell('b', 0, 0) / S.cell('b', 3, 0)) / Math.LN2); } }),
         N('c4', 'Percentage by which this half-life is too long', null, '%', { tol: 0.1, grp: 'P', note: 'about 8%', ecf: function (S) { return 100 * (S.get('c3') - S.get('c2')) / S.get('c2'); } })] },
       W('d', 'Describe the shape of the raw readings and of the net count rate, and explain the difference.', 2, [

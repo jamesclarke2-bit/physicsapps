@@ -188,7 +188,10 @@
         var g = groups[key], col = COL[k % 3], rowsS = g.rows.slice().sort(function (a, b) { return a.x - b.x; }), r = g.r;
         legend.push([col, seriesLabel(r, view)]);
         g.rows.forEach(function (p) { pts.push({ x: p.x, y: p.y, colour: col }); bump(p.y * 1.1); });
-        if (net) { lines.push({ pts: rowsS.map(function (p) { return [p.x, p.y - bm]; }), colour: col }); rowsS.forEach(function (p) { bump(p.y - bm); }); }
+        if (net) {
+          var sx = rowsS.map(function (p) { return p.x; }), sf = view === 'decay' && rowsS.length > 2 ? fitExp(sx, rowsS.map(function (p) { return p.y - bm; }), 0) : null;
+          lines.push({ pts: sf ? smooth(sf, sx[0], sx[sx.length - 1]) : rowsS.map(function (p) { return [p.x, p.y - bm]; }), colour: col }); rowsS.forEach(function (p) { bump(p.y - bm); });
+        }
         if (showTheory && view !== 'abs') {
           var cf = { bg: C.bg, unit: C.unit, src: src(r.sid) }, raw = [], nt = [], n = 80, i, x, v;
           for (i = 0; i <= n; i++) {
@@ -210,6 +213,26 @@
     if (opts.length > 1) { var g = el('div', { class: 'seg', role: 'group', 'aria-label': 'Graph shows' }); opts.forEach(function (o) { g.appendChild(el('button', { type: 'button', text: o[1], 'aria-pressed': String(st.view === o[0]), onclick: function () { st.view = o[0]; renderPlot(); } })); }); vb.appendChild(el('span', { class: 'lab', text: 'Graph shows' })); vb.appendChild(g); }
   }
 
+  /* ---------- smooth best-fit curve: offset + A*(1/2)^(t/T), fitted by least squares on ln(y - offset) ---------- */
+  function fitExp(xs, ys, fixedC) {
+    function lin(c) {
+      var P = [], i, w, sw = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
+      for (i = 0; i < xs.length; i++) if (ys[i] - c > 0.5) P.push([xs[i], Math.log(ys[i] - c), (ys[i] - c) * (ys[i] - c)]);
+      if (P.length < 2) return null;
+      P.forEach(function (p) { w = p[2]; sw += w; sx += w * p[0]; sy += w * p[1]; sxx += w * p[0] * p[0]; sxy += w * p[0] * p[1]; });
+      var d = sw * sxx - sx * sx; if (!d) return null;
+      var k = (sw * sxy - sx * sy) / d, a = (sy - k * sx) / sw, sse = 0;
+      for (i = 0; i < xs.length; i++) sse += Math.pow(ys[i] - c - Math.exp(a + k * xs[i]), 2);
+      return { c: c, a: a, k: k, sse: sse };
+    }
+    var best = null, c, f, mn = Math.min.apply(null, ys);
+    if (fixedC !== undefined) best = lin(fixedC);
+    else for (c = 0; c < mn * 0.995; c += Math.max(mn / 200, 0.05)) { f = lin(c); if (f && (!best || f.sse < best.sse)) best = f; }
+    if (!best) return null;
+    return function (x) { return best.c + Math.exp(best.a + best.k * x); };
+  }
+  function smooth(f, x0, x1) { var o = [], i; for (i = 0; i <= 60; i++) o.push([x0 + (x1 - x0) * i / 60, f(x0 + (x1 - x0) * i / 60)]); return o; }
+
   /* ---------- the two obvious curves: with and without background ---------- */
   function renderTwo() {
     var bm = bgMean(), ok = netOK(), groups = {}, order = [], msg = $('bn-two-msg'), lg = $('bn-two-legend'); lg.textContent = '';
@@ -219,11 +242,14 @@
     if (!best) msg.textContent = 'Put the source next to the tube and press "Reading every day" to see the decay curve.';
     else {
       rows = groups[best].slice().sort(function (a, b) { return a.day - b.day; }); var r0 = rows[0];
-      msg.textContent = 'Orange: what the counter shows (with background). Blue: the source alone, after subtracting your mean background. ' + seriesLabel(r0, 'decay')+ '.';
-      lines.push({ pts: rows.map(function (r) { return [r.day, rate(r)]; }), colour: '--c2' });
+      msg.textContent = 'Orange: what the counter shows (with background). Blue: the source alone, after subtracting your mean background. Smooth lines are best-fit curves through the points. ' + seriesLabel(r0, 'decay')+ '.';
+      var xs = rows.map(function (r) { return r.day; }), fN = ok ? fitExp(xs, rows.map(function (r) { return rate(r) - bm; }), 0) : null,
+        fR = fN ? function (x) { return bm + fN(x); } : fitExp(xs, rows.map(rate));
+      var x1 = xs[xs.length - 1];
+      if (fR) lines.push({ pts: smooth(fR, xs[0], x1), colour: '--c2' });
       rows.forEach(function (r) { pts.push({ x: r.day, y: rate(r), colour: '--c2' }); if (rate(r) * 1.1 > ymax) ymax = rate(r) * 1.1; });
       if (ok) {
-        lines.push({ pts: rows.map(function (r) { return [r.day, rate(r) - bm]; }), colour: '--c1' });
+        if (fN) lines.push({ pts: smooth(fN, xs[0], x1), colour: '--c1' });
         rows.forEach(function (r) { pts.push({ x: r.day, y: rate(r) - bm, colour: '--c1' }); if (rate(r) - bm < ymin) ymin = (rate(r) - bm) * 1.2; });
       } else msg.textContent += ' The blue curve appears once you have measured the background: take at least three counts with the source in its box.';
       if (showTheory) {
@@ -239,7 +265,9 @@
       var cs = [].slice.call(two.querySelectorAll('circle')), raw = cs.slice(0, n), net = ok ? cs.slice(n, 2 * n) : [];
       function pt(c) { return [+c.getAttribute('cx'), +c.getAttribute('cy')]; }
       if (net.length === n) {
-        var poly = document.createElementNS(NS, 'polygon'), a = raw.map(pt), z = net.map(pt).reverse();
+        var poly = document.createElementNS(NS, 'polygon');
+        function pathPts(col) { var p = [].slice.call(two.querySelectorAll('path')).filter(function (e) { return e.getAttribute('stroke') === 'var(' + col + ')' && !e.getAttribute('stroke-dasharray'); })[0]; return p ? (p.getAttribute('d').match(/-?[\d.]+[ ,]-?[\d.]+/g) || []).map(function (s) { return s.split(/[ ,]/).map(Number); }) : []; }
+        var a = pathPts('--c2'), z = pathPts('--c1').reverse(); if (!a.length || !z.length) { a = raw.map(pt); z = net.map(pt).reverse(); }
         poly.setAttribute('points', a.concat(z).map(function (p) { return p.join(','); }).join(' '));
         poly.setAttribute('fill', 'var(--c2)'); poly.setAttribute('opacity', '0.3');
         two.insertBefore(poly, two.firstChild);
@@ -250,7 +278,7 @@
       }
       var k = Math.min(2, n - 1);
       tag(raw[k], 'WITH background', '--c2', 14, -14);
-      if (net.length === n) tag(net[k], 'WITHOUT background', '--c1', 14, 24);
+      if (net.length === n) tag(net[k], 'WITHOUT background', '--c1', 22, 32);
     }
     lg.appendChild(el('li', { style: 'color:var(--c2)' }, el('span', { class: 'sol' }), el('span', { style: 'color:var(--ink)', text: 'WITH background (raw readings)' })));
     lg.appendChild(el('li', { style: 'color:var(--c1)' }, el('span', { class: 'sol' }), el('span', { style: 'color:var(--ink)', text: ok ? 'WITHOUT background (net = reading − mean background)' : 'WITHOUT background (measure the background first)' })));
