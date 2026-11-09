@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Nuclear fission reactor</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../shared/sim.css">
+<style>
+/* App-specific styles only. Anything reusable belongs in shared/sim.css. */
+.rig .bob{fill:var(--c2);stroke:var(--ink);stroke-width:1.5}
+.rig .string{stroke:var(--ink);stroke-width:1.5}
+.rig .pivot{fill:var(--ink)}
+.rig .dim{stroke:var(--c1);stroke-width:1.4}
+.rig .dimtext{fill:var(--c1);font-weight:500;font-size:11px}
+.rig .ref{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 4}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Nuclear fission reactor</h1>
+    <p class="sub">Change the length, amplitude and timing method, take readings, and see how the period and its uncertainty respond.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Simulation sections">
+    <button role="tab" id="t-bench" aria-controls="p-bench" aria-selected="true" data-tab="bench">Bench</button>
+    <button role="tab" id="t-analyse" aria-controls="p-analyse" aria-selected="false" data-tab="analyse">Analyse</button>
+    <button role="tab" id="t-design" aria-controls="p-design" aria-selected="false" data-tab="design">Improve the design</button>
+  </nav>
+
+  <!-- BENCH -->
+  <section id="p-bench" role="tabpanel" aria-labelledby="t-bench">
+    <div class="think"><b>Think</b><span>Predict first: what happens to the period if you double the length? Then test it.</span></div>
+    <div class="bench">
+      <div class="card">
+        <div class="cardhead"><h2>Set up</h2></div>
+        <div class="ctl"><label for="c-L">Length, L <b id="o-L"></b></label><input id="c-L" type="range" min="0.2" max="1.2" step="0.05" value="0.5"></div>
+        <div class="ctl"><label for="c-amp">Amplitude <b id="o-amp"></b></label><input id="c-amp" type="range" min="2" max="40" step="1" value="10"></div>
+        <div class="ctl"><span class="lab">Oscillations timed, N</span><div class="seg" id="seg-N" role="group" aria-label="Oscillations timed"></div></div>
+        <div class="ctl"><span class="lab">Timer</span><div class="seg" id="seg-timer" role="group" aria-label="Timer"></div></div>
+        <div class="ctl"><span class="lab">Length measured to</span><div class="seg" id="seg-where" role="group" aria-label="Length measured to"></div></div>
+        <div class="btns">
+          <button class="btn primary" id="b-run3" type="button">Time 3 runs</button>
+          <button class="btn" id="b-run1" type="button">Time 1 run</button>
+          <button class="btn" id="b-swing" type="button" aria-pressed="false">Watch it swing</button>
+          <button class="btn" id="b-clear" type="button">Clear data</button>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card"><svg class="rig" id="rig" viewBox="0 0 400 300" role="img" aria-label="Pendulum set-up"></svg></div>
+        <div class="card">
+          <div class="cardhead"><h2>Results</h2></div>
+          <p class="banner" id="banner"></p>
+          <div id="results"></div>
+          <p class="fine">Click a time to cross out an anomaly. Click an underlined value to see how it is worked out.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALYSE -->
+  <section id="p-analyse" role="tabpanel" aria-labelledby="t-analyse" hidden>
+    <div class="think"><b>Think</b><span>Plot T against L. Is it a straight line? Change the axes (1 &divide; it, squared, square root) until it is, then use the gradient. What should it equal?</span></div>
+    <div class="card" style="margin-bottom:14px"><div id="axes"></div></div>
+    <div class="two">
+      <div class="card">
+        <div class="cardhead"><h2 id="a-title"></h2></div>
+        <svg id="plot"></svg>
+        <label class="check" id="model-row"><input type="checkbox" id="chk-model"> Show the line the physics predicts</label>
+      </div>
+      <div class="card"><div class="cardhead"><h2>Best-fit line</h2></div><div id="fit-out"></div></div>
+    </div>
+  </section>
+
+  <!-- DESIGN -->
+  <section id="p-design" role="tabpanel" aria-labelledby="t-design" hidden>
+    <div class="think"><b>Think</b><span>Find a design with under 5% uncertainty in T that also keeps the small-angle formula valid.</span></div>
+    <div class="two">
+      <div class="card">
+        <div class="cardhead"><h2>Design</h2></div>
+        <div class="ctl"><label for="d-L">Length <b id="od-L"></b></label><input id="d-L" type="range" min="0.2" max="1.2" step="0.05" value="0.5"></div>
+        <div class="ctl"><label for="d-amp">Amplitude <b id="od-amp"></b></label><input id="d-amp" type="range" min="2" max="40" step="1" value="10"></div>
+        <div class="ctl"><span class="lab">Oscillations timed, N</span><div class="seg" id="dseg-N" role="group" aria-label="Oscillations timed"></div></div>
+        <div class="ctl"><span class="lab">Timer</span><div class="seg" id="dseg-timer" role="group" aria-label="Timer"></div></div>
+      </div>
+      <div class="card"><div class="cardhead"><h2>Checks</h2></div><div id="d-out"></div></div>
+    </div>
+  </section>
+
+  <div class="about">
+    <p><strong>About this model.</strong> Period T = 2&pi;&radic;(L/g) with a small correction for large amplitude. Each timing has a random error equal to the biggest single source of error. Uncertainty in a mean time is half the range of the readings; repeating does not make a faulty method accurate.</p>
+  </div>
+</div>
+<script src="../shared/sim.js"></script>
+<script src="model.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
