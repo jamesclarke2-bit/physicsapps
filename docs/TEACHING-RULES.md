@@ -45,3 +45,6 @@ These come from James's own teaching. They override defaults. If a build seems t
 - Start each experiment on the raw quantities (for example a against m, or T against L). The skill is choosing the axis change that makes it straight and then interpreting the gradient, so never pre-plot the linear version.
 - Give each known relationship a `known` entry (model line, extra rows such as "g = 4π² ÷ gradient", and a question). Unknown combinations fall back to a generic prompt about units.
 - Animated rigs need a Reset button, real accelerating motion (not a jump), a strobe, and selectable force, acceleration and velocity vectors.
+
+## Model lines
+- A dashed model line always states the assumption it makes in the legend and checkbox (for example "the case always falls at terminal velocity"), never just "the physics model". Where the data leaves the line, the assumption has failed and the investigation is about why (method, drop height, mass range). Say how far the data is from it.

@@ -245,7 +245,7 @@ details summary{cursor:pointer;font-weight:700}
 
   <!-- ANALYSE -->
   <section id="p-analyse" role="tabpanel" aria-labelledby="t-analyse" hidden>
-    <div class="think"><b>Think</b><span>Is average speed against mass a straight line? Switch to speed² and look again. What does that tell you about how terminal velocity depends on mass?</span></div>
+    <div class="think"><b>Think</b><span>Speed² against mass is only a straight line if every case falls at terminal velocity. Switch to speed², show the dashed line and look for where your data leaves it. What does that tell you about your method?</span></div>
     <div class="two">
       <div class="card">
         <div class="cardhead"><h2>Your results</h2>
@@ -255,12 +255,13 @@ details summary{cursor:pointer;font-weight:700}
             <button data-y="speed2" aria-pressed="false">Speed²</button>
           </div></div>
         <div id="an-chart"></div>
-        <label class="check"><input type="checkbox" id="theory"> Show the physics model for each series</label>
+        <label class="check"><input type="checkbox" id="theory"> Show the dashed line: &ldquo;the case always falls at terminal velocity&rdquo;</label>
+        <p class="fine" id="tv-note" style="font-size:14px"></p>
       </div>
       <div class="stack">
         <div class="card"><h2>Prediction check</h2><div class="verdict" id="verdict"></div></div>
         <div class="card"><h2>Reading the graph</h2>
-          <p class="fine" style="font-size:14px">Error bars show half the range of your times. If speed² against mass is a straight line through the origin, then speed is proportional to the square root of mass. If average speed sits below the model, you are not dropping from high enough.</p></div>
+          <p class="fine" style="font-size:14px">Error bars show half the range of your times. The dashed line is what you would get if every case fell at terminal velocity for the whole drop: since TV² = mg ÷ k, speed² against mass is then a straight line through the origin. Where your data sits below the dashed line, the case was still speeding up for part of the drop, so the assumption (and your measurement of TV) fails there. A longer drop or a lighter case keeps the assumption valid.</p></div>
       </div>
     </div>
   </section>
@@ -649,7 +650,8 @@ function convert(st,y){
   if(y==='speed')return[st.v,st.vErr];
   return[st.v*st.v,st.vErr==null?null:2*st.v*st.vErr];
 }
-function theory(m,h,k,y){var t=tFall(m,h,k),v=h/t;return y==='time'?t:y==='speed'?v:v*v;}
+/* the dashed line assumes the case ALWAYS falls at terminal velocity, so v = TV for the whole drop */
+function theory(m,h,k,y){var v=vT(m,k);return y==='time'?h/v:y==='speed'?v:v*v;}
 function seriesData(){
   var map={},arr=[];
   groups().forEach(function(g){var st=stats(g);if(!st.n)return;
@@ -662,7 +664,7 @@ function renderAnalyse(){
   var y=S.an.y,sd=seriesData();
   document.querySelectorAll('[data-y]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.y===y);});
   $('#theory').checked=S.an.theory;
-  if(!sd.length){$('#an-chart').innerHTML='<div class="empty">No data yet. Take some readings on the Bench tab or load the example data.</div>';$('#verdict').innerHTML='';return;}
+  if(!sd.length){$('#tv-note').innerHTML='';$('#an-chart').innerHTML='<div class="empty">No data yet. Take some readings on the Bench tab or load the example data.</div>';$('#verdict').innerHTML='';return;}
   var xmaxd=0,ymaxd=0;
   var series=sd.map(function(s,i){
     var pts=s.pts.map(function(p){var c=convert(p.st,y);xmaxd=Math.max(xmaxd,p.x);ymaxd=Math.max(ymaxd,c[0]+(c[1]||0));return[p.x,c[0],c[1]];});
@@ -675,8 +677,11 @@ function renderAnalyse(){
     all=th.concat(series);
   }
   var leg=sd.map(function(s,i){return{col:COLS[i%5],shape:SHAPES[i%5],label:s.h.toFixed(1)+' m, '+s.area+' cm², '+MN[s.method].toLowerCase()};});
-  if(S.an.theory)leg.push({col:'var(--muted)',dash:'5 4',label:'physics model'});
+  if(S.an.theory)leg.push({col:'var(--muted)',dash:'5 4',label:'model: always falling at terminal velocity (v = TV)'});
   $('#an-chart').innerHTML=chart({xmin:0,xmax:xmax,ymin:0,ymax:nmax(ymaxd*1.12),xlabel:'Mass (g)',ylabel:YN[y][0],aria:YN[y][1],series:all,legend:leg,xn:5});
+  var notes=[];sd.forEach(function(s){if(s.pts.length<2)return;var p=s.pts.slice().sort(function(a,b){return a.x-b.x;}),hi=p[p.length-1],k=kOf(s.area),r=hi.st.v/vT(hi.x/1000,k)*100;
+    notes.push(s.h.toFixed(1)+' m, '+s.area+' cm²: at '+hi.x.toFixed(2)+' g the average speed is '+r.toFixed(0)+'% of terminal velocity'+(r<90?'. It was still speeding up for much of the drop, so the "always at terminal velocity" assumption fails here.':'. The assumption holds well here.'));});
+  $('#tv-note').innerHTML=notes.join('<br>');
   var best=null;sd.forEach(function(s){if(s.pts.length>=3&&(!best||s.pts.length>best.pts.length))best=s;});
   var v=$('#verdict'),P=S.pred;
   if(!P.time&&!P.speed){v.innerHTML='<p>Choose your predictions on the Bench tab and they are checked here.</p>';return;}
