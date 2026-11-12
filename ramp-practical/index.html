@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Ramp Practical</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../shared/sim.css">
+<style>
+/* App-specific styles only. Anything reusable belongs in shared/sim.css. */
+.rig .wedge{fill:var(--surface2);stroke:none}
+.rig .surface{fill:var(--line);stroke:var(--ink);stroke-width:1}
+.rig .ground{stroke:var(--muted);stroke-width:1.4}
+.rig .tick{stroke:var(--ink);stroke-width:1}
+.rig .trolley{fill:var(--c1);stroke:var(--ink);stroke-width:1.5}
+.rig .wheel{fill:var(--ink)}
+.rig .card{fill:var(--c2);stroke:var(--ink);stroke-width:.8}
+.rig .stopper{fill:#e8b64a;stroke:var(--ink);stroke-width:1}
+.rig .gate{stroke:var(--c3);stroke-width:3}
+.rig .gatelbl{fill:var(--c3);font-weight:500;font-size:11px}
+.rig .flag{stroke:var(--c4);stroke-width:2;stroke-dasharray:4 3}
+.rig .lbl{fill:var(--ink);font-size:11px}
+.rig .dim{stroke:var(--accent);stroke-width:1.4;fill:none}
+.rig .dimtext{fill:var(--accent);font-weight:500;font-size:11px}
+.rig .ticklbl{fill:var(--muted);font-size:10px}
+.stepbtns{display:flex;gap:6px;align-items:center}
+.readout{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font:500 13px var(--f-mono);margin:8px 0 0}
+.readout dt{color:var(--muted)}.readout dd{margin:0}
+select.series{max-width:100%;font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.fitkv td.unc{color:var(--muted)}
+.valrows{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:10px}
+.valrows li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;align-items:start}
+.valrows .sm{display:block}
+.legendrow{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin-top:6px}
+.sw{display:inline-block;width:22px;height:0;border-top:3px solid var(--c1);vertical-align:middle;margin-right:4px}
+.sw.dash{border-top-style:dashed}
+.sw.c2{border-color:var(--c2)}.sw.c3{border-color:var(--c3)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Ramp Practical</h1>
+    <p class="sub">Design an experiment with a trolley on a ramp, take readings, and decide whether your results validate the equations of motion and a = g sin &theta;. Uncertainty decides the answer.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Simulation sections">
+    <button role="tab" id="t-bench" aria-controls="p-bench" aria-selected="true" data-tab="bench">Bench</button>
+    <button role="tab" id="t-analyse" aria-controls="p-analyse" aria-selected="false" data-tab="analyse">Analyse and validate</button>
+    <button role="tab" id="t-design" aria-controls="p-design" aria-selected="false" data-tab="design">Improve the design</button>
+  </nav>
+
+  <!-- BENCH -->
+  <section id="p-bench" role="tabpanel" aria-labelledby="t-bench">
+    <div class="card" id="exp-card" style="margin-bottom:14px"></div>
+    <div class="think"><b>Think</b><span id="think-bench">Choose an investigation above, then predict what shape of graph you expect before you take any readings.</span></div>
+    <div class="bench">
+      <div class="card" id="set-card">
+        <div class="cardhead"><h2>Step 3: Set up and take readings</h2></div>
+        <div class="ctl"><span class="lab">Ramp length, &#8467;</span><div class="seg" id="seg-ell" role="group" aria-label="Ramp length"></div></div>
+        <div class="ctl"><span class="lab">How you find the angle</span><div class="seg" id="seg-method" role="group" aria-label="How you find the angle"></div></div>
+        <div class="ctl"><label for="c-th"><span id="l-th">Ramp angle, &theta;</span> <b id="o-th"></b></label>
+          <div class="stepbtns"><button class="btn" id="th-" type="button" aria-label="Angle 0.5 degrees less">&minus;0.5&deg;</button><input id="c-th" type="range" min="1" max="20" step="0.5" value="8" style="flex:1"><button class="btn" id="th+" type="button" aria-label="Angle 0.5 degrees more">+0.5&deg;</button></div></div>
+        <div class="ctl"><label for="c-s"><span id="l-s">Distance from start line to finish, s</span> <b id="o-s"></b></label><input id="c-s" type="range" min="0.4" max="1.8" step="0.1" value="1"></div>
+        <div class="ctl"><span class="lab" id="l-timer">Timer</span><div class="seg" id="seg-timer" role="group" aria-label="Timer"></div></div>
+        <dl class="readout" id="readout"></dl>
+        <div class="btns">
+          <button class="btn primary" id="b-run3" type="button">Time 3 runs</button>
+          <button class="btn" id="b-run1" type="button">Time 1 run</button>
+          <button class="btn" id="b-watch" type="button">Watch a run</button>
+          <button class="btn" id="b-reset" type="button">Reset trolley</button>
+          <button class="btn" id="b-clear" type="button">Clear data</button>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card"><svg class="rig" id="rig" viewBox="0 0 760 330" role="img" aria-label="Trolley on a ramp with a light gate at the bottom"></svg>
+          <div class="ctl"><span class="lab">Speed</span><div class="seg" id="seg-speed" role="group" aria-label="Playback speed"></div></div>
+          <div class="vecrow" role="group" aria-label="Show on the trolley">
+            <label class="check"><input type="checkbox" id="v-strobe" checked> Strobe (ghost trolleys)</label>
+            <label class="check"><input type="checkbox" id="v-F"> Force</label>
+            <label class="check"><input type="checkbox" id="v-a"> Acceleration</label>
+            <label class="check"><input type="checkbox" id="v-v"> Velocity</label>
+          </div></div>
+        <div class="card">
+          <div class="cardhead"><h2>Results</h2></div>
+          <p class="banner" id="banner"></p>
+          <div id="results"></div>
+          <p class="fine">Click a reading to cross out an anomaly. Click an underlined value to see how it is worked out.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALYSE AND VALIDATE -->
+  <section id="p-analyse" role="tabpanel" aria-labelledby="t-analyse" hidden>
+    <div class="think"><b>Think</b><span id="a-think"></span></div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="cardhead"><h2>1. Raw data</h2></div>
+      <div id="raw"></div>
+      <p class="fine">Exactly as measured. Crossed-out readings are ignored in the means.</p>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="ctl" style="margin:0"><label for="sel-series"><span class="lab">Readings to plot</span></label><select class="series" id="sel-series"></select></div>
+    </div>
+    <div class="two">
+      <div class="card">
+        <div class="cardhead"><h2>2. Raw graph (as measured)</h2></div>
+        <div id="axes-raw" style="margin-bottom:10px"></div>
+        <svg id="plot-raw"></svg>
+        <p class="fine" id="raw-note"></p>
+      </div>
+      <div class="card">
+        <div class="cardhead"><h2>3. Straight-line graph</h2></div>
+        <div id="axes" style="margin-bottom:10px"></div>
+        <svg id="plot"></svg>
+        <div class="legendrow">
+          <label class="check"><input type="checkbox" id="chk-lines"> Steepest and shallowest lines through the error bars</label>
+          <label class="check" id="model-row"><input type="checkbox" id="chk-model"> <span id="model-label"></span></label>
+        </div>
+      </div>
+    </div>
+    <div class="two" style="margin-top:20px">
+      <div class="card"><div class="cardhead"><h2>4. Manipulated data</h2></div><div id="manip"></div></div>
+      <div class="card"><div class="cardhead"><h2>5. Line and uncertainty</h2></div><div id="fit-out"></div></div>
+    </div>
+    <div class="card" style="margin-top:20px">
+      <div class="cardhead"><h2>6. Validate</h2></div>
+      <div class="think"><b>Think</b><span id="val-think">Choose axes that give a straight line first.</span></div>
+      <div class="btns"><button class="btn primary" id="b-validate" type="button">Check my line against the prediction</button></div>
+      <div id="val-out"></div>
+    </div>
+  </section>
+
+  <!-- DESIGN -->
+  <section id="p-design" role="tabpanel" aria-labelledby="t-design" hidden>
+    <p class="empty" id="d-none">Choose an investigation on the Bench tab first. The design checks depend on what you are testing.</p>
+    <div id="d-body" hidden>
+    <div class="think"><b>Think</b><span id="think-design"></span></div>
+    <div class="two">
+      <div class="card">
+        <div class="cardhead"><h2>Design</h2></div>
+        <p class="fine" id="d-note"></p>
+        <div class="ctl"><span class="lab">Ramp length, &#8467;</span><div class="seg" id="dseg-ell" role="group" aria-label="Ramp length"></div></div>
+        <div class="ctl" data-d="method"><span class="lab">How you find the angle</span><div class="seg" id="dseg-method" role="group" aria-label="How you find the angle"></div></div>
+        <div class="ctl" data-d="th"><label for="d-th"><span id="l-dth">Ramp angle</span> <b id="od-th"></b></label><input id="d-th" type="range" min="1" max="20" step="0.5" value="8"></div>
+        <div class="ctl" data-d="thmax"><label for="d-thmax">Largest angle you will use <b id="od-thmax"></b></label><input id="d-thmax" type="range" min="2" max="20" step="0.5" value="16"></div>
+        <div class="ctl" data-d="s"><label for="d-s"><span id="l-ds">Distance, s</span> <b id="od-s"></b></label><input id="d-s" type="range" min="0.4" max="1.8" step="0.1" value="1"></div>
+        <div class="ctl"><span class="lab">Timer</span><div class="seg" id="dseg-timer" role="group" aria-label="Timer"></div></div>
+        <div class="ctl"><label for="d-tgt">Target: % uncertainty in a at most <b id="od-tgt"></b></label><input id="d-tgt" type="range" min="1" max="10" step="0.5" value="5"></div>
+      </div>
+      <div class="card"><div class="cardhead"><h2>Checks</h2></div><div id="d-out"></div></div>
+    </div>
+    </div>
+  </section>
+
+  <div class="about">
+    <p><strong>About this model.</strong> The trolley starts from rest on a ramp and accelerates at a = g (sin &theta; &minus; &mu; cos &theta;), where &mu; is a small friction coefficient. Every error is a fixed amount (seconds, millimetres or degrees), so longer runs and bigger angles give smaller percentage uncertainties. The uncertainty in a mean is half the range of the readings. Repeating shows the spread and exposes anomalies; it does not make a faulty method accurate. The uncertainty in a gradient is half the difference between the steepest and shallowest lines that pass through the error bars.</p>
+  </div>
+</div>
+<script src="../shared/sim.js"></script>
+<script src="../force-mass-acceleration/model.js"></script>
+<script src="model.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

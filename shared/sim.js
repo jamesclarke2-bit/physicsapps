@@ -4,6 +4,7 @@
    Sim.rng(seed)                 seeded random numbers: .next(), .gauss()
    Sim.stats(values, {res})      mean, min, max, half-range uncertainty (floored at res/2), % uncertainty
    Sim.linfit(xs, ys)            least-squares line {slope, intercept}
+   Sim.lineUnc(pts)              best line plus steepest and shallowest lines through the error bars: gradient and intercept uncertainty (half the range)
    Sim.fmt(x, dp) / Sim.sig(x,n) number formatting with a proper minus sign
    Sim.el(tag, attrs, ...kids)   tiny DOM builder
    Sim.tabs(root, opts)          accessible tabs with #hash routing
@@ -43,6 +44,37 @@
     var d = n * sxx - sx * sx; if (!d) return null;
     var slope = (n * sxy - sx * sy) / d, dy = n * syy - sy * sy;
     return { slope: slope, intercept: (sy - slope * sx) / n, r2: dy ? Math.pow(n * sxy - sx * sy, 2) / (d * dy) : 1 };
+  }
+  /* Best-fit line plus the range of straight lines that pass through the error bars (the A-level "steepest and shallowest line" method).
+     pts: [{x, y, ex, ey}] (ex, ey = half-range error bars, default 0). Candidate lines run through pairs of error-bar corners of
+     different points. The lines that pass through the most error bars are kept (all of them if possible: all === true).
+     Uncertainty in the gradient and the intercept = half the range of the kept lines (the same half-range rule as for readings).
+     Returns {slope, intercept, r2, dSlope, dIntercept, steep, shallow, hit, n, all} or null. */
+  function lineUnc(pts) {
+    var n = pts.length; if (n < 2) return null;
+    var best = linfit(pts.map(function (p) { return p.x; }), pts.map(function (p) { return p.y; })); if (!best) return null;
+    function hits(m, c) {
+      var k = 0, eps = 1e-9;
+      pts.forEach(function (p) {
+        var ex = p.ex || 0, ey = p.ey || 0, a = m * (p.x - ex) + c, b = m * (p.x + ex) + c;
+        if (Math.max(a, b) >= p.y - ey - eps && Math.min(a, b) <= p.y + ey + eps) k++;
+      });
+      return k;
+    }
+    var corners = [];
+    pts.forEach(function (p, i) { [[-1, -1], [-1, 1], [1, -1], [1, 1]].forEach(function (s) { corners.push({ i: i, x: p.x + s[0] * (p.ex || 0), y: p.y + s[1] * (p.ey || 0) }); }); });
+    var cand = [{ slope: best.slope, intercept: best.intercept, hit: hits(best.slope, best.intercept) }];
+    for (var a = 0; a < corners.length; a++) for (var b = a + 1; b < corners.length; b++) {
+      var P = corners[a], Q = corners[b]; if (P.i === Q.i || Math.abs(Q.x - P.x) < 1e-12) continue;
+      var m = (Q.y - P.y) / (Q.x - P.x), c = P.y - m * P.x; cand.push({ slope: m, intercept: c, hit: hits(m, c) });
+    }
+    var top = Math.max.apply(null, cand.map(function (l) { return l.hit; })), kept = cand.filter(function (l) { return l.hit === top; });
+    var steep = kept[0], shallow = kept[0], iMax = -Infinity, iMin = Infinity;
+    kept.forEach(function (l) { if (l.slope > steep.slope) steep = l; if (l.slope < shallow.slope) shallow = l; iMax = Math.max(iMax, l.intercept); iMin = Math.min(iMin, l.intercept); });
+    var dS = Math.max((steep.slope - shallow.slope) / 2, Math.abs(steep.slope - best.slope), Math.abs(best.slope - shallow.slope));
+    var dI = Math.max((iMax - iMin) / 2, Math.abs(iMax - best.intercept), Math.abs(best.intercept - iMin));
+    return { slope: best.slope, intercept: best.intercept, r2: best.r2, dSlope: dS, dIntercept: dI,
+      steep: { slope: steep.slope, intercept: steep.intercept }, shallow: { slope: shallow.slope, intercept: shallow.intercept }, hit: top, n: n, all: top === n };
   }
   function fmt(x, dp) { if (x === null || x === undefined || !isFinite(x)) return '–'; var s = x.toFixed(dp === undefined ? 2 : dp); return s.replace('-', '−'); }
   function sig(x, n) { if (!isFinite(x)) return '–'; if (x === 0) return '0'; return fmt(+x.toPrecision(n || 3), Math.max(0, (n || 3) - 1 - Math.floor(Math.log10(Math.abs(x))))); }
@@ -357,5 +389,5 @@
     return { choose: choose, current: function () { return def(); }, relock: function () { cfg.lock(locked()); } };
   }
 
-  window.Sim = { rng: rng, stats: stats, linfit: linfit, fmt: fmt, sig: sig, el: el, svgel: svgel, tabs: tabs, pop: pop, steps: steps, Results: Results, calcButton: calcButton, plot: plot, experiment: experiment, axes: axes };
+  window.Sim = { rng: rng, stats: stats, linfit: linfit, lineUnc: lineUnc, fmt: fmt, sig: sig, el: el, svgel: svgel, tabs: tabs, pop: pop, steps: steps, Results: Results, calcButton: calcButton, plot: plot, experiment: experiment, axes: axes };
 })();
