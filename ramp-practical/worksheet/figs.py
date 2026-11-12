@@ -56,3 +56,28 @@ def two(fname, a, b):
 two("pred_A.png", ("distance, $s$", "time, $t$"), ("distance, $s$", "speed at the gate, $v$"))
 two("pred_B.png", ("angle, $\\theta$", "acceleration, $a$"), ("$\\sin\\theta$", "acceleration, $a$"))
 print("figures ok")
+
+# ---- worked-example graphs: points, best fit, steepest and shallowest worst-fit lines ----
+ex = d["example"]
+def exfig(fname, xs, ys, fit, xl, yl, xmax, ymax, xt, yt, ax=None):
+    fig, ax = plt.subplots(figsize=(3.4, 3.0), dpi=200)
+    ax.set_xlim(0, xmax); ax.set_ylim(0, ymax); ax.set_xticks(xt); ax.set_yticks(yt); ax.grid(color="#dde3ea", lw=0.6); ax.set_axisbelow(True)
+    for sp in ("top", "right"): ax.spines[sp].set_visible(False)
+    ax.set_xlabel(xl, fontsize=9); ax.set_ylabel(yl, fontsize=9); ax.tick_params(labelsize=8)
+    xx = np.array([0, xmax])
+    for k, col, ls, lab in (("steep", OR, "--", "steepest"), ("shallow", OR, ":", "shallowest")):
+        ax.plot(xx, fit[k]["intercept"] + fit[k]["slope"]*xx, color=col, lw=1.4, ls=ls, label=lab)
+        for x, y in ((fit[k]["x0"], fit[k]["y0"]), (fit[k]["x1"], fit[k]["y1"])): ax.plot([x], [y], marker="x", color=col, ms=6, mew=1.4)
+    ax.plot(xx, fit["best"]["intercept"] + fit["best"]["slope"]*xx, color=BL, lw=1.8, label="best fit")
+    ax.plot(xs, ys, "o", color=INK, ms=4.5, zorder=5, label="data")
+    ax.legend(fontsize=7, loc="upper left", frameon=False)
+    fig.tight_layout(); fig.savefig(fname, pad_inches=0.05); plt.close(fig)
+ax_ = [r["s"] for r in ex["A"]]
+exfig("ex_t2.png", ax_, [r["t2"] for r in ex["A"]], ex["fT"], "distance, $s$ (m)", "$t^2$ (s$^2$)", 1.8, 4.0, [0, .4, .8, 1.2, 1.6], [0, 1, 2, 3, 4])
+exfig("ex_v2.png", ax_, [r["v2"] for r in ex["A"]], ex["fV"], "distance, $s$ (m)", "$v^2$ (m$^2$ s$^{-2}$)", 1.8, 5.0, [0, .4, .8, 1.2, 1.6], [0, 1, 2, 3, 4, 5])
+exfig("ex_asin.png", [r["sin"] for r in ex["B"]], [r["a"] for r in ex["B"]], ex["fB"], "$\\sin\\theta$", "acceleration, $a$ (m s$^{-2}$)", 0.34, 3.2, [0, .1, .2, .3], [0, 1, 2, 3])
+print("example figures ok")
+
+from PIL import Image
+a = Image.open("ex_t2.png"); b = Image.open("ex_v2.png"); W = a.width + b.width; H = max(a.height, b.height)
+c = Image.new("RGB", (W, H), "white"); c.paste(a, (0, 0)); c.paste(b, (a.width, 0)); c.save("ex_A.png")

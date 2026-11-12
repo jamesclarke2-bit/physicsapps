@@ -53,7 +53,7 @@ function tbl(heads,rows,widths,o={}){
   const total=widths.reduce((a,b)=>a+b,0);
   const hr=new TableRow({tableHeader:true,cantSplit:true,children:heads.map((h,i)=>cell(h,widths[i],{fill:"DCE7F5",bold:true,size:o.hsize??18,keep:o.keep}))});
   const body=rows.map((r,ri)=>new TableRow({cantSplit:true,height:{value:o.rowH??520,rule:'atLeast'},children:r.map((c,i)=>{
-    const first=(i===0&&o.firstFill!==false);return cell(c,widths[i],{fill:first&&c?LIGHT:undefined,bold:first&&!!c,align:first&&c&&o.firstLeft?AlignmentType.LEFT:undefined,keep:o.keep&&ri<rows.length-1});})}));
+    const first=(i===0&&o.firstFill!==false);return cell(c,widths[i],{fill:first&&c?LIGHT:undefined,bold:first&&!!c,align:(o.leftAll||(first&&c&&o.firstLeft))?AlignmentType.LEFT:undefined,keep:o.keep&&ri<rows.length-1});})}));
   return new Table({width:{size:total,type:WidthType.DXA},columnWidths:widths,rows:[hr,...body]});}
 const blanks=(n,c,first)=>Array.from({length:n},(_,i)=>Array.from({length:c},(_,j)=>j===0&&first?first[i]:""));
 
