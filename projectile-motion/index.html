@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Projectile Motion Explorer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../shared/sim.css">
+<style>
+/* App-specific styles only. Anything reusable belongs in shared/sim.css.
+   Quantity colours (mandatory): horizontal blue, vertical red, resultant purple, acceleration green.
+   Never the only cue: each also has its own dash pattern and a text label. The projectile colour is never used for them. */
+:root{--q-h:#1d5fd0;--q-v:#c62828;--q-r:#7a3cc0;--q-a:#18803a;--q-t:#566678;--ball:#e6a100}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--q-h:#80b1ff;--q-v:#ff8080;--q-r:#c9a0ff;--q-a:#62d58c;--q-t:#9aabbc}}
+:root[data-theme="dark"]{--q-h:#80b1ff;--q-v:#ff8080;--q-r:#c9a0ff;--q-a:#62d58c;--q-t:#9aabbc}
+body{font-size:17px}
+.pm{max-width:1560px}
+.pmhead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.pmgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;align-items:start}
+.simcol{position:sticky;top:12px;display:flex;flex-direction:column;gap:14px;min-width:0}
+@media (max-width:980px){.pmgrid{grid-template-columns:minmax(0,1fr)}.simcol{position:static}}
+/* phone: in Questions the simulator sticks to the top so it stays visible beside the question */
+@media (max-width:980px){body.qmode .simcol{position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:6px;gap:6px}
+  body.qmode .stage{max-height:30vh}body.qmode .readouts,body.qmode .simnote,body.qmode .transport .seg,body.qmode .simcard .cardhead{display:none}body.qmode .simcard{padding:8px}}
+.pm .btn,.pm .seg button,.pm .tabs button,.pm select{min-height:44px}
+.pm .btn{min-width:44px}
+.pm input[type=range]{height:44px}
+.pm .tabs{margin:0 0 16px;flex-wrap:wrap}
+.pm .tabs button{padding:10px 11px}
+.stage{width:100%;height:auto;display:block;touch-action:manipulation;max-height:64vh}
+.stage text{font:14px var(--f-mono);fill:var(--muted)}.pane text{font:12px var(--f-mono);fill:var(--muted)}
+.stage text.axl{font:700 15px var(--f-body);fill:var(--ink)}.pane text.axl{font:600 13px var(--f-body);fill:var(--ink)}
+.stage .grid,.pane .grid{stroke:var(--grid);stroke-width:1}
+.stage .ax,.pane .ax{stroke:var(--muted);stroke-width:1.4}
+.ground{stroke:var(--ink);stroke-width:2.5}
+.earth{fill:var(--surface2)}
+.pit{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;stroke-dasharray:4 3}
+.path-full{fill:none;stroke:var(--muted);stroke-width:1.6;stroke-dasharray:2 5;stroke-linecap:round}
+.path-done{fill:none;stroke:var(--ink);stroke-width:2;opacity:.55}
+.strobe{fill:var(--muted);opacity:.55}
+.ballc{stroke:var(--ink);stroke-width:2}
+.launch{fill:none;stroke:var(--ink);stroke-width:1.5}
+.v-h{stroke:var(--q-h);fill:var(--q-h)}.v-v{stroke:var(--q-v);fill:var(--q-v)}.v-r{stroke:var(--q-r);fill:var(--q-r)}.v-a{stroke:var(--q-a);fill:var(--q-a)}
+.vline{stroke-width:3.5;fill:none!important;stroke-linecap:butt}
+.vhead-open{fill:var(--surface)!important;stroke-width:2.5}
+text.vl{font:700 15px var(--f-body)!important;paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+text.vl.v-h{fill:var(--q-h)}text.vl.v-v{fill:var(--q-v)}text.vl.v-r{fill:var(--q-r)}text.vl.v-a{fill:var(--q-a)}
+.transport{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.transport .seg{margin-left:auto}
+.simnote{font-size:14px;color:var(--muted);margin:8px 0 0}
+.pitnote{margin:8px 0 0;padding:8px 12px;border-radius:8px;background:var(--tint);font-size:15px}
+.assume{display:inline-block;font:700 13px var(--f-body);border:1.5px solid var(--ink);border-radius:999px;padding:3px 10px;margin:0}
+/* readout cards with a colour chip AND a line-pattern sample AND a text tag */
+.readouts{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px}
+.ro{background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--qc,var(--q-t));border-radius:10px;padding:8px 12px;min-width:0}
+.ro .rh{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);font-weight:700}
+.ro .val sup{font-size:65%}
+.ro .val{display:block;font:500 22px/1.2 var(--f-mono);color:var(--ink);white-space:nowrap}
+.chipq{display:inline-flex;align-items:center;gap:4px;font:700 11px var(--f-mono);color:var(--qc);border:1.5px solid var(--qc);border-radius:5px;padding:1px 5px;line-height:1.3}
+.chipq svg{width:22px;height:8px;display:block}
+.chipq line{stroke:var(--qc);stroke-width:3}
+.qh{--qc:var(--q-h)}.qv{--qc:var(--q-v)}.qr{--qc:var(--q-r)}.qa{--qc:var(--q-a)}.qt{--qc:var(--q-t)}
+.ctl2{display:grid;grid-template-columns:minmax(0,1fr) 108px;gap:4px 10px;align-items:center}
+.ctl2 label{grid-column:1/-1;display:block}
+.ctl2 input[type=number]{font:500 16px var(--f-mono);width:100%;min-height:44px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+.toggles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px 12px}
+.toggles label{display:flex;gap:10px;align-items:center;min-height:44px;font-size:15px;cursor:pointer}
+.toggles input{width:22px;height:22px}
+input[type=color]{width:64px;height:44px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:2px}
+.locknote{margin:0 0 10px;font-size:14px}
+/* independent motion: panels share one clock and one scale */
+.indep{display:grid;grid-template-columns:minmax(0,400fr) minmax(0,96fr);gap:8px}
+.pane{width:100%;height:auto;display:block;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.ptitle{font:700 14px var(--f-display);margin:0 0 4px}
+.pread{font:500 14px var(--f-mono);margin:4px 0 0;display:grid;gap:2px}
+/* graphs */
+.ggrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:620px){.ggrid{grid-template-columns:minmax(0,1fr)}}
+.gcol h3{font:700 15px var(--f-display);margin:0 0 6px;display:flex;gap:8px;align-items:center}
+.gsvg{width:100%;height:auto;display:block;margin-bottom:8px}
+.gsvg text{font:11px var(--f-mono);fill:var(--muted)}.gsvg text.axl{font:600 12px var(--f-body);fill:var(--ink)}
+.gsvg .grid{stroke:var(--grid)}.gsvg .ax{stroke:var(--muted);stroke-width:1.2}
+.gline{fill:none;stroke-width:2.5}
+.kvals{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:14px}
+.kv1{background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--muted);font-weight:700}
+.kv1 .calc{display:block;font-size:20px;margin-top:2px;color:var(--ink)}
+/* equations */
+.eqsec{border:1px solid var(--line);border-left:6px solid var(--qc);border-radius:10px;padding:10px 12px;margin-bottom:12px;background:var(--surface)}
+.eqsec summary{display:flex;align-items:center;gap:8px;min-height:44px;font:700 16px var(--f-display)}
+.eqline{margin:8px 0 0}
+.eqline .en{font-size:13px;color:var(--muted);font-weight:700}
+.eqline .es{font:500 17px/1.5 var(--f-mono);display:block}
+.eqline .esub{font:500 16px/1.5 var(--f-mono);display:block;background:var(--surface2);border-radius:6px;padding:4px 8px;overflow-wrap:anywhere}
+.noworking .esub{display:none}
+.eqline sub,.eqline sup{font-size:70%}
+/* questions */
+.scen{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px}
+.qlist{list-style:none;padding:0;margin:0 0 14px;display:grid;gap:6px}
+.qlist button{width:100%;text-align:left;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:8px 12px;min-height:44px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
+.qlist button[aria-current=true]{border-color:var(--c1);box-shadow:0 0 0 2px var(--c1) inset}
+.qlist .qm{font-size:13px;color:var(--muted)}
+.qstat{font:700 13px var(--f-body);white-space:nowrap;align-self:center}
+.qcard h3{font:700 18px var(--f-display);margin:0 0 4px}
+.qmeta{font-size:13px;color:var(--muted);margin:0 0 8px}
+.qprompt{font-size:18px;margin:0 0 10px}
+.setupline{font:500 14px var(--f-mono);background:var(--surface2);border-radius:6px;padding:6px 10px;margin:0 0 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.ansrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.ansrow input{font:500 18px var(--f-mono);width:150px;min-height:44px;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.opts{border:0;padding:0;margin:0 0 10px;display:grid;gap:6px}
+.opts label{display:flex;gap:10px;align-items:center;min-height:44px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:var(--surface)}
+.opts input{width:20px;height:20px;flex:none}
+.fb{margin:10px 0;padding:10px 12px;border-radius:8px;background:var(--surface2)}
+.fb p{margin:4px 0}
+.scaf{margin:6px 0 0;padding-left:20px}
+.support{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 8px}
+.supbox{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:8px}
+.supbox h4{margin:0 0 6px;font:700 15px var(--f-display)}
+.supbox ol{margin:0;padding-left:20px}.supbox li{margin:4px 0}
+.anim .astep{font-size:16px;margin:8px 0}
+.anim .esub{font:500 15px/1.5 var(--f-mono);background:var(--surface2);border-radius:6px;padding:4px 8px;display:block;overflow-wrap:anywhere}
+.keys{font-size:13px;color:var(--muted)}
+kbd{font:500 12px var(--f-mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px;background:var(--surface)}
+@media (min-width:1700px){.pm{zoom:1.18}}
+@media (prefers-reduced-motion:reduce){.pm *{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap pm">
+  <header class="pmhead">
+    <div>
+      <h1>Projectile Motion Explorer</h1>
+      <p class="sub">Launch a projectile and see the horizontal and vertical motions separately: constant horizontal velocity, constant downward acceleration.</p>
+    </div>
+    <button class="btn" id="b-theme" type="button" aria-pressed="false">Dark mode</button>
+  </header>
+
+  <div class="pmgrid">
+    <!-- SIMULATOR (always visible) -->
+    <div class="simcol" id="simcol">
+      <div class="card simcard">
+        <div class="cardhead"><h2>Simulator</h2><p class="assume" id="assume">No air resistance</p></div>
+        <svg class="stage" id="stage" viewBox="0 0 640 400" role="img" aria-labelledby="stage-t stage-d"><title id="stage-t">Projectile trajectory</title><desc id="stage-d"></desc></svg>
+        <p class="pitnote" id="pitnote" hidden></p>
+        <div class="transport" role="group" aria-label="Playback controls">
+          <button class="btn primary" id="b-play" type="button">Play</button>
+          <button class="btn" id="b-pause" type="button">Pause</button>
+          <button class="btn" id="b-reset" type="button">Reset</button>
+          <button class="btn" id="b-step" type="button">Step forward</button>
+          <div class="seg" id="seg-speed" role="group" aria-label="Playback speed"></div>
+        </div>
+        <p class="simnote keys">Keys: <kbd>Space</kbd> play or pause, <kbd>S</kbd> step forward, <kbd>R</kbd> reset. One step is <span id="stepdt"></span>.</p>
+      </div>
+      <div class="readouts" id="readouts" aria-label="Live readouts"></div>
+    </div>
+
+    <!-- SIDE PANELS -->
+    <div class="sidecol">
+      <nav class="tabs" role="tablist" aria-label="Explorer sections">
+        <button role="tab" id="t-setup" aria-controls="p-setup" aria-selected="true" data-tab="setup">Set up</button>
+        <button role="tab" id="t-independent" aria-controls="p-independent" aria-selected="false" data-tab="independent">Independent motion</button>
+        <button role="tab" id="t-graphs" aria-controls="p-graphs" aria-selected="false" data-tab="graphs">Graphs</button>
+        <button role="tab" id="t-equations" aria-controls="p-equations" aria-selected="false" data-tab="equations">Equations</button>
+        <button role="tab" id="t-questions" aria-controls="p-questions" aria-selected="false" data-tab="questions">Questions</button>
+      </nav>
+
+      <section id="p-setup" role="tabpanel" aria-labelledby="t-setup">
+        <div class="think"><b>Think</b><span>Before you press Play: will the horizontal velocity change during the flight? Watch the blue readout.</span></div>
+        <div class="card">
+          <div class="cardhead"><h2>Launch</h2></div>
+          <p class="locknote" id="locknote" hidden>Make your prediction in Questions first. The controls unlock when you have answered.</p>
+          <div id="inputs"></div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="cardhead"><h2>Show</h2></div>
+          <div class="toggles" id="toggles"></div>
+          <div class="ctl" style="margin-top:8px"><label for="c-colour" style="justify-content:flex-start;gap:12px;align-items:center">Projectile colour <input type="color" id="c-colour" value="#e6a100"></label></div>
+        </div>
+      </section>
+
+      <section id="p-independent" role="tabpanel" aria-labelledby="t-independent" hidden>
+        <div class="think"><b>Think</b><span>The three panels share one clock. Which panel has equally spaced dots? What does that tell you about its velocity?</span></div>
+        <div class="indep">
+          <div><p class="ptitle">Panel 1: full motion</p><svg class="pane" id="pane1" role="img" aria-label="Panel 1: full motion"></svg></div>
+          <div><p class="ptitle">Panel 3</p><svg class="pane" id="pane3" role="img" aria-label="Panel 3: vertical motion only"></svg></div>
+          <div><p class="ptitle">Panel 2: horizontal only</p><svg class="pane" id="pane2" role="img" aria-label="Panel 2: horizontal motion only"></svg></div>
+          <div></div>
+        </div>
+        <div class="even" style="margin-top:12px">
+          <div class="card"><p class="ptitle" id="pt2">Panel 2: horizontal only</p><div class="pread" id="read2"></div><p class="fine">Constant velocity, zero acceleration: equal distances in equal times.</p></div>
+          <div class="card"><p class="ptitle" id="pt3">Panel 3: vertical only</p><div class="pread" id="read3"></div><p class="fine">Changing velocity, constant acceleration g downward.</p></div>
+        </div>
+      </section>
+
+      <section id="p-graphs" role="tabpanel" aria-labelledby="t-graphs" hidden>
+        <div class="think"><b>Think</b><span>Before you replay: which graph will be a straight sloping line, and which will be a curve?</span></div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="cardhead"><h2>Computed values</h2><button class="btn" id="b-replay" type="button">Replay graphs</button></div>
+          <div class="kvals" id="kvals"></div>
+          <div class="tablewrap"><table class="data" id="keytable"></table></div>
+          <p class="fine">Click a value to see how it is worked out.</p>
+        </div>
+        <div class="card"><div class="ggrid" id="graphs"></div></div>
+      </section>
+
+      <section id="p-equations" role="tabpanel" aria-labelledby="t-equations" hidden>
+        <div class="card">
+          <div class="cardhead"><h2>Equations</h2><button class="btn" id="b-working" type="button" aria-pressed="true">Hide working</button></div>
+          <p class="assume" style="margin-bottom:10px">No air resistance</p>
+          <p class="fine" id="eq-assume" style="margin:0 0 12px"></p>
+          <div id="eqs"></div>
+        </div>
+      </section>
+
+      <section id="p-questions" role="tabpanel" aria-labelledby="t-questions" hidden>
+        <div class="card">
+          <div class="cardhead"><h2>Scenarios</h2><button class="btn" id="b-progress-reset" type="button">Reset my progress</button></div>
+          <div class="scen" id="scen" role="radiogroup" aria-label="Scenario"></div>
+                    <ul class="qlist" id="qlist"></ul>
+        </div>
+        <div class="card qcard" id="qcard" style="margin-top:14px"></div>
+      </section>
+    </div>
+  </div>
+
+  <div class="about">
+    <p><strong>About this model.</strong> Point particle, no air resistance. Ground is y = 0 and up is positive; launch from (0, h<sub>0</sub>). x = u<sub>x</sub>t, y = h<sub>0</sub> + u<sub>y</sub>t − ½gt<sup>2</sup>, v<sub>x</sub> = u<sub>x</sub> (constant), v<sub>y</sub> = u<sub>y</sub> − gt. Flight time is the positive root of y = 0. A negative launch height is a launch from a narrow pit (its walls are ignored). Progress and settings are saved on this device only.</p>
+  </div>
+</div>
+<script src="../shared/sim.js"></script>
+<script src="model.js"></script>
+<script src="equations.js"></script>
+<script src="questions.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
