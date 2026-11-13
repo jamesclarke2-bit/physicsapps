@@ -1,0 +1,94 @@
+[BRIEF.md](https://github.com/user-attachments/files/34800519/BRIEF.md)
+# Projectile Motion Explorer: Phase 1 brief
+
+Before writing anything, read the existing apps in this repo (e.g. the F = ma trolley lab and the ramp practical) and match their folder structure, file layout and conventions.
+
+Build Phase 1 of "Projectile Motion Explorer", a browser-based learning app for high-attaining GCSE and A-Level Physics students (including students not taking A-Level Maths). It is for teacher demos, self-study, homework and interactive whiteboards.
+
+Phase 1 is the only scope to build now. Phases 2 and 3 are described at the end so the architecture leaves room for them. Do not build them yet.
+
+## Technical constraints
+- Plain HTML, CSS and JavaScript. No build step, no frameworks, no network calls at runtime. It must run from GitHub Pages.
+- Folder: projectile-motion/ with index.html, css/, js/ and a short README.md.
+- Progress and settings in localStorage only. No backend.
+- Responsive from phone up to a 1920x1080 interactive whiteboard. Touch targets at least 44 px.
+
+## Physics conventions (fix these exactly)
+- Ground is y = 0. Up is positive. Launch point (x = 0, y = h0).
+- Equations: x = ux*t; y = h0 + uy*t - 1/2 g t^2; vy = uy - g t; vx = ux constant.
+- Flight time = positive root of the quadratic for y = 0. If h0 < 0, the projectile starts below ground, so treat this as a launch from a pit and say so in the UI.
+- Range = x at landing. Max height = h0 + uy^2/(2g). Time to max height = uy/g.
+- Collision = two point particles at the same (x, y) at the same time, within a stated tolerance of 0.01 m.
+- Air resistance is off in Phase 1. Equations must state "no air resistance" while it is off.
+- Acceleration is always g downward (green). Horizontal acceleration is zero.
+- Gravity slider 1-20 m s^-2, default 9.81 m s^-2.
+
+## Inputs
+- Initial speed 0-100 m/s; launch angle 0-90 degrees; launch height -20 to +100 m; gravity 1-20 m s^-2; projectile colour.
+- Vector toggles for velocity, horizontal component and vertical component.
+
+## Live readouts (every value with units)
+t (s), x (m), y (m), ux (m s^-1), vy (m s^-1), |v| (m s^-1), a (m s^-2).
+
+## Colour system (mandatory, use CSS variables)
+- Horizontal quantities: blue.
+- Vertical quantities: red.
+- Resultant: purple.
+- Acceleration: green.
+- Red and green must not be the only distinction. Add a second cue such as dash pattern, arrow style or a text label on every vector.
+- The projectile body colour is user-chosen. Vectors and readouts never use the projectile colour.
+
+## Phase 1 features
+1. Core simulator on a 2D axis with grid, labelled axes with units, full trajectory, moving projectile, velocity vector, and components.
+2. Controls: Play, Pause, Reset, Step Forward (one fixed time step), Slow Motion, Normal, Fast Forward.
+3. Independent Motion Explorer: three synchronised panels sharing one clock.
+   - Panel 1: full motion.
+   - Panel 2: horizontal only (constant velocity, zero acceleration shown).
+   - Panel 3: vertical only (changing velocity, constant acceleration shown).
+4. Graph View: live graphs for horizontal and vertical motion (displacement-time, velocity-time, acceleration-time). Show a moving point, draw the graph live, and offer replay. Show max height, time to max height, flight time and range as computed values.
+5. Equation Explorer: symbolic equations and live numerical substitution in the form y = (18.0 x 1.6) - 0.5 x 9.81 x (1.6^2), with units. Students can hide or reveal the working.
+6. Scenarios 1 (vertical launch) and 2 (cliff launch, horizontal or angled). Each scenario sets the simulator state and loads its questions.
+7. Assessment, with the simulator always visible beside the question:
+   - Numerical with tolerance (e.g. flight time within 2%).
+   - Multiple choice with misconception distractors (e.g. "at maximum height, acceleration is zero").
+   - Prediction ("if launch speed doubles, what happens to max height?"). The student must answer before the simulation runs.
+   - Marking is rule-based in Phase 1.
+8. Four support levels per question: hint, structured guidance, full worked solution, and an animated solution linking motion, equations, graph and answer.
+9. Adaptive scaffolding for wrong answers: step-by-step prompts that guide without giving the answer. Each question stores its own scaffold steps.
+
+## Data model
+Each question is a JSON object:
+{id, scenario, setup:{u, theta_deg, h0, g, ...}, type:"numerical|mcq|prediction", prompt, answer, tolerance, markScheme:[...], hints:[L1,L2,L3,L4], scaffold:[...], difficulty}
+
+Difficulty labels: GCSE Foundation, GCSE Higher, Year 12 Introductory, Year 12 Standard, Year 12 Extension, Oxbridge/Engineering.
+
+## Visual direction (secondary, but specify it)
+- One clean theme, high contrast, large type readable from the back of a room.
+- Dark-mode toggle.
+- Colour chips for each quantity on every readout card.
+- Simulator on the left or top, data and equations in side panels. Equations collapsible.
+- Avoid generic templates: use a considered type scale and spacing.
+
+## Teaching rules (apply everywhere)
+- Table headings put units in brackets, e.g. t (s), not t / s.
+- Never use the formula triangle for V, I and R.
+- Uncertainty for random results is half the range. Repeats show spread, expose anomalies and give a mean; they do not reduce uncertainty or improve accuracy.
+- Longer measurements (longer time, distance or bigger angle) reduce percentage uncertainty.
+
+## Acceptance tests (must pass before you report done)
+1. Simulated flight time, max height and range match the closed-form equations within 0.1% for at least 20 random inputs.
+2. The equation substitution text matches the live values.
+3. Panel 2 velocity is constant and Panel 3 acceleration is constant to display precision.
+4. Every table heading uses brackets, e.g. t (s). No formula triangles anywhere.
+5. Every number shown has units.
+6. Each question loads the correct setup, and the simulator stays visible during questions.
+7. Keyboard operable; no colour-only encoding.
+
+## Deliver
+- The working app in projectile-motion/.
+- A test log showing each acceptance check and its result.
+- A list of any assumptions you had to make. Do not stop to ask unless a requirement is genuinely contradictory.
+
+## Later phases (architecture only, do not build)
+- Phase 2: multi-projectile mode (up to five, with independent speed, angle, height, launch time and colour; collision and intersection points), air resistance, Scenarios 3-9, and Investigation Mode.
+- Phase 3: Teacher Mode assignment generation with randomised parameters. The assignment sharing method (URL code vs export/import) is undecided; leave it as an open choice, do not build it. Mathematical Extension Mode, Scenario 10 (sports), and AI marking through a proxy if added.
