@@ -109,7 +109,10 @@ async function setParams(page, p) {
   const pageTri = await page.evaluate(() => /triangle/i.test(document.body.innerText));
   if (tri.length || pageTri) ok = false;
   det.push(`Search for "triangle" in ${files.join(', ')} and in the rendered page text: ${tri.length || pageTri ? 'FOUND in ' + tri.join(', ') : 'none'}. (V = IR does not appear in this app; no formula triangle anywhere.)`);
-  det.push('Graph axes use "quantity / unit" (e.g. "y / m", "t / s"), as docs/TEACHING-RULES.md requires for graphs; the bracket rule is for tables.');
+  for (const t of tabs) await page.click('#t-' + t);
+  const axl = await page.evaluate(() => [...new Set([...document.querySelectorAll('svg text.axl')].map(t => t.textContent))]);
+  const axSlash = axl.filter(l => / \/ /.test(l)); if (axSlash.length) ok = false;
+  det.push(`Axis labels also use brackets, to match the tables: ${axl.map(l => '"' + l + '"').join(', ')}. ${axSlash.length ? 'BAD (slash): ' + axSlash.join(', ') : 'None uses "quantity / unit".'}`);
   record(4, 'Every table heading uses brackets, e.g. t (s). No formula triangles anywhere', ok, det); await ctx.close();
 }
 
@@ -136,8 +139,8 @@ async function setParams(page, p) {
   const subBad = subs.filter(s => !/= [−\-]?\d+(\.\d+)? (s|m|m s−1|m s−2)$/.test(s)); if (subBad.length) ok = false;
   det.push(`Equation substitutions: ${subs.length}, ${subBad.length ? 'not ending in a value with units: ' + subBad.join(' | ') : 'every one ends in a value with its unit'}.`);
   const axes = await page.evaluate(() => [...document.querySelectorAll('svg')].filter(s => [...s.querySelectorAll('text')].some(t => /^[−\-]?\d/.test(t.textContent))).map(s => ({ id: s.id || s.getAttribute('aria-label'), labels: [...s.querySelectorAll('text.axl')].map(t => t.textContent) })));
-  const axBad = axes.filter(a => a.id !== 'pane3' && !a.labels.some(l => / \/ \S/.test(l))); if (axBad.length) ok = false;
-  det.push(`Charts and scenes with numbered axes: ${axes.length}; each has an axis label with its unit ("… / unit"). ${axBad.length ? 'BAD: ' + axBad.map(a => a.id).join(', ') : ''}`);
+  const axBad = axes.filter(a => !a.labels.some(l => /\(\S[^)]*\)$/.test(l))); if (axBad.length) ok = false;
+  det.push(`Charts and scenes with numbered axes: ${axes.length}; each has an axis label with its unit in brackets ("… (unit)"). ${axBad.length ? 'BAD: ' + axBad.map(a => a.id).join(', ') : ''}`);
   await page.click('#t-questions'); await page.click('#scen button:nth-child(2)'); await page.click('[data-qid="s2-angled-time"]');
   const setup = await page.textContent('#q-setup');
   const tokens = setup.replace('Set-up loaded: ', '').split(', '); const sBad = tokens.filter(t => !/= [\d.]+ ?(m s⁻¹|°|m|m s⁻²)$/.test(t)); if (sBad.length) ok = false;
@@ -188,9 +191,9 @@ async function setParams(page, p) {
   const reached = new Set();
   await page.evaluate(() => document.activeElement && document.activeElement.blur());
   for (let i = 0; i < 80; i++) { await page.keyboard.press('Tab'); const id = await page.evaluate(() => { const a = document.activeElement; return a.id || a.dataset.tab || a.textContent.trim().slice(0, 20); }); reached.add(id); }
-  const need = ['b-theme', 'b-play', 'b-pause', 'b-reset', 'b-step', 'Slow motion (0.25×)', 'Normal (1×)', 'Fast forward (3×)', 't-setup', 'c-u', 'c-u-n', 'c-thetaDeg', 'c-h0', 'c-g', 'c-colour'];
+  const need = ['b-theme', 'b-play', 'b-pause', 'b-reset', 'b-step', 'speed-slow', 'speed-normal', 'speed-fast', 'b-present', 't-setup', 'c-u', 'c-u-n', 'c-thetaDeg', 'c-h0', 'c-g', 'c-colour'];
   const miss = need.filter(n => !reached.has(n)); if (miss.length) ok = false;
-  det.push(`Tab order reaches theme, Play, Pause, Reset, Step forward, the three speeds, the tabs, every slider and number box and the colour picker. ${miss.length ? 'MISSING: ' + miss.join(', ') : ''}`);
+  det.push(`Tab order reaches presentation mode, theme, Play, Pause, Reset, Step forward, the three speeds, the tabs, every slider and number box and the colour picker. ${miss.length ? 'MISSING: ' + miss.join(', ') : ''}`);
   await page.focus('#b-play'); await page.keyboard.press('Enter'); await page.waitForTimeout(400); const t1 = await page.evaluate(() => PM.clock.t);
   await page.focus('#b-pause'); await page.keyboard.press('Enter'); await page.evaluate(() => document.activeElement.blur());
   await page.keyboard.press('r'); const t2 = await page.evaluate(() => PM.clock.t); await page.keyboard.press('s'); const t3 = await page.evaluate(() => PM.clock.t);
@@ -209,11 +212,11 @@ async function setParams(page, p) {
   await page.click('#t-setup'); await setParams(page, { u: 20, thetaDeg: 45, h0: 0, g: 9.81 }); await page.evaluate(() => PM.setT(0.5));
   const vec = await page.evaluate(() => Object.fromEntries([...document.querySelectorAll('#stage [data-vec]')].map(g => [g.dataset.vec, { label: (g.querySelector('text') || {}).textContent || '', dash: (g.querySelector('line') || { getAttribute: () => '' }).getAttribute('stroke-dasharray') || 'solid', head: (g.querySelector('polygon') || { getAttribute: () => '' }).getAttribute('class') || 'filled' }])));
   const dashes = Object.values(vec).map(v => v.dash); const vOk = ['v', 'vx', 'vy', 'a'].every(k => vec[k] && vec[k].label) && new Set(dashes).size === 4;
-  const chips = await page.$$eval('#readouts .chipq', c => c.map(x => x.textContent.trim()));
-  const status = await page.evaluate(() => { document.querySelector('#t-questions').click(); return [...document.querySelectorAll('.qstat')].map(s => s.textContent); });
+  const chips = await page.$$eval('#readouts .sym', c => c.map(x => x.textContent.trim()));
+  const status = await page.evaluate(() => { document.querySelector('#t-questions').click(); return [...document.querySelectorAll('#qsteps button')].map(s => s.getAttribute('aria-label').split(', ').pop()); });
   const cOk = vOk && chips.every(c => c) && status.every(s => /(New|Tried|Correct)/.test(s)); if (!cOk) ok = false;
   det.push(`Vectors on the stage: ${Object.entries(vec).map(([k, v]) => `${k}: label "${v.label}", line ${v.dash}, head ${v.head}`).join('; ')}. Four different line patterns and a text label on each, so red (v_y) and green (a) differ without colour.`);
-  det.push(`Readout chips carry a letter and a line pattern as well as colour: ${chips.join(', ')}. Question status uses words and symbols: ${[...new Set(status)].join(', ')}. Correct/incorrect feedback uses ✓/✗ with the words "Correct"/"Not yet".`);
+  det.push(`Readouts carry a written symbol and name as well as a colour dot: ${chips.join(', ')}. Question status in the stepper is in each button's name (and a ✓ mark): ${[...new Set(status)].join(', ')}. Correct/incorrect feedback uses ✓/✗ with the words "Correct"/"Not yet".`);
   if (errs.length) { ok = false; det.push('page errors: ' + errs.join('; ')); }
   record(7, 'Keyboard operable; no colour-only encoding', ok, det); await ctx.close();
 }
@@ -222,8 +225,17 @@ async function setParams(page, p) {
 {
   const { ctx, page, errs } = await open(1280, 860, 'dark'); const det = []; let ok = true;
   await page.click('#t-questions'); await page.click('#scen button:nth-child(2)'); await page.click('[data-qid="s2-horiz-time"]'); await page.click('[data-level="4"]');
-  const btn = page.locator('#q-support .anim button');
-  for (let i = 0; i < 6 && !/Answer\./.test(await page.textContent('#q-support .anim')); i++) { await btn.click(); await page.waitForFunction(() => !document.querySelector('#q-support .anim button').disabled, null, { timeout: 15000 }); }
+  const steps = [];
+  for (let i = 0; i < 8 && !/Answer\./.test(await page.textContent('#anim-cap')); i++) {
+    await page.click('#anim-next'); await page.waitForFunction(() => document.querySelector('#anim-next').dataset.busy !== '1', null, { timeout: 15000 });
+    steps.push(await page.evaluate(() => ({ count: document.getElementById('anim-count').textContent, on: document.querySelectorAll('.aeqs .eqline.on').length, dimEq: document.querySelectorAll('.aeqs .eqline:not(.on)').length, dimRo: document.querySelectorAll('#readouts .ro.off').length })));
+  }
+  await page.click('#anim-back'); const backCount = await page.textContent('#anim-count');
+  const lastS = steps[steps.length - 1], N = +lastS.count.split(' of ')[1];
+  const stepOk = lastS.count === `Step ${N} of ${N}` && steps.every(s => s.on >= 1 && s.dimRo > 0) && steps.some(s => s.dimEq > 0) && backCount === `Step ${N - 1} of ${N}`;
+  if (!stepOk) ok = false;
+  det.push(`Step-by-step: ${steps.map(s => s.count + ' (' + s.on + ' equation highlighted, ' + s.dimEq + ' dimmed, ' + s.dimRo + ' readouts dimmed)').join('; ')}. Back returned to "${backCount}".`);
+  await page.click('#anim-next'); await page.waitForFunction(() => document.querySelector('#anim-next').dataset.busy !== '1');
   const txt = (await page.textContent('#q-support .anim')).replace(/\u00a0/g, ' '); const tEnd = await page.evaluate(() => PM.clock.t), T = M.flightTime({ u: 15, thetaDeg: 0, h0: 45, g: 9.81 });
   const a = /Answer/.test(txt) && /3\.03 s/.test(txt) && Math.abs(tEnd - T) < 1e-6; if (!a) ok = false;
   await page.screenshot({ path: path.join(root, '.check', 'projectile-motion-animated-dark.png') });

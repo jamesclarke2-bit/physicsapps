@@ -27,9 +27,17 @@ Horizontal and vertical motions are independent: constant horizontal velocity, c
 
 ## Where this follows the repo rather than the brief
 - Flat layout (`index.html`, `model.js`, `app.js` ...) and the shared stylesheet and helpers, not `css/` and `js/` folders (CLAUDE.md rule 4).
-- Graph axes use "quantity / unit"; tables use "quantity (unit)" (docs/TEACHING-RULES.md).
+- Axis labels use brackets to match the tables, e.g. "height, y (m)" (agreed for this app; docs/TEACHING-RULES.md still says "quantity / unit" for graphs elsewhere).
 - No worksheet: the brief does not ask for one.
 
 ## Room for later phases (not built)
 - Phase 2: every model function takes a projectile object `{u, thetaDeg, h0, g, t0}`; `t0` (launch time) is already honoured and `collide()` exists. The app keeps projectiles in a list (`PROJ`). Air resistance: `drag` is reserved and Phase 1 refuses it rather than ignoring it. Scenarios 3 to 9 add entries to `SCENARIOS` and `QUESTIONS`.
 - Phase 3: questions are plain data with `setup` objects, so Teacher Mode can randomise setups within ranges; answers recompute from the model. How assignments are shared (URL code or export/import) is left open.
+
+## Visual design
+- Quiet by default, loud only where the physics is: neutral greys, hairlines instead of boxes, and the four meaning colours (horizontal blue, vertical red, resultant purple, acceleration green) used only for physics. One accent (orange) for Play, the current step and THINK prompts.
+- Colour is never the only cue: each vector has its own line pattern and a label; each readout has a written symbol.
+- Velocity is drawn head to tail (v<sub>x</sub>, then v<sub>y</sub> from its tip, v as the diagonal); acceleration sits to one side on its own scale. Labels avoid the ball, other shafts and each other, and are left out when an arrow is too short. Tapping a velocity or acceleration readout highlights its arrow.
+- Font: Inter, self-hosted in `shared/fonts/` (SIL Open Font License, `shared/fonts/Inter-OFL.txt`), with tabular figures.
+- Presentation mode (toolbar button) scales everything up for whiteboards. Touch targets are at least 44 px.
+

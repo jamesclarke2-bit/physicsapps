@@ -52,7 +52,7 @@ Run: `node projectile-motion/acceptance.mjs` on 2026-11-13. Chromium via Playwri
 
 - Table headings found: "Point", "t (s)", "x (m)", "y (m)", "vx (m s−1)", "vy (m s−1)", "|v| (m s−1)". Every heading over a column of numbers has the form "quantity (unit)"; none uses "quantity / unit". 
 - Search for "triangle" in index.html, app.js, model.js, equations.js, questions.js, README.md and in the rendered page text: none. (V = IR does not appear in this app; no formula triangle anywhere.)
-- Graph axes use "quantity / unit" (e.g. "y / m", "t / s"), as docs/TEACHING-RULES.md requires for graphs; the bracket rule is for tables.
+- Axis labels also use brackets, to match the tables: "horizontal distance, x (m)", "height, y (m)", "x (m)", "t (s)", "vx​ (m s⁻¹)", "ax​ (m s⁻²)", "y (m)", "vy​ (m s⁻¹)", "ay​ (m s⁻²)". None uses "quantity / unit".
 
 ## 5. Every number shown has units: PASS
 
@@ -61,7 +61,7 @@ Run: `node projectile-motion/acceptance.mjs` on 2026-11-13. Chromium via Playwri
 - Computed values (Graphs): 4 values, all with units (e.g. 17.39 m; 1.59 s; 3.47 s)
 - Equation results: 13 values, all with units (e.g. 9.00 m s−1; 14.40 m; 9.00 m s−1)
 - Equation substitutions: 13, every one ends in a value with its unit.
-- Charts and scenes with numbered axes: 9; each has an axis label with its unit ("… / unit"). 
+- Charts and scenes with numbered axes: 8; each has an axis label with its unit in brackets ("… (unit)"). 
 - Question set-up line: "Set-up loaded: u = 20.00 m s⁻¹, θ = 30°, h₀ = 45.00 m, g = 9.81 m s⁻²" (every number has a unit)
 - Key-points table: numbers carry their unit in the column heading: Point | t (s) | x (m) | y (m) | vx (m s−1) | vy (m s−1) | |v| (m s−1).
 
@@ -73,12 +73,13 @@ Run: `node projectile-motion/acceptance.mjs` on 2026-11-13. Chromium via Playwri
 
 ## 7. Keyboard operable; no colour-only encoding: PASS
 
-- Tab order reaches theme, Play, Pause, Reset, Step forward, the three speeds, the tabs, every slider and number box and the colour picker. 
-- Enter on Play ran the clock (t = 0.38 s); R reset it (0 s); S stepped one fixed step (0.10 s); arrow key on the angle slider gave 46°; arrow keys move between tabs (now t-independent).
+- Tab order reaches presentation mode, theme, Play, Pause, Reset, Step forward, the three speeds, the tabs, every slider and number box and the colour picker. 
+- Enter on Play ran the clock (t = 0.40 s); R reset it (0 s); S stepped one fixed step (0.10 s); arrow key on the angle slider gave 46°; arrow keys move between tabs (now t-independent).
 - Keyboard-only question: wrong answer gave "Not yet" with scaffold step 1 and no answer (true); right answer marked correct; worked solution opened (true). Pop-ups close with Esc (shared Sim.pop).
-- Vectors on the stage: v: label "v", line solid, head filled; vx: label "vx​", line 10 6, head filled; vy: label "vy​", line 3 4, head filled; a: label "a = g", line 12 4 3 4, head vhead-open. Four different line patterns and a text label on each, so red (v_y) and green (a) differ without colour.
-- Readout chips carry a letter and a line pattern as well as colour: t, H, V, H, V, R, A. Question status uses words and symbols: ○ New, ✓ Correct. Correct/incorrect feedback uses ✓/✗ with the words "Correct"/"Not yet".
+- Vectors on the stage: v: label "v", line solid, head filled; vx: label "vx​", line 6 4, head filled; vy: label "vy​", line 1.5 3.5, head filled; a: label "a", line 7 3 1.5 3, head filled. Four different line patterns and a text label on each, so red (v_y) and green (a) differ without colour.
+- Readouts carry a written symbol and name as well as a colour dot: t time, x horizontal displacement, y height, ux horizontal velocity, vy vertical velocity, |v| speed, ay acceleration. Question status in the stepper is in each button's name (and a ✓ mark): New, Correct. Correct/incorrect feedback uses ✓/✗ with the words "Correct"/"Not yet".
 
 ## +. Extra: animated solution links motion, equation, graph and answer: PASS
 
+- Step-by-step: Step 2 of 3 (2 equation highlighted, 3 dimmed, 4 readouts dimmed); Step 3 of 3 (1 equation highlighted, 4 dimmed, 5 readouts dimmed). Back returned to "Step 2 of 3".
 - Animated solution (Q2.1) played the motion to launch and landing, stopped at each, and ended on the answer with its substitution (true). Clock ended at T = 3.029 s. Dark mode rendered without errors.

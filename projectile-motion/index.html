@@ -5,153 +5,245 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Projectile Motion Explorer</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="preload" href="../shared/fonts/inter-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../shared/sim.css">
 <style>
-/* App-specific styles only. Anything reusable belongs in shared/sim.css.
-   Quantity colours (mandatory): horizontal blue, vertical red, resultant purple, acceleration green.
-   Never the only cue: each also has its own dash pattern and a text label. The projectile colour is never used for them. */
-:root{--q-h:#1d5fd0;--q-v:#c62828;--q-r:#7a3cc0;--q-a:#18803a;--q-t:#566678;--ball:#e6a100}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--q-h:#80b1ff;--q-v:#ff8080;--q-r:#c9a0ff;--q-a:#62d58c;--q-t:#9aabbc}}
-:root[data-theme="dark"]{--q-h:#80b1ff;--q-v:#ff8080;--q-r:#c9a0ff;--q-a:#62d58c;--q-t:#9aabbc}
-body{font-size:17px}
-.pm{max-width:1560px}
-.pmhead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px}
-.pmgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;align-items:start}
-.simcol{position:sticky;top:12px;display:flex;flex-direction:column;gap:14px;min-width:0}
-@media (max-width:980px){.pmgrid{grid-template-columns:minmax(0,1fr)}.simcol{position:static}}
-/* phone: in Questions the simulator sticks to the top so it stays visible beside the question */
-@media (max-width:980px){body.qmode .simcol{position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:6px;gap:6px}
-  body.qmode .stage{max-height:30vh}body.qmode .readouts,body.qmode .simnote,body.qmode .transport .seg,body.qmode .simcard .cardhead{display:none}body.qmode .simcard{padding:8px}}
-.pm .btn,.pm .seg button,.pm .tabs button,.pm select{min-height:44px}
-.pm .btn{min-width:44px}
-.pm input[type=range]{height:44px}
-.pm .tabs{margin:0 0 16px;flex-wrap:wrap}
-.pm .tabs button{padding:10px 11px}
-.stage{width:100%;height:auto;display:block;touch-action:manipulation;max-height:64vh}
-.stage text{font:14px var(--f-mono);fill:var(--muted)}.pane text{font:12px var(--f-mono);fill:var(--muted)}
-.stage text.axl{font:700 15px var(--f-body);fill:var(--ink)}.pane text.axl{font:600 13px var(--f-body);fill:var(--ink)}
-.stage .grid,.pane .grid{stroke:var(--grid);stroke-width:1}
-.stage .ax,.pane .ax{stroke:var(--muted);stroke-width:1.4}
-.ground{stroke:var(--ink);stroke-width:2.5}
+/* App-specific styles. Principle: quiet by default, loud only where the physics is.
+   Neutral greys everywhere except the four meaning colours (horizontal blue, vertical red, resultant purple, acceleration green),
+   which are used only for physics, and one accent (orange: Play, current step, THINK prompts). Colour is never the only cue:
+   every vector also has its own line pattern and a text label, every readout a symbol. */
+@font-face{font-family:'Inter';font-style:normal;font-weight:400 600;font-display:swap;src:url(../shared/fonts/inter-latin-wght.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400 600;font-display:swap;src:url(../shared/fonts/inter-greek-wght.woff2) format('woff2');unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF}
+:root{
+  --bg:#fbfbfa;--surface:#ffffff;--surface2:#f2f3f4;--ink:#1d2329;--muted:#69737d;--faint:#a3abb3;--line:#e3e6e9;--grid:#eef0f2;
+  --accent:#c2410c;--accent-ink:#ffffff;--tint:#fdf3ec;--c1:#c2410c;
+  --q-h:#2d5e9c;--q-v:#a83a31;--q-r:#6a4a9a;--q-a:#2f714a;--q-t:#69737d;--ball:#3a4550;
+  --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;--f-display:var(--f-body);--f-mono:var(--f-body);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#13171b;--surface:#191e23;--surface2:#21272d;--ink:#e5e8eb;--muted:#9aa4ad;--faint:#5f6973;--line:#2b3239;--grid:#20262c;
+  --accent:#f0874a;--accent-ink:#13171b;--tint:#2a1f17;--c1:#f0874a;--q-h:#82a8de;--q-v:#e2867e;--q-r:#b69ce2;--q-a:#7cc69a;--q-t:#9aa4ad;--ball:#d4dae0}}
+:root[data-theme="dark"]{
+  --bg:#13171b;--surface:#191e23;--surface2:#21272d;--ink:#e5e8eb;--muted:#9aa4ad;--faint:#5f6973;--line:#2b3239;--grid:#20262c;
+  --accent:#f0874a;--accent-ink:#13171b;--tint:#2a1f17;--c1:#f0874a;--q-h:#82a8de;--q-v:#e2867e;--q-r:#b69ce2;--q-a:#7cc69a;--q-t:#9aa4ad;--ball:#d4dae0}
+body{font:15px/1.55 var(--f-body);font-feature-settings:'cv11' 1;padding-block:0 48px}
+.pm{max-width:1560px;margin:0 auto}
+html.present .pm{zoom:1.35}
+.pm h1{font:600 19px/1.2 var(--f-body);letter-spacing:-.01em;margin:0}
+.pm h2{font:600 15px/1.3 var(--f-body)}
+.num,.val,.tnum{font-variant-numeric:tabular-nums}
+sub,sup{font-size:72%;line-height:0}
+
+/* toolbar */
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid var(--line);margin-bottom:18px}
+.bar .grow{flex:1}
+.assume{font:500 12px var(--f-body);color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 10px;margin:0;white-space:nowrap}
+.pm .btn{min-height:44px;min-width:44px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;padding:8px 14px;font:500 14px var(--f-body);cursor:pointer}
+.pm .btn:hover{background:var(--surface2)}
+.pm .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600;min-width:96px}
+.pm .btn.primary:hover{filter:brightness(1.06)}
+#b-theme[aria-pressed=true],#anim-auto[aria-pressed=true]{background:var(--surface2)}
+.pm .btn.go{border-color:var(--accent);color:var(--accent);font-weight:600}
+.pm .btn.link{border:0;padding:4px 6px;min-height:44px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.pm .btn:disabled{opacity:.4;cursor:default}
+.pm button:focus-visible,.pm input:focus-visible,.pm summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#b-present[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+/* layout */
+.pmgrid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);gap:36px;align-items:start}
+.simcol{position:sticky;top:12px;min-width:0}
+@media (max-width:980px){.pmgrid{grid-template-columns:minmax(0,1fr);gap:24px}.simcol{position:static}}
+/* phones in Questions: the simulator becomes a compact strip pinned to the top */
+@media (max-width:980px){
+  body.qmode .simcol{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:4px 0 6px}
+  body.qmode .stage{max-height:24vh}
+  body.qmode .readouts,body.qmode .keys,body.qmode .transport .seg,body.qmode #b-pause{display:none}
+  body.qmode .transport{margin-top:4px}
+  body.qmode .transport .btn{padding:4px 12px}
+  body.qmode #p-questions *{scroll-margin-top:calc(24vh + 70px)}}
+
+/* simulator */
+.stage{width:100%;height:auto;display:block;touch-action:manipulation;max-height:62vh}
+.stage text,.scene text{font:400 12px var(--f-body);fill:var(--muted);font-variant-numeric:tabular-nums}
+text.axl{font:400 12.5px var(--f-body)!important;fill:var(--muted)!important}
+.grid{stroke:var(--grid);stroke-width:1}
+.ax{stroke:var(--faint);stroke-width:1}
+.ground{stroke:var(--ink);stroke-width:1.4}
 .earth{fill:var(--surface2)}
-.pit{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;stroke-dasharray:4 3}
-.path-full{fill:none;stroke:var(--muted);stroke-width:1.6;stroke-dasharray:2 5;stroke-linecap:round}
-.path-done{fill:none;stroke:var(--ink);stroke-width:2;opacity:.55}
-.strobe{fill:var(--muted);opacity:.55}
-.ballc{stroke:var(--ink);stroke-width:2}
-.launch{fill:none;stroke:var(--ink);stroke-width:1.5}
-.v-h{stroke:var(--q-h);fill:var(--q-h)}.v-v{stroke:var(--q-v);fill:var(--q-v)}.v-r{stroke:var(--q-r);fill:var(--q-r)}.v-a{stroke:var(--q-a);fill:var(--q-a)}
-.vline{stroke-width:3.5;fill:none!important;stroke-linecap:butt}
-.vhead-open{fill:var(--surface)!important;stroke-width:2.5}
-text.vl{font:700 15px var(--f-body)!important;paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
-text.vl.v-h{fill:var(--q-h)}text.vl.v-v{fill:var(--q-v)}text.vl.v-r{fill:var(--q-r)}text.vl.v-a{fill:var(--q-a)}
+.pit{fill:var(--bg);stroke:var(--faint);stroke-width:1;stroke-dasharray:3 3}
+.path-full{fill:none;stroke:var(--faint);stroke-width:1.2;stroke-dasharray:1.5 4;stroke-linecap:round}
+.path-done{fill:none;stroke:var(--muted);stroke-width:1.5}
+.strobe{fill:var(--faint)}
+.ballc{stroke:var(--surface);stroke-width:2}
+.launch{fill:var(--surface);stroke:var(--muted);stroke-width:1.2}
+.guide{stroke:var(--faint);stroke-width:1;stroke-dasharray:1.5 3.5}
+.stripbg{fill:var(--surface2);opacity:.6}
+/* vectors: thin shafts, small heads, own dash pattern, one label */
+.vec{transition:opacity .15s}
+.vec line{stroke-width:2;fill:none;stroke-linecap:round}
+.vec polygon{stroke:none}
+.vec.v-a polygon{fill:var(--surface)!important;stroke:var(--q-a);stroke-width:1.5}
+.v-h line{stroke:var(--q-h)}.v-h polygon,.v-h text{fill:var(--q-h)}
+.v-v line{stroke:var(--q-v)}.v-v polygon,.v-v text{fill:var(--q-v)}
+.v-r line{stroke:var(--q-r)}.v-r polygon,.v-r text{fill:var(--q-r)}
+.v-a line{stroke:var(--q-a)}.v-a text{fill:var(--q-a)}
+.vec text{font:600 12px var(--f-body)!important;paint-order:stroke;stroke:var(--surface);stroke-width:3.5px;stroke-linejoin:round}
+.vec.hl line{stroke-width:3.2}
+.vec.dim{opacity:.22}
+.pitnote{margin:8px 0 0;font-size:13px;color:var(--muted)}
 .transport{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
 .transport .seg{margin-left:auto}
-.simnote{font-size:14px;color:var(--muted);margin:8px 0 0}
-.pitnote{margin:8px 0 0;padding:8px 12px;border-radius:8px;background:var(--tint);font-size:15px}
-.assume{display:inline-block;font:700 13px var(--f-body);border:1.5px solid var(--ink);border-radius:999px;padding:3px 10px;margin:0}
-/* readout cards with a colour chip AND a line-pattern sample AND a text tag */
-.readouts{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px}
-.ro{background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--qc,var(--q-t));border-radius:10px;padding:8px 12px;min-width:0}
-.ro .rh{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);font-weight:700}
-.ro .val sup{font-size:65%}
-.ro .val{display:block;font:500 22px/1.2 var(--f-mono);color:var(--ink);white-space:nowrap}
-.chipq{display:inline-flex;align-items:center;gap:4px;font:700 11px var(--f-mono);color:var(--qc);border:1.5px solid var(--qc);border-radius:5px;padding:1px 5px;line-height:1.3}
-.chipq svg{width:22px;height:8px;display:block}
-.chipq line{stroke:var(--qc);stroke-width:3}
-.qh{--qc:var(--q-h)}.qv{--qc:var(--q-v)}.qr{--qc:var(--q-r)}.qa{--qc:var(--q-a)}.qt{--qc:var(--q-t)}
-.ctl2{display:grid;grid-template-columns:minmax(0,1fr) 108px;gap:4px 10px;align-items:center}
-.ctl2 label{grid-column:1/-1;display:block}
-.ctl2 input[type=number]{font:500 16px var(--f-mono);width:100%;min-height:44px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
-.toggles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px 12px}
-.toggles label{display:flex;gap:10px;align-items:center;min-height:44px;font-size:15px;cursor:pointer}
-.toggles input{width:22px;height:22px}
-input[type=color]{width:64px;height:44px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:2px}
-.locknote{margin:0 0 10px;font-size:14px}
-/* independent motion: panels share one clock and one scale */
-.indep{display:grid;grid-template-columns:minmax(0,400fr) minmax(0,96fr);gap:8px}
-.pane{width:100%;height:auto;display:block;background:var(--surface);border:1px solid var(--line);border-radius:8px}
-.ptitle{font:700 14px var(--f-display);margin:0 0 4px}
-.pread{font:500 14px var(--f-mono);margin:4px 0 0;display:grid;gap:2px}
+.pm .seg{border:1px solid var(--line);border-radius:8px;overflow:hidden;display:inline-flex;flex-wrap:wrap}
+.pm .seg button{min-height:44px;border:0;background:transparent;color:var(--muted);padding:6px 12px;font:500 13px var(--f-body);cursor:pointer}
+.pm .seg button+button{border-left:1px solid var(--line)}
+.pm .seg button[aria-pressed=true],.pm .seg button[aria-checked=true]{background:var(--surface2);color:var(--ink);font-weight:600}
+.keys{font-size:12px;color:var(--faint);margin:8px 0 0}
+kbd{font:500 11px var(--f-body);border:1px solid var(--line);border-radius:4px;padding:0 4px;color:var(--muted)}
+/* readouts: one slim strip, colour dot + symbol + tabular value */
+.readouts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px 1px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:14px}
+.ro{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:7px 10px;border:0;box-shadow:-1px 0 0 var(--line),0 -1px 0 var(--line);background:transparent;color:var(--ink);font:inherit;text-align:left;min-width:0;min-height:44px}
+@media (min-width:1500px){.readouts{grid-template-columns:repeat(7,minmax(0,1fr))}}
+@media (max-width:460px){.readouts{grid-template-columns:repeat(3,minmax(0,1fr))}.ro .val{font-size:14px}}
+.readouts{overflow:hidden}
+button.ro{cursor:pointer}button.ro:hover{background:var(--surface2)}
+button.ro[aria-pressed=true]{background:var(--surface2);box-shadow:inset 0 -2px 0 var(--qc)}
+.ro .sym{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.ro .val{font:500 15px/1.3 var(--f-body);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ro .val sup{font-size:68%}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--qc);flex:none;display:inline-block}
+.qh{--qc:var(--q-h)}.qv{--qc:var(--q-v)}.qr{--qc:var(--q-r)}.qa{--qc:var(--q-a)}.qt{--qc:var(--faint)}
+.focusing .ro.off{opacity:.25}
+
+/* side panels: whitespace and hairlines, not boxes */
+.pm .tabs{margin:0 0 20px;flex-wrap:wrap;gap:0 4px;border-bottom:1px solid var(--line)}
+.pm .tabs button{padding:10px 10px;min-height:44px;font:500 14px var(--f-body);color:var(--muted);border-bottom-width:2px}
+.pm .tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+.pm .card{background:none;border:0;border-radius:0;padding:0}
+.sec{padding:16px 0;border-top:1px solid var(--line)}
+.sec:first-child{border-top:0;padding-top:0}
+.sec>h2{margin:0 0 10px}
+.pm .think{background:var(--tint);border-radius:6px;padding:9px 12px;margin:0 0 18px;font-size:14px}
+.pm .think b{font:600 10px var(--f-body);letter-spacing:.12em;color:var(--accent)}
+.fine{font-size:13px;color:var(--muted)}
+.ctl2{display:grid;grid-template-columns:minmax(0,1fr) 96px;gap:2px 12px;align-items:center;margin-bottom:12px}
+.ctl2 label{grid-column:1/-1;display:block;font:500 13px var(--f-body);color:var(--muted)}
+.ctl2 input[type=number]{font:500 15px var(--f-body);font-variant-numeric:tabular-nums;width:100%;min-height:44px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+.pm input[type=range]{height:44px;accent-color:var(--ink)}
+.toggles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:0 16px}
+.toggles label{display:flex;gap:10px;align-items:center;min-height:44px;font-size:14px;cursor:pointer}
+.toggles input{width:18px;height:18px;accent-color:var(--ink)}
+.lsample{width:26px;height:8px;flex:none}
+.lsample line{stroke-width:2.2;stroke-linecap:round}
+input[type=color]{width:52px;height:44px;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:2px}
+/* independent motion explorer */
+.pm .indseg{display:none;margin-bottom:10px}
+@media (max-width:700px){.pm .indseg{display:inline-flex}}
+.cap .vals span{white-space:nowrap}
+.scene{width:100%;height:auto;display:block;max-height:70vh;margin:0 auto}
+.caps{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 24px;margin-top:10px}
+@media (max-width:700px){.caps{grid-template-columns:minmax(0,1fr)}}
+.cap{margin:0;font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline}
+.cap strong{color:var(--ink);font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.cap .vals{font-variant-numeric:tabular-nums;color:var(--ink)}
+.cap .vals b{font-weight:500}
 /* graphs */
-.ggrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.kvals{display:flex;flex-wrap:wrap;gap:6px 28px;margin-bottom:14px}
+.kv1{font-size:12px;color:var(--muted)}
+.kv1 .calc{display:block;font:500 18px var(--f-body);font-variant-numeric:tabular-nums;color:var(--ink);border-bottom:1px dotted var(--faint);background:none;padding:0}
+.pm table.data th{font:500 12px var(--f-body);color:var(--muted)}
+.pm table.data td.num{font-family:var(--f-body)}
+.ggrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 24px}
 @media (max-width:620px){.ggrid{grid-template-columns:minmax(0,1fr)}}
-.gcol h3{font:700 15px var(--f-display);margin:0 0 6px;display:flex;gap:8px;align-items:center}
-.gsvg{width:100%;height:auto;display:block;margin-bottom:8px}
-.gsvg text{font:11px var(--f-mono);fill:var(--muted)}.gsvg text.axl{font:600 12px var(--f-body);fill:var(--ink)}
-.gsvg .grid{stroke:var(--grid)}.gsvg .ax{stroke:var(--muted);stroke-width:1.2}
-.gline{fill:none;stroke-width:2.5}
-.kvals{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:14px}
-.kv1{background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--muted);font-weight:700}
-.kv1 .calc{display:block;font-size:20px;margin-top:2px;color:var(--ink)}
+.gcol h3{font:600 13px var(--f-body);margin:0 0 4px;display:flex;gap:7px;align-items:center}
+.gsvg{width:100%;height:auto;display:block;margin-bottom:6px}
+.gsvg text{font:400 10.5px var(--f-body);fill:var(--muted);font-variant-numeric:tabular-nums}
+.gsvg .axl{font-size:11px!important}
+.gline{fill:none;stroke-width:2}
 /* equations */
-.eqsec{border:1px solid var(--line);border-left:6px solid var(--qc);border-radius:10px;padding:10px 12px;margin-bottom:12px;background:var(--surface)}
-.eqsec summary{display:flex;align-items:center;gap:8px;min-height:44px;font:700 16px var(--f-display)}
-.eqline{margin:8px 0 0}
-.eqline .en{font-size:13px;color:var(--muted);font-weight:700}
-.eqline .es{font:500 17px/1.5 var(--f-mono);display:block}
-.eqline .esub{font:500 16px/1.5 var(--f-mono);display:block;background:var(--surface2);border-radius:6px;padding:4px 8px;overflow-wrap:anywhere}
+.eqsec{border-left:2px solid var(--qc);padding:2px 0 6px 14px;margin:0 0 18px}
+.eqsec summary{display:flex;align-items:center;gap:8px;min-height:44px;font:600 14px var(--f-body)}
+.eqline{margin:8px 0 0;transition:opacity .2s}
+.eqline .en{font-size:12px;color:var(--muted);display:block}
+.eqline .es{font:500 15px/1.5 var(--f-body);display:block}
+.eqline .esub{font:400 14px/1.5 var(--f-body);font-variant-numeric:tabular-nums;display:block;color:var(--ink);overflow-wrap:anywhere}
 .noworking .esub{display:none}
-.eqline sub,.eqline sup{font-size:70%}
 /* questions */
-.scen{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:12px}
-.qlist{list-style:none;padding:0;margin:0 0 14px;display:grid;gap:6px}
-.qlist button{width:100%;text-align:left;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:8px 12px;min-height:44px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
-.qlist button[aria-current=true]{border-color:var(--c1);box-shadow:0 0 0 2px var(--c1) inset}
-.qlist .qm{font-size:13px;color:var(--muted)}
-.qstat{font:700 13px var(--f-body);white-space:nowrap;align-self:center}
-.qcard h3{font:700 18px var(--f-display);margin:0 0 4px}
-.qmeta{font-size:13px;color:var(--muted);margin:0 0 8px}
-.qprompt{font-size:18px;margin:0 0 10px}
-.setupline{font:500 14px var(--f-mono);background:var(--surface2);border-radius:6px;padding:6px 10px;margin:0 0 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between}
-.ansrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-.ansrow input{font:500 18px var(--f-mono);width:150px;min-height:44px;padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
-.opts{border:0;padding:0;margin:0 0 10px;display:grid;gap:6px}
-.opts label{display:flex;gap:10px;align-items:center;min-height:44px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:var(--surface)}
-.opts input{width:20px;height:20px;flex:none}
-.fb{margin:10px 0;padding:10px 12px;border-radius:8px;background:var(--surface2)}
-.fb p{margin:4px 0}
+#scen{margin-bottom:8px}
+.scenintro{font-size:13px;color:var(--muted);margin:0 0 14px}
+.qsteps{list-style:none;display:flex;flex-wrap:wrap;gap:6px;padding:0;margin:0 0 20px;align-items:center}
+.qsteps li{display:flex;align-items:center;gap:6px}
+.qsteps li+li::before{content:"";width:14px;height:1px;background:var(--line)}
+.qsteps button{position:relative;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:600 14px var(--f-body);cursor:pointer;font-variant-numeric:tabular-nums}
+.qsteps button[aria-current=step]{border-color:var(--accent);color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.qsteps .mk{position:absolute;right:-5px;top:-5px;font-size:11px;line-height:16px;width:16px;height:16px;border-radius:50%;background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+.qmeta{font-size:12px;color:var(--muted);margin:0 0 6px;letter-spacing:.01em}
+.qprompt{font:500 18px/1.45 var(--f-body);margin:0 0 10px}
+.setupline{font-size:13px;color:var(--muted);margin:0 0 16px;display:flex;gap:4px 10px;align-items:center;flex-wrap:wrap}
+.ansrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.ansrow input{font:500 17px var(--f-body);font-variant-numeric:tabular-nums;width:140px;min-height:44px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.opts{border:0;padding:0;margin:0 0 12px;display:grid;gap:0}
+.opts legend{margin-bottom:4px}
+.opts label{display:flex;gap:12px;align-items:center;min-height:44px;padding:6px 2px;border-bottom:1px solid var(--line);cursor:pointer;font-size:15px}
+.opts input{width:18px;height:18px;flex:none;accent-color:var(--accent)}
+.fb{margin:12px 0;padding:10px 0 10px 14px;border-left:2px solid var(--line);font-size:14px}
+.fb p{margin:3px 0}
 .scaf{margin:6px 0 0;padding-left:20px}
-.support{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 8px}
-.supbox{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:8px}
-.supbox h4{margin:0 0 6px;font:700 15px var(--f-display)}
-.supbox ol{margin:0;padding-left:20px}.supbox li{margin:4px 0}
-.anim .astep{font-size:16px;margin:8px 0}
-.anim .esub{font:500 15px/1.5 var(--f-mono);background:var(--surface2);border-radius:6px;padding:4px 8px;display:block;overflow-wrap:anywhere}
-.keys{font-size:13px;color:var(--muted)}
-kbd{font:500 12px var(--f-mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px;background:var(--surface)}
-@media (min-width:1700px){.pm{zoom:1.18}}
+.suphead{font:600 12px var(--f-body);color:var(--muted);margin:22px 0 6px;letter-spacing:.02em}
+.support{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.support button{white-space:nowrap;flex:1 1 0;min-height:44px;border:0;background:transparent;color:var(--muted);font:500 13px var(--f-body);cursor:pointer;padding:6px 8px;display:flex;gap:6px;align-items:center;justify-content:center}
+.support button+button{border-left:1px solid var(--line)}
+.support button b{display:inline-flex;width:20px;height:20px;border-radius:50%;border:1px solid currentColor;align-items:center;justify-content:center;font-size:11px;flex:none}
+.support button[aria-expanded=true]{color:var(--ink);background:var(--surface2);font-weight:600}
+.support button:disabled{opacity:.4;cursor:default}
+.supbox{padding:12px 2px 4px}
+.supbox ol,.supbox ul{margin:0;padding-left:20px}.supbox li{margin:4px 0}
+details.ms{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}
+details.ms summary{font:600 13px var(--f-body);min-height:44px;display:flex;align-items:center}
+/* animated solution */
+.anim .astephead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.anim .acount{font:600 12px var(--f-body);color:var(--accent);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.anim .acap{font-size:15px;margin:0 0 10px;min-height:3em}
+.anim .aeqs .eqline{opacity:.25;border-left:2px solid transparent;padding-left:10px;margin:4px 0}
+.anim .aeqs .eqline:not(.on) .en,.anim .aeqs .eqline:not(.on) .esub{display:none}
+.anim .aeqs .eqline.on{opacity:1;border-left-color:var(--accent)}
+.anim .actl{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.anim .gsvg{max-width:340px;margin-top:8px}
+.anim .actl .btn{padding:4px 12px}
+.anim .gsvg.off{opacity:.25}
+.about{margin-top:40px;font-size:13px;color:var(--muted);max-width:80ch;border-top:1px solid var(--line);padding-top:14px}
+@media (max-width:520px){
+  .bar{gap:8px;padding:10px 0}.pm h1{font-size:17px}.bar .grow{display:none}
+  .bar .btn{padding:4px 10px;font-size:13px}
+  .qsteps{gap:3px}.qsteps li+li::before{width:5px}
+  .transport{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}.transport .btn{min-width:0;padding:6px 4px}.transport .seg{grid-column:1/-1;margin:0}.transport .seg button{flex:1}
+  .long{display:none}}
 @media (prefers-reduced-motion:reduce){.pm *{transition:none!important}}
 </style>
 </head>
 <body>
 <div class="wrap pm">
-  <header class="pmhead">
-    <div>
-      <h1>Projectile Motion Explorer</h1>
-      <p class="sub">Launch a projectile and see the horizontal and vertical motions separately: constant horizontal velocity, constant downward acceleration.</p>
-    </div>
-    <button class="btn" id="b-theme" type="button" aria-pressed="false">Dark mode</button>
+  <header class="bar">
+    <h1>Projectile Motion Explorer</h1>
+    <p class="assume" id="assume">No air resistance</p>
+    <span class="grow"></span>
+    <button class="btn" id="b-present" type="button" aria-pressed="false">Presentation mode</button>
+    <button class="btn" id="b-theme" type="button" aria-pressed="false">Dark</button>
   </header>
 
   <div class="pmgrid">
     <!-- SIMULATOR (always visible) -->
     <div class="simcol" id="simcol">
-      <div class="card simcard">
-        <div class="cardhead"><h2>Simulator</h2><p class="assume" id="assume">No air resistance</p></div>
-        <svg class="stage" id="stage" viewBox="0 0 640 400" role="img" aria-labelledby="stage-t stage-d"><title id="stage-t">Projectile trajectory</title><desc id="stage-d"></desc></svg>
-        <p class="pitnote" id="pitnote" hidden></p>
-        <div class="transport" role="group" aria-label="Playback controls">
-          <button class="btn primary" id="b-play" type="button">Play</button>
-          <button class="btn" id="b-pause" type="button">Pause</button>
-          <button class="btn" id="b-reset" type="button">Reset</button>
-          <button class="btn" id="b-step" type="button">Step forward</button>
-          <div class="seg" id="seg-speed" role="group" aria-label="Playback speed"></div>
-        </div>
-        <p class="simnote keys">Keys: <kbd>Space</kbd> play or pause, <kbd>S</kbd> step forward, <kbd>R</kbd> reset. One step is <span id="stepdt"></span>.</p>
+      <svg class="stage" id="stage" viewBox="0 0 640 400" role="img" aria-labelledby="stage-t stage-d"><title id="stage-t">Projectile trajectory</title><desc id="stage-d"></desc></svg>
+      <p class="pitnote" id="pitnote" hidden></p>
+      <div class="transport" role="group" aria-label="Playback controls">
+        <button class="btn primary" id="b-play" type="button">Play</button>
+        <button class="btn" id="b-pause" type="button">Pause</button>
+        <button class="btn" id="b-reset" type="button">Reset</button>
+        <button class="btn" id="b-step" type="button" aria-label="Step forward">Step<span class="long"> forward</span></button>
+        <div class="seg" id="seg-speed" role="group" aria-label="Playback speed"></div>
       </div>
-      <div class="readouts" id="readouts" aria-label="Live readouts"></div>
+      <div class="readouts" id="readouts" role="group" aria-label="Live readouts. Tap a velocity or acceleration to highlight its arrow."></div>
+      <p class="keys">Keys: <kbd>Space</kbd> play or pause, <kbd>S</kbd> step forward (<span id="stepdt"></span>), <kbd>R</kbd> reset.</p>
     </div>
 
     <!-- SIDE PANELS -->
@@ -165,66 +257,58 @@ kbd{font:500 12px var(--f-mono);border:1px solid var(--line);border-bottom-width
       </nav>
 
       <section id="p-setup" role="tabpanel" aria-labelledby="t-setup">
-        <div class="think"><b>Think</b><span>Before you press Play: will the horizontal velocity change during the flight? Watch the blue readout.</span></div>
-        <div class="card">
-          <div class="cardhead"><h2>Launch</h2></div>
-          <p class="locknote" id="locknote" hidden>Make your prediction in Questions first. The controls unlock when you have answered.</p>
+        <div class="think"><b>THINK</b> <span>Before you press Play: will the horizontal velocity change during the flight? Watch u<sub>x</sub> in the readouts.</span></div>
+        <div class="sec">
+          <h2>Launch</h2>
+          <p class="fine" id="locknote" hidden>Make your prediction in Questions first. The controls unlock when you have answered.</p>
           <div id="inputs"></div>
         </div>
-        <div class="card" style="margin-top:14px">
-          <div class="cardhead"><h2>Show</h2></div>
+        <div class="sec">
+          <h2>Show</h2>
           <div class="toggles" id="toggles"></div>
-          <div class="ctl" style="margin-top:8px"><label for="c-colour" style="justify-content:flex-start;gap:12px;align-items:center">Projectile colour <input type="color" id="c-colour" value="#e6a100"></label></div>
+          <label class="toggles" for="c-colour" style="display:flex;gap:12px;align-items:center;min-height:44px;font-size:14px;margin-top:6px"><input type="color" id="c-colour" value="#3a4550"> Projectile colour</label>
         </div>
       </section>
 
       <section id="p-independent" role="tabpanel" aria-labelledby="t-independent" hidden>
-        <div class="think"><b>Think</b><span>The three panels share one clock. Which panel has equally spaced dots? What does that tell you about its velocity?</span></div>
-        <div class="indep">
-          <div><p class="ptitle">Panel 1: full motion</p><svg class="pane" id="pane1" role="img" aria-label="Panel 1: full motion"></svg></div>
-          <div><p class="ptitle">Panel 3</p><svg class="pane" id="pane3" role="img" aria-label="Panel 3: vertical motion only"></svg></div>
-          <div><p class="ptitle">Panel 2: horizontal only</p><svg class="pane" id="pane2" role="img" aria-label="Panel 2: horizontal motion only"></svg></div>
-          <div></div>
-        </div>
-        <div class="even" style="margin-top:12px">
-          <div class="card"><p class="ptitle" id="pt2">Panel 2: horizontal only</p><div class="pread" id="read2"></div><p class="fine">Constant velocity, zero acceleration: equal distances in equal times.</p></div>
-          <div class="card"><p class="ptitle" id="pt3">Panel 3: vertical only</p><div class="pread" id="read3"></div><p class="fine">Changing velocity, constant acceleration g downward.</p></div>
+        <div class="think"><b>THINK</b> <span>All three views share one clock. Which strip has equally spaced dots, and what does that tell you about its velocity?</span></div>
+        <div class="seg indseg" id="ind-seg" role="radiogroup" aria-label="Which view to show"></div>
+        <svg class="scene" id="indep" role="img" aria-label="Full motion with the horizontal-only strip below and the vertical-only strip to the right"></svg>
+        <div class="caps">
+          <p class="cap qh" id="cap-h"></p>
+          <p class="cap qv" id="cap-v"></p>
         </div>
       </section>
 
       <section id="p-graphs" role="tabpanel" aria-labelledby="t-graphs" hidden>
-        <div class="think"><b>Think</b><span>Before you replay: which graph will be a straight sloping line, and which will be a curve?</span></div>
-        <div class="card" style="margin-bottom:14px">
+        <div class="think"><b>THINK</b> <span>Before you replay: which graphs will be straight lines, and which one a curve?</span></div>
+        <div class="sec">
           <div class="cardhead"><h2>Computed values</h2><button class="btn" id="b-replay" type="button">Replay graphs</button></div>
           <div class="kvals" id="kvals"></div>
           <div class="tablewrap"><table class="data" id="keytable"></table></div>
           <p class="fine">Click a value to see how it is worked out.</p>
         </div>
-        <div class="card"><div class="ggrid" id="graphs"></div></div>
+        <div class="sec"><div class="ggrid" id="graphs"></div></div>
       </section>
 
       <section id="p-equations" role="tabpanel" aria-labelledby="t-equations" hidden>
-        <div class="card">
-          <div class="cardhead"><h2>Equations</h2><button class="btn" id="b-working" type="button" aria-pressed="true">Hide working</button></div>
-          <p class="assume" style="margin-bottom:10px">No air resistance</p>
-          <p class="fine" id="eq-assume" style="margin:0 0 12px"></p>
-          <div id="eqs"></div>
-        </div>
+        <div class="cardhead"><h2>Equations</h2><button class="btn" id="b-working" type="button">Hide working</button></div>
+        <p class="fine" id="eq-assume" style="margin:0 0 16px"></p>
+        <div id="eqs"></div>
       </section>
 
       <section id="p-questions" role="tabpanel" aria-labelledby="t-questions" hidden>
-        <div class="card">
-          <div class="cardhead"><h2>Scenarios</h2><button class="btn" id="b-progress-reset" type="button">Reset my progress</button></div>
-          <div class="scen" id="scen" role="radiogroup" aria-label="Scenario"></div>
-                    <ul class="qlist" id="qlist"></ul>
-        </div>
-        <div class="card qcard" id="qcard" style="margin-top:14px"></div>
+        <div class="seg" id="scen" role="radiogroup" aria-label="Scenario"></div>
+        <p class="scenintro" id="scen-intro"></p>
+        <ol class="qsteps" id="qsteps" aria-label="Questions in this scenario"></ol>
+        <div id="qcard"></div>
+        <p style="margin-top:28px"><button class="btn link" id="b-progress-reset" type="button">Reset my progress</button></p>
       </section>
     </div>
   </div>
 
   <div class="about">
-    <p><strong>About this model.</strong> Point particle, no air resistance. Ground is y = 0 and up is positive; launch from (0, h<sub>0</sub>). x = u<sub>x</sub>t, y = h<sub>0</sub> + u<sub>y</sub>t − ½gt<sup>2</sup>, v<sub>x</sub> = u<sub>x</sub> (constant), v<sub>y</sub> = u<sub>y</sub> − gt. Flight time is the positive root of y = 0. A negative launch height is a launch from a narrow pit (its walls are ignored). Progress and settings are saved on this device only.</p>
+    <p><strong>About this model.</strong> Point particle, no air resistance. Ground is y = 0 and up is positive; launch from (0, h<sub>0</sub>). x = u<sub>x</sub>t, y = h<sub>0</sub> + u<sub>y</sub>t − ½gt<sup>2</sup>, v<sub>x</sub> = u<sub>x</sub> (constant), v<sub>y</sub> = u<sub>y</sub> − gt. Flight time is the positive root of y = 0. A negative launch height is a launch from a narrow pit (its walls are ignored). Velocity arrows are drawn head to tail (v<sub>x</sub> then v<sub>y</sub>, with v as the diagonal); the acceleration arrow is drawn to one side on its own scale. Progress and settings are saved on this device only.</p>
   </div>
 </div>
 <script src="../shared/sim.js"></script>
