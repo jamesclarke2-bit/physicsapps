@@ -8,6 +8,7 @@
   var S = Object.assign({}, BASE_A);
   var D = { stage: 'A', th: 8, thMax: 16, s: 1.0, timer: 'video', method: 'trig', ell: 2.0, tgt: 5 }, DES = null;
   var lockedIds = [], rand = Sim.rng(20), meta = {}, prefDim = 's', seriesSel = '', valShown = false;
+  var curStage = null, lastKey = null;                 // UI only: which investigation is chosen, and the newest reading's set-up
   var results = new Sim.Results({ res: 0.001, dp: 2, rowHead: 'Set-up', empty: 'No readings yet. Press Time 3 runs.' });
   var raw = new Sim.Results({ res: 0.001, dp: 2, rowHead: 'Set-up', empty: 'No readings yet. Take some readings on the Bench tab.' });
   var rad = function (d) { return d * Math.PI / 180; };
@@ -32,6 +33,7 @@
   function setup(o) { return { th: o.th }; }
   function sinOf(th) { return Math.sin(rad(th)); }
   function head(lbl) { var i = lbl.indexOf(' / '); return i < 0 ? lbl : lbl.slice(0, i) + ' (' + lbl.slice(i + 3) + ')'; }
+  function unitIn(lbl) { var m = / \(([^()]*)\)$/.exec(lbl); if (m) return m[1]; var i = lbl.indexOf(' / '); return i < 0 ? '' : lbl.slice(i + 3); }
   function valUnc(v, u, unit) {
     if (!isNum(v)) return '–';
     if (!(u > 0)) return sig(v, 3) + (unit ? ' ' + unit : '');
@@ -60,12 +62,13 @@
   function drawRig() {
     var svg = $('rig'), g0 = rigGeom(), P = g0.px, th = S.th;
     svg.textContent = '';
-    svg.setAttribute('viewBox', '0 -70 760 ' + 400);
+    var top = Math.round(Math.min(g0.ty - 90 - (vec.F || vec.a || vec.v ? 75 : 0), 105));   // crop the empty sky above the ramp
+    svg.setAttribute('viewBox', '0 ' + top + ' 760 ' + (350 - top));
     svg.appendChild(A('polygon', { class: 'wedge', points: g0.tx + ',' + g0.ty + ' ' + XB + ',' + YB + ' ' + g0.tx + ',' + YB }));
     svg.appendChild(A('line', { class: 'ground', x1: 30, x2: 740, y1: YB, y2: YB }));
     var rr = 78, ex = XB - rr * Math.cos(g0.r), ey = YB - rr * Math.sin(g0.r);
     svg.appendChild(A('path', { class: 'dim', d: 'M ' + (XB - rr) + ' ' + YB + ' A ' + rr + ' ' + rr + ' 0 0 1 ' + ex + ' ' + ey }));
-    svg.appendChild(A('text', { class: 'dimtext', x: 756, y: YB + 22, 'text-anchor': 'end' }, S.method === 'trig' ? 'θ = sin⁻¹(h ÷ ℓ)' : 'θ = ' + fmt(th, 1) + '° ± ' + M.PROTRACTOR_SIG + '°'));
+    svg.appendChild(A('text', { class: 'dimtext', x: 756, y: YB + 40, 'text-anchor': 'end' }, S.method === 'trig' ? 'θ = sin⁻¹(h ÷ ℓ)' : 'θ = ' + fmt(th, 1) + '° ± ' + M.PROTRACTOR_SIG + '°'));
     if (S.method === 'trig') {
       var hx = g0.tx - 26;
       svg.appendChild(A('line', { class: 'dim', x1: hx, x2: hx, y1: YB, y2: g0.ty }));
@@ -124,7 +127,7 @@
     var th = S.th;
     if (!M.moves(th)) { $('banner').textContent = 'The trolley does not move: the slope is too gentle to overcome friction. Raise the ramp.'; return; }
     $('banner').textContent = '';
-    var o = Object.assign({}, S); o.key = keyOf(o); o.label = label(o); meta[o.key] = o;
+    var o = Object.assign({}, S); o.key = keyOf(o); o.label = label(o); meta[o.key] = o; lastKey = o.key;
     for (var i = 0; i < n; i++) {
       var t = hasT(o) ? M.measureTime(th, o.s, o.timer, rand) : null, v = hasV(o) ? M.measureSpeed(th, o.s, rand) : null;
       results.add(o.key, isNum(t) ? t : v, { t: t, v: v });
@@ -171,7 +174,7 @@
   function renderBench() {
     var rows = Object.keys(meta).map(function (k) { return meta[k]; });
     [results, raw].forEach(function (r) {
-      r.cfg.rows = rows;
+      r.cfg.rows = r === results ? rows.filter(function (o) { return o.stage === curStage; }) : rows;
       r.cfg.fields = function (o) {
         var f = []; if (hasT(o)) f.push({ label: 't (s)', get: function (rd) { return rd.meta.t; }, dp: o.timer === 'stopwatch' ? 2 : 3 });
         if (hasV(o)) f.push({ label: 'v (m s<sup>-1</sup>)', get: function (rd) { return rd.meta.v; }, dp: 3 }); return f;
@@ -184,7 +187,10 @@
       { head: 'a (m s<sup>-2</sup>)', cell: function (r) { var c = calc(r); return c ? Sim.calcButton(fmt(c.a, 3), 'Acceleration', function () { return popAccel(r, c); }) : ''; } },
       { head: '% uncertainty in a', cell: function (r) { var c = calc(r); return c ? Sim.calcButton(fmt(c.pct, 1) + '%', 'Uncertainty in a', function () { return popAccel(r, c); }) : ''; } }
     ];
+    $('resultsec').hidden = !curStage;
     results.render($('results'));
+    var shown = results.cfg.rows.filter(function (o) { return (results.data[o.key] || []).length; }), i = shown.map(function (o) { return o.key; }).indexOf(lastKey);
+    var trs = $('results').querySelectorAll('tbody tr'); if (i >= 0 && trs[i]) trs[i].classList.add('newest');
   }
   function renderAll() { renderBench(); raw.render($('raw')); renderAnalyse(); }
   results.onChange(renderAll); raw.onChange(renderAll);
@@ -210,8 +216,8 @@
     }
     return null;
   }
-  var AX = Sim.axes({ mount: $('axes'), quantities: QS, get: qget, x: { q: 's' }, y: { q: 't' }, known: [], onChange: function () { valShown = false; renderAnalyse(); } });
-  var AXR = Sim.axes({ mount: $('axes-raw'), quantities: QRAW, get: qget, x: { q: 's' }, y: { q: 't' }, known: [], onChange: function () { renderAnalyse(); } });
+  var AX = Sim.axes({ mount: $('axes'), quantities: QS, get: qget, x: { q: 's' }, y: { q: 't' }, known: [], brackets: true, onChange: function () { valShown = false; renderAnalyse(); } });
+  var AXR = Sim.axes({ mount: $('axes-raw'), quantities: QRAW, get: qget, x: { q: 's' }, y: { q: 't' }, known: [], brackets: true, onChange: function () { renderAnalyse(); } });
 
   /* what each straight-line graph should show. kind 'a': a is worked out; kind 'g': g is worked out and compared with 9.81 m s⁻² */
   var KNOWN = {
@@ -311,7 +317,7 @@
     if (!pts.length) man.appendChild(el('p', { class: 'empty', text: 'These two quantities are not both available for these readings. Choose different axes.' }));
     else {
       var dimQ = rows[0] && gs.filter(function (x) { return x.key === seriesSel; })[0].dim, dimHead = dimQ === 's' ? 's (m)' : 'θ (°)';
-      var xh = head(AX.xlabel()), yh = head(AX.ylabel()), xu = AX.xlabel().indexOf(' / ') < 0 ? '' : AX.xlabel().slice(AX.xlabel().indexOf(' / ') + 3), yu = AX.ylabel().indexOf(' / ') < 0 ? '' : AX.ylabel().slice(AX.ylabel().indexOf(' / ') + 3);
+      var xh = head(AX.xlabel()), yh = head(AX.ylabel()), xu = unitIn(AX.xlabel()), yu = unitIn(AX.ylabel());
       function cell(sel, o, val, unc, which) {
         var b = sel.tf === 'none' ? null : { val: val, unc: unc };
         var txt = which === 'v' ? sig(val, 4) : sig(unc, 2);
@@ -461,7 +467,7 @@
     $('l-s').textContent = S.stage === 'A' ? 'Distance from start line to finish, s' : 'Distance from start line to finish, s (kept the same)';
     $('l-timer').textContent = S.stage === 'A' ? 'Timer for t (a light gate at the end of the ramp records v)' : 'How you find a';
     var rows = S.method === 'trig' ? [['Height of block, h', Math.round(1000 * M.heightFor(th, S.ell)) + ' mm ± ' + M.HEIGHT_SIG * 1000 + ' mm'], ['Ramp length, ℓ', fmt(S.ell, 1) + ' m'], ['sin θ = h ÷ ℓ', fmt(sinOf(th), 4)], ['θ = sin⁻¹(h ÷ ℓ)', fmt(th, 2) + '°']] : [['Protractor reading, θ', fmt(th, 1) + '° ± ' + M.PROTRACTOR_SIG + '°'], ['sin θ (calculated)', fmt(sinOf(th), 3)]];
-    rows.forEach(function (p) { ro.appendChild(el('dt', { text: p[0] })); ro.appendChild(el('dd', { text: p[1] })); });
+    rows.forEach(function (p) { ro.appendChild(el('div', null, el('dt', { text: p[0] }), el('dd', { text: p[1] }))); });
     resetRig();
   }
   $('c-th').addEventListener('input', function (e) { S.th = +e.target.value; syncBench(); });
@@ -503,7 +509,7 @@
       opt('No', false, 'A short ramp gives a short run, so the same timer error is a bigger percentage and the readings are less reliable. Try it and look at the % uncertainty in a.', [], { ell: 1, s: 0.8 })] };
   }
   var EXPS = [
-    { id: 'A', title: 'Equations of motion', sub: 'Do t² ∝ s and v² ∝ s hold?', ax: [{ q: 's' }, { q: 't' }], dim: 's', stage: 'A',
+    { id: 'A', title: 'Equations of motion', sub: 'Do t² ∝ s and v² ∝ s hold?', short: 'change s · measure t and v · keep θ the same', ax: [{ q: 's' }, { q: 't' }], dim: 's', stage: 'A',
       ana: 'Plot t against s, then v against s. Both are curves. Change an axis until each is a straight line through the origin. What do the gradients give you? Do the two values of a agree?',
       change: 'distance s from the start line to the finish', measure: 'time t from release, and speed v at the end of the ramp (light gate)', keep: ['angle θ', 'trolley mass', 'released from rest', 'gate position'],
       think: 'Predict: if you double the distance from rest, what happens to the time? To the speed at the end? Sketch t against s and v against s.', apply: fresh(BASE_A),
@@ -513,7 +519,7 @@
           opt('Yes', true, 'Yes. Then a is the same for every run and only s, t and v change.', ['th', 'method']),
           opt('No', false, 'Then a changes between runs, so t² and v² will not be proportional to s.', [])] },
         rampCheck(null)] },
-    { id: 'B', title: 'Acceleration and angle', sub: 'Is a = g sin θ? Find g.', ax: [{ q: 'th' }, { q: 'a' }], dim: 'th', stage: 'B',
+    { id: 'B', title: 'Acceleration and angle', sub: 'Is a = g sin θ? Find g.', short: 'change θ · measure t or v, then a · keep s the same', ax: [{ q: 'th' }, { q: 'a' }], dim: 'th', stage: 'B',
       ana: 'Plot a against θ. Is it a straight line? Change the x axis until it is, then use the gradient and the intercept to test a = g sin θ. Is the accepted value of g inside your range?',
       change: 'angle θ of the ramp', measure: 'time t or speed v over the same distance s, then work out a', keep: ['distance s', 'trolley mass', 'released from rest', 'timer'],
       think: 'Predict: if you double sin θ, what happens to a? Sketch a against θ. Is it a straight line?', apply: fresh(BASE_B),
@@ -529,8 +535,36 @@
   Sim.experiment({ mount: $('exp-card'), defs: EXPS, lock: lock,
     gate: function (on) { $('set-card').inert = on; $('set-card').classList.toggle('gated', on); },
     onChoose: function (d) {
-      setDesign(d.stage); $('think-bench').textContent = d.think; AX.set(d.ax[0], d.ax[1]); AXR.set(d.ax[0], d.ax[1]); prefDim = d.dim; seriesSel = ''; valShown = false; $('a-think').textContent = d.ana; renderAll();
+      curStage = d.stage; expanded(true); setDesign(d.stage); $('think-bench').textContent = d.think; AX.set(d.ax[0], d.ax[1]); AXR.set(d.ax[0], d.ax[1]); prefDim = d.dim; seriesSel = ''; valShown = false; $('a-think').textContent = d.ana; renderAll();
     } });
+
+  function expDef() { return EXPS.filter(function (x) { return x.stage === curStage; })[0]; }
+  function allAnswered() { var n = $('exp-card').querySelectorAll('.yn').length; return n > 0 && $('exp-card').querySelectorAll('.ynfb').length === n; }
+  function expanded(on) {
+    $('exp-wrap').hidden = !on; $('exp-sum').hidden = on;
+    $('exp-done').hidden = !(on && allAnswered());
+    if (on || !curStage) return;
+    var d = expDef(), n = $('exp-card').querySelectorAll('.yn').length, good = $('exp-card').querySelectorAll('.ynfb .ok').length, box = $('exp-sum'); box.textContent = '';
+    box.appendChild(el('strong', { text: 'Testing: ' + d.title }));
+    box.appendChild(el('span', { class: 'meta', text: good + ' of ' + n + ' technique checks good · ' + d.short }));
+    box.appendChild(el('button', { class: 'btn link', type: 'button', id: 'b-expedit', 'aria-controls': 'exp-wrap', 'aria-expanded': 'false', text: 'Change', onclick: function () { expanded(true); $('exp-card').querySelector('.expopt[aria-checked=true]').focus(); } }));
+  }
+  $('exp-card').addEventListener('click', function () { setTimeout(function () { $('exp-done').hidden = !allAnswered(); }, 0); });
+  $('b-expdone').addEventListener('click', function () { expanded(false); $('b-expedit').focus(); });
+
+  /* toolbar: presentation mode (scales everything for a whiteboard) and dark mode, remembered on this device */
+  var UI = { present: false, theme: null };
+  try { Object.assign(UI, JSON.parse(localStorage.getItem('ramp-practical-ui') || '{}')); } catch (e) { /* private mode */ }
+  function saveUI() { try { localStorage.setItem('ramp-practical-ui', JSON.stringify(UI)); } catch (e) { /* ignore */ } }
+  function isDark() { var t = document.documentElement.getAttribute('data-theme'); return t ? t === 'dark' : !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches); }
+  function applyUI() {
+    if (UI.theme) document.documentElement.setAttribute('data-theme', UI.theme);
+    document.documentElement.classList.toggle('present', !!UI.present);
+    $('b-present').setAttribute('aria-pressed', String(!!UI.present)); $('b-theme').setAttribute('aria-pressed', String(isDark()));
+  }
+  $('b-present').addEventListener('click', function () { UI.present = !UI.present; saveUI(); applyUI(); });
+  $('b-theme').addEventListener('click', function () { UI.theme = isDark() ? 'light' : 'dark'; saveUI(); applyUI(); });
+  applyUI();
 
   /* example data: Stage A (t and v against s at 8°) and Stage B (a against angle, video, trigonometry) so the Analyse tab is not empty */
   [0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6].forEach(function (s) { Object.assign(S, BASE_A, { s: s }); run(3); });

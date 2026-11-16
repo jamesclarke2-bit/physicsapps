@@ -5,44 +5,185 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <title>Ramp Practical</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="preload" href="../shared/fonts/inter-latin-wght.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../shared/sim.css">
 <style>
-/* App-specific styles only. Anything reusable belongs in shared/sim.css. */
+/* App-specific styles. Same visual language as projectile-motion: quiet by default, loud only where the physics is.
+   Neutral greys and hairlines; meaning colours only for physics (data and best line blue, velocity purple, acceleration green,
+   force dark); one accent (orange) for the main action and THINK prompts. Colour is never the only cue. */
+@font-face{font-family:'Inter';font-style:normal;font-weight:400 600;font-display:swap;src:url(../shared/fonts/inter-latin-wght.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400 600;font-display:swap;src:url(../shared/fonts/inter-greek-wght.woff2) format('woff2');unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF}
+:root{
+  --bg:#fbfbfa;--surface:#ffffff;--surface2:#f2f3f4;--ink:#1d2329;--muted:#69737d;--faint:#a3abb3;--line:#e3e6e9;--grid:#eef0f2;
+  --accent:#c2410c;--accent-ink:#ffffff;--tint:#fdf3ec;
+  --c1:#2d5e9c;--c2:#1d2329;--c3:#8a949e;--q-r:#6a4a9a;--q-a:#2f714a;--good:#2f714a;--bad:#a83a31;
+  --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;--f-display:var(--f-body);--f-mono:var(--f-body);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#13171b;--surface:#191e23;--surface2:#21272d;--ink:#e5e8eb;--muted:#9aa4ad;--faint:#5f6973;--line:#2b3239;--grid:#20262c;
+  --accent:#f0874a;--accent-ink:#13171b;--tint:#2a1f17;--c1:#82a8de;--c2:#e5e8eb;--c3:#7c8791;--q-r:#b69ce2;--q-a:#7cc69a;--good:#7cc69a;--bad:#e2867e}}
+:root[data-theme="dark"]{
+  --bg:#13171b;--surface:#191e23;--surface2:#21272d;--ink:#e5e8eb;--muted:#9aa4ad;--faint:#5f6973;--line:#2b3239;--grid:#20262c;
+  --accent:#f0874a;--accent-ink:#13171b;--tint:#2a1f17;--c1:#82a8de;--c2:#e5e8eb;--c3:#7c8791;--q-r:#b69ce2;--q-a:#7cc69a;--good:#7cc69a;--bad:#e2867e}
+body{font:15px/1.55 var(--f-body);padding-block:0 48px}
+.pm{max-width:1560px;margin:0 auto}
+html.present .pm{zoom:1.35}
+.pm h1{font:600 19px/1.2 var(--f-body);letter-spacing:-.01em;margin:0}
+.pm h2{font:600 15px/1.3 var(--f-body);margin:0}
+.pm .num,.pm td,.pm .chip,.pm .calc{font-variant-numeric:tabular-nums}
+
+/* toolbar */
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid var(--line);margin-bottom:6px}
+.bar .grow{flex:1}
+.pm .btn{min-height:44px;min-width:44px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:8px;padding:8px 14px;font:500 14px var(--f-body);cursor:pointer}
+.pm .btn:hover{background:var(--surface2)}
+.pm .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.pm .btn.link{border:0;padding:4px 6px;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.pm .btn:disabled{opacity:.4;cursor:default}
+#b-present[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#b-theme[aria-pressed=true]{background:var(--surface2)}
+.pm button:focus-visible,.pm input:focus-visible,.pm select:focus-visible,.pm summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:520px){.bar{gap:8px;padding:10px 0}.pm h1{font-size:17px}.bar .grow{display:none}.bar .btn{padding:4px 10px;font-size:13px}}
+
+/* tabs, sections: whitespace and hairlines, not boxes */
+.pm .tabs{margin:0 0 20px;flex-wrap:wrap;gap:0 4px;border-bottom:1px solid var(--line);overflow:visible}
+.pm .tabs button{padding:10px 10px;min-height:44px;font:500 14px var(--f-body);color:var(--muted);border-bottom-width:2px}
+.pm .tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+.pm .card{background:none;border:0;border-radius:0;padding:0}
+.sec{padding:16px 0;border-top:1px solid var(--line)}
+.sec:first-child{border-top:0;padding-top:0}
+.pm .cardhead{margin-bottom:10px}
+.pm .think{background:var(--tint);border-radius:6px;padding:9px 12px;margin:0 0 18px;font-size:14px}
+.pm .think b{font:600 10px var(--f-body);letter-spacing:.12em;color:var(--accent)}
+.pm .fine{font-size:13px;color:var(--muted)}
+.pm .seg{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.pm .seg button{min-height:44px;background:transparent;color:var(--muted);padding:6px 12px;font:500 13px var(--f-body)}
+.pm .seg button+button{border-left:1px solid var(--line)}
+.pm .seg button[aria-pressed=true]{background:var(--surface2);color:var(--ink);font-weight:600}
+.pm .seg button:disabled{opacity:.5}
+.pm .ctl{margin-bottom:12px}
+.pm .ctl label,.pm .lab{font:500 13px var(--f-body);color:var(--muted)}
+.pm .ctl label b{font:500 14px var(--f-body);color:var(--ink);font-variant-numeric:tabular-nums}
+.pm input[type=range]{height:44px;accent-color:var(--ink)}
+.pm select{min-height:44px;font:14px var(--f-body);border-radius:8px}
+.pm .check{min-height:44px;font-size:14px}
+.pm .check input{width:18px;height:18px;accent-color:var(--ink)}
+.pm .ok{color:var(--good)}.pm .no{color:var(--bad)}
+.stepbtns{display:flex;gap:6px;align-items:center}
+
+/* Step 1 and 2 (shared chooser), and the summary line it collapses to */
+.pm .expopt{border-width:1px;border-radius:10px;min-height:44px}
+.pm .expopt[aria-checked=true]{background:var(--surface2);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.pm .ynq{font-weight:500}
+.pm .yn .seg button{min-width:56px}
+.expdone{margin-top:14px}
+#exp-wrap{padding-bottom:18px}
+#d-note{margin:0 0 12px}
+.expsum{display:flex;align-items:center;gap:6px 14px;flex-wrap:wrap;padding:10px 0 12px;border-bottom:1px solid var(--line);margin-bottom:16px;font-size:14px}
+.expsum strong{font-weight:600}
+.expsum .meta{color:var(--muted)}
+
+/* bench: ramp (pinned on wide screens) with results under it; set-up controls beside it */
+.benchgrid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);gap:28px;align-items:start}
+.rigcol{min-width:0}
+.rigwrap{position:sticky;top:0;z-index:2;background:var(--bg);padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rigctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rigctl .seg{margin-left:auto}
+.vecrow{display:flex;gap:2px 16px;flex-wrap:wrap}
+.vecrow .check{gap:8px}
+.lsample{width:26px;height:8px;flex:none}.lsample line{stroke-width:2.2;stroke-linecap:round}
+.setcol{min-width:0}
+.gated{opacity:.45}
+@media (max-width:980px){.benchgrid{grid-template-columns:minmax(0,1fr)}.rigwrap{position:static;border-bottom:0}}
+.runbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.runbtns .btn.primary{flex:1 1 160px}
+/* readout: one slim strip */
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1px;margin:10px 0 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);overflow:hidden}
+.readout>div{padding:6px 8px;box-shadow:-1px 0 0 var(--line),0 -1px 0 var(--line)}
+.readout dt{font-size:12px;color:var(--muted)}
+.readout dd{margin:0;font:500 15px var(--f-body);font-variant-numeric:tabular-nums}
+.resultsec{margin-top:18px}
+.pm .banner{font-size:13px;color:var(--muted)}
+.pm table.data th{font:500 12px var(--f-body);color:var(--muted)}
+.pm table.data td.num{font-family:var(--f-body)}
+.pm .chip{font:500 13px var(--f-body);border-radius:6px}
+@media (pointer:coarse){.pm .chip{min-height:44px;min-width:44px}}
+.pm tr.newest td{background:var(--tint)}
+/* rig: neutral apparatus; colour only for the physics vectors */
+.rig{width:100%;height:auto;display:block;max-height:52vh}
 .rig .wedge{fill:var(--surface2);stroke:none}
 .rig .surface{fill:var(--line);stroke:var(--ink);stroke-width:1}
-.rig .ground{stroke:var(--muted);stroke-width:1.4}
-.rig .tick{stroke:var(--ink);stroke-width:1}
-.rig .trolley{fill:var(--c1);stroke:var(--ink);stroke-width:1.5}
+.rig .ground{stroke:var(--muted);stroke-width:1.2}
+.rig .tick{stroke:var(--muted);stroke-width:1}
+.rig .trolley{fill:var(--muted);stroke:var(--ink);stroke-width:1.2}
 .rig .wheel{fill:var(--ink)}
-.rig .card{fill:var(--c2);stroke:var(--ink);stroke-width:.8}
-.rig .stopper{fill:#e8b64a;stroke:var(--ink);stroke-width:1}
-.rig .gate{stroke:var(--c3);stroke-width:3}
-.rig .gatelbl{fill:var(--c3);font-weight:500;font-size:11px}
-.rig .flag{stroke:var(--c4);stroke-width:2;stroke-dasharray:4 3}
-.rig .lbl{fill:var(--ink);font-size:11px}
-.rig .dim{stroke:var(--accent);stroke-width:1.4;fill:none}
-.rig .dimtext{fill:var(--accent);font-weight:500;font-size:11px}
-.rig .ticklbl{fill:var(--muted);font-size:10px}
-.stepbtns{display:flex;gap:6px;align-items:center}
-.readout{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font:500 13px var(--f-mono);margin:8px 0 0}
-.readout dt{color:var(--muted)}.readout dd{margin:0}
-select.series{max-width:100%;font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.rig .card{fill:var(--ink);stroke:none}
+.rig .stopper{fill:var(--surface2);stroke:var(--ink);stroke-width:1}
+.rig .gate{stroke:var(--ink);stroke-width:3}
+.rig .gatelbl{fill:var(--ink);font-weight:500;font-size:12px}
+.rig .flag{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:4 3}
+.rig .lbl{fill:var(--muted);font-size:12px}
+.rig .dim{stroke:var(--muted);stroke-width:1;fill:none}
+.rig .dimtext{fill:var(--ink);font-weight:500;font-size:12px}
+.rig .ticklbl{fill:var(--muted);font-size:11px}
+.rig text{font-family:var(--f-body)!important}
+.rig .ghost{fill:var(--surface2);stroke:var(--faint)}
+@media (max-width:600px){.rig .dimtext,.rig .lbl,.rig .gatelbl,.rig text.vlbl{font-size:17px}.rig .ticklbl{font-size:14px}}
+/* vectors: force dark (dashed), acceleration green (dash-dot), velocity purple (solid); each also has a text label */
+.rig .vec{stroke-width:2.5}
+.rig .vec-F{stroke:var(--ink);stroke-dasharray:9 4}.rig .vech-F{fill:var(--ink)}.rig text.vlbl-F{fill:var(--ink)}
+.rig .vec-a{stroke:var(--q-a);stroke-dasharray:7 3 1.5 3}.rig .vech-a{fill:var(--q-a)}.rig text.vlbl-a{fill:var(--q-a)}
+.rig .vec-v{stroke:var(--q-r)}.rig .vech-v{fill:var(--q-r)}.rig text.vlbl-v{fill:var(--q-r)}
+.rig text.vlbl{font-size:12px;font-weight:600;paint-order:stroke;stroke:var(--bg);stroke-width:3px}
+
+/* analyse: the straight-line graph is the main thing; raw graph beside it, smaller; tables one click away */
+.sertop{display:flex;gap:8px 14px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.sertop label{font:500 13px var(--f-body);color:var(--muted)}
+select.series{flex:1 1 320px;max-width:100%}
+.agrid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:980px){.agrid{grid-template-columns:minmax(0,1fr)}}
+.pm .axpick{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px 14px;margin-bottom:6px}
+.pm .axcol .lab{font-size:12px}
+.pm .axshow{display:none}
+#axes-raw .axrow select:nth-child(2){display:none}
+.pm .chart text{font-family:var(--f-body)}
+.pm .chart text.lbl{font:500 12px var(--f-body)}
+.pm .chart .ax{stroke:var(--faint)}
+.mainplot .chart text{font-size:12px}
+.legendrow{display:flex;flex-wrap:wrap;gap:0 16px;font-size:13px;margin-top:4px}
+.fitkv td{font-family:var(--f-body)!important}
 .fitkv td.unc{color:var(--muted)}
-.valrows{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:10px}
+.pm table.kv td{padding:6px 0}
+.valrows{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:10px;font-size:14px}
 .valrows li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;align-items:start}
 .valrows .sm{display:block}
-.legendrow{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin-top:6px}
-.sw{display:inline-block;width:22px;height:0;border-top:3px solid var(--c1);vertical-align:middle;margin-right:4px}
-.sw.dash{border-top-style:dashed}
-.sw.c2{border-color:var(--c2)}.sw.c3{border-color:var(--c3)}
+.pm .verdict{font:600 18px/1.45 var(--f-body);color:var(--ink);border-left:3px solid var(--accent);padding:4px 0 4px 14px;margin:16px 0 0}
+details.tables{margin-top:24px;border-top:1px solid var(--line);padding-top:6px}
+details.tables>summary{min-height:44px;display:flex;align-items:center;gap:8px;font:600 15px var(--f-body);list-style:none}
+details.tables>summary::-webkit-details-marker{display:none}
+details.tables>summary::before{content:'▸';color:var(--muted)}
+details.tables[open]>summary::before{content:'▾'}
+details.tables h3{font:600 14px var(--f-body);margin:14px 0 6px}
+
+/* design: the checks are the main thing */
+.dgrid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px;align-items:start}
+.dgrid .dchecks{order:-1}
+@media (max-width:860px){.dgrid{grid-template-columns:minmax(0,1fr)}}
+.pm .checks{gap:14px;font-size:16px}
+.pm .checks li{grid-template-columns:24px minmax(0,1fr) 44px}
+.pm .info{width:28px;height:28px;border-color:var(--muted);color:var(--muted)}
+.pm .info:hover{background:var(--muted);color:var(--surface)}
+.pm .live{background:var(--surface2);font-size:13px;color:var(--muted)}
+.about{margin-top:40px;font-size:13px;color:var(--muted);max-width:80ch;border-top:1px solid var(--line);padding-top:14px}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
+<div class="wrap pm">
+  <header class="bar">
     <h1>Ramp Practical</h1>
-    <p class="sub">Design an experiment with a trolley on a ramp, take readings, and decide whether your results validate the equations of motion and a = g sin &theta;. Uncertainty decides the answer.</p>
+    <span class="grow"></span>
+    <button class="btn" id="b-present" type="button" aria-pressed="false">Presentation mode</button>
+    <button class="btn" id="b-theme" type="button" aria-pressed="false">Dark</button>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Simulation sections">
@@ -53,11 +194,37 @@ select.series{max-width:100%;font:inherit;padding:6px 8px;border-radius:8px;bord
 
   <!-- BENCH -->
   <section id="p-bench" role="tabpanel" aria-labelledby="t-bench">
-    <div class="card" id="exp-card" style="margin-bottom:14px"></div>
-    <div class="think"><b>Think</b><span id="think-bench">Choose an investigation above, then predict what shape of graph you expect before you take any readings.</span></div>
-    <div class="bench">
-      <div class="card" id="set-card">
-        <div class="cardhead"><h2>Step 3: Set up and take readings</h2></div>
+    <div class="expsum" id="exp-sum" hidden></div>
+    <div class="card sec" id="exp-wrap">
+      <div id="exp-card"></div>
+      <div class="expdone" id="exp-done" hidden><button class="btn primary" id="b-expdone" type="button">Done: take readings</button></div>
+    </div>
+    <div class="think"><b>THINK</b> <span id="think-bench">Choose an investigation above, then predict what shape of graph you expect before you take any readings.</span></div>
+    <div class="benchgrid">
+      <div class="rigcol">
+        <div class="rigwrap">
+          <svg class="rig" id="rig" viewBox="0 0 760 330" role="img" aria-label="Trolley on a ramp with a light gate at the bottom"></svg>
+          <div class="rigctl">
+            <button class="btn" id="b-watch" type="button">Watch a run</button>
+            <button class="btn" id="b-reset" type="button">Reset trolley</button>
+            <div class="seg" id="seg-speed" role="group" aria-label="Playback speed"></div>
+          </div>
+          <div class="vecrow" role="group" aria-label="Show on the trolley">
+            <label class="check"><input type="checkbox" id="v-strobe" checked> Strobe (ghost trolleys)</label>
+            <label class="check"><input type="checkbox" id="v-F"> <svg class="lsample" viewBox="0 0 26 8" aria-hidden="true"><line x1="1" y1="4" x2="25" y2="4" stroke="var(--ink)" stroke-dasharray="9 4"/></svg> Force</label>
+            <label class="check"><input type="checkbox" id="v-a"> <svg class="lsample" viewBox="0 0 26 8" aria-hidden="true"><line x1="1" y1="4" x2="25" y2="4" stroke="var(--q-a)" stroke-dasharray="7 3 1.5 3"/></svg> Acceleration</label>
+            <label class="check"><input type="checkbox" id="v-v"> <svg class="lsample" viewBox="0 0 26 8" aria-hidden="true"><line x1="1" y1="4" x2="25" y2="4" stroke="var(--q-r)"/></svg> Velocity</label>
+          </div>
+        </div>
+        <div class="resultsec" id="resultsec">
+          <div class="cardhead"><h2>Results</h2><button class="btn link" id="b-clear" type="button">Clear data</button></div>
+          <p class="banner" id="banner"></p>
+          <div id="results"></div>
+          <p class="fine">Click a reading to cross out an anomaly. Click an underlined value to see how it is worked out.</p>
+        </div>
+      </div>
+      <div class="card setcol" id="set-card">
+        <div class="cardhead"><h2>Set up and take readings</h2></div>
         <div class="ctl"><span class="lab">Ramp length, &#8467;</span><div class="seg" id="seg-ell" role="group" aria-label="Ramp length"></div></div>
         <div class="ctl"><span class="lab">How you find the angle</span><div class="seg" id="seg-method" role="group" aria-label="How you find the angle"></div></div>
         <div class="ctl"><label for="c-th"><span id="l-th">Ramp angle, &theta;</span> <b id="o-th"></b></label>
@@ -65,28 +232,9 @@ select.series{max-width:100%;font:inherit;padding:6px 8px;border-radius:8px;bord
         <div class="ctl"><label for="c-s"><span id="l-s">Distance from start line to finish, s</span> <b id="o-s"></b></label><input id="c-s" type="range" min="0.4" max="1.8" step="0.1" value="1"></div>
         <div class="ctl"><span class="lab" id="l-timer">Timer</span><div class="seg" id="seg-timer" role="group" aria-label="Timer"></div></div>
         <dl class="readout" id="readout"></dl>
-        <div class="btns">
+        <div class="runbtns">
           <button class="btn primary" id="b-run3" type="button">Time 3 runs</button>
           <button class="btn" id="b-run1" type="button">Time 1 run</button>
-          <button class="btn" id="b-watch" type="button">Watch a run</button>
-          <button class="btn" id="b-reset" type="button">Reset trolley</button>
-          <button class="btn" id="b-clear" type="button">Clear data</button>
-        </div>
-      </div>
-      <div class="stack">
-        <div class="card"><svg class="rig" id="rig" viewBox="0 0 760 330" role="img" aria-label="Trolley on a ramp with a light gate at the bottom"></svg>
-          <div class="ctl"><span class="lab">Speed</span><div class="seg" id="seg-speed" role="group" aria-label="Playback speed"></div></div>
-          <div class="vecrow" role="group" aria-label="Show on the trolley">
-            <label class="check"><input type="checkbox" id="v-strobe" checked> Strobe (ghost trolleys)</label>
-            <label class="check"><input type="checkbox" id="v-F"> Force</label>
-            <label class="check"><input type="checkbox" id="v-a"> Acceleration</label>
-            <label class="check"><input type="checkbox" id="v-v"> Velocity</label>
-          </div></div>
-        <div class="card">
-          <div class="cardhead"><h2>Results</h2></div>
-          <p class="banner" id="banner"></p>
-          <div id="results"></div>
-          <p class="fine">Click a reading to cross out an anomaly. Click an underlined value to see how it is worked out.</p>
         </div>
       </div>
     </div>
@@ -94,50 +242,50 @@ select.series{max-width:100%;font:inherit;padding:6px 8px;border-radius:8px;bord
 
   <!-- ANALYSE AND VALIDATE -->
   <section id="p-analyse" role="tabpanel" aria-labelledby="t-analyse" hidden>
-    <div class="think"><b>Think</b><span id="a-think"></span></div>
-    <div class="card" style="margin-bottom:14px">
-      <div class="cardhead"><h2>1. Raw data</h2></div>
-      <div id="raw"></div>
-      <p class="fine">Exactly as measured. Crossed-out readings are ignored in the means.</p>
-    </div>
-    <div class="card" style="margin-bottom:14px">
-      <div class="ctl" style="margin:0"><label for="sel-series"><span class="lab">Readings to plot</span></label><select class="series" id="sel-series"></select></div>
-    </div>
-    <div class="two">
-      <div class="card">
-        <div class="cardhead"><h2>2. Raw graph (as measured)</h2></div>
-        <div id="axes-raw" style="margin-bottom:10px"></div>
-        <svg id="plot-raw"></svg>
-        <p class="fine" id="raw-note"></p>
-      </div>
-      <div class="card">
-        <div class="cardhead"><h2>3. Straight-line graph</h2></div>
-        <div id="axes" style="margin-bottom:10px"></div>
+    <div class="think"><b>THINK</b> <span id="a-think"></span></div>
+    <div class="sertop"><label for="sel-series">Readings to plot</label><select class="series" id="sel-series"></select></div>
+    <div class="agrid">
+      <div class="card mainplot">
+        <div class="cardhead"><h2>Straight-line graph</h2></div>
+        <div id="axes"></div>
         <svg id="plot"></svg>
         <div class="legendrow">
           <label class="check"><input type="checkbox" id="chk-lines"> Steepest and shallowest lines through the error bars</label>
           <label class="check" id="model-row"><input type="checkbox" id="chk-model"> <span id="model-label"></span></label>
         </div>
       </div>
+      <div class="card">
+        <div class="cardhead"><h2>Raw graph (as measured)</h2></div>
+        <div id="axes-raw"></div>
+        <svg id="plot-raw"></svg>
+        <p class="fine" id="raw-note"></p>
+      </div>
     </div>
-    <div class="two" style="margin-top:20px">
-      <div class="card"><div class="cardhead"><h2>4. Manipulated data</h2></div><div id="manip"></div></div>
-      <div class="card"><div class="cardhead"><h2>5. Line and uncertainty</h2></div><div id="fit-out"></div></div>
+    <div class="agrid sec" style="margin-top:18px">
+      <div class="card">
+        <div class="cardhead"><h2>Validate</h2></div>
+        <div class="think"><b>THINK</b> <span id="val-think">Choose axes that give a straight line first.</span></div>
+        <div class="btns"><button class="btn primary" id="b-validate" type="button">Check my line against the prediction</button></div>
+        <div id="val-out"></div>
+      </div>
+      <div class="card"><div class="cardhead"><h2>Line and uncertainty</h2></div><div id="fit-out"></div></div>
     </div>
-    <div class="card" style="margin-top:20px">
-      <div class="cardhead"><h2>6. Validate</h2></div>
-      <div class="think"><b>Think</b><span id="val-think">Choose axes that give a straight line first.</span></div>
-      <div class="btns"><button class="btn primary" id="b-validate" type="button">Check my line against the prediction</button></div>
-      <div id="val-out"></div>
-    </div>
+    <details class="tables" id="tables">
+      <summary>Data tables: raw readings and the points on the graph</summary>
+      <h3>Raw data</h3>
+      <div id="raw"></div>
+      <p class="fine">Exactly as measured. Crossed-out readings are ignored in the means.</p>
+      <h3>Manipulated data</h3>
+      <div id="manip"></div>
+    </details>
   </section>
 
   <!-- DESIGN -->
   <section id="p-design" role="tabpanel" aria-labelledby="t-design" hidden>
     <p class="empty" id="d-none">Choose an investigation on the Bench tab first. The design checks depend on what you are testing.</p>
     <div id="d-body" hidden>
-    <div class="think"><b>Think</b><span id="think-design"></span></div>
-    <div class="two">
+    <div class="think"><b>THINK</b> <span id="think-design"></span></div>
+    <div class="dgrid">
       <div class="card">
         <div class="cardhead"><h2>Design</h2></div>
         <p class="fine" id="d-note"></p>
@@ -147,14 +295,18 @@ select.series{max-width:100%;font:inherit;padding:6px 8px;border-radius:8px;bord
         <div class="ctl" data-d="thmax"><label for="d-thmax">Largest angle you will use <b id="od-thmax"></b></label><input id="d-thmax" type="range" min="2" max="20" step="0.5" value="16"></div>
         <div class="ctl" data-d="s"><label for="d-s"><span id="l-ds">Distance, s</span> <b id="od-s"></b></label><input id="d-s" type="range" min="0.4" max="1.8" step="0.1" value="1"></div>
         <div class="ctl"><span class="lab">Timer</span><div class="seg" id="dseg-timer" role="group" aria-label="Timer"></div></div>
-        <div class="ctl"><label for="d-tgt">Target: % uncertainty in a at most <b id="od-tgt"></b></label><input id="d-tgt" type="range" min="1" max="10" step="0.5" value="5"></div>
       </div>
-      <div class="card"><div class="cardhead"><h2>Checks</h2></div><div id="d-out"></div></div>
+      <div class="card dchecks">
+        <div class="cardhead"><h2>Checks</h2></div>
+        <div class="ctl"><label for="d-tgt">Target: % uncertainty in a at most <b id="od-tgt"></b></label><input id="d-tgt" type="range" min="1" max="10" step="0.5" value="5"></div>
+        <div id="d-out"></div>
+      </div>
     </div>
     </div>
   </section>
 
   <div class="about">
+    <p>Design an experiment with a trolley on a ramp, take readings, and decide whether your results validate the equations of motion and a = g sin &theta;. Uncertainty decides the answer.</p>
     <p><strong>About this model.</strong> The trolley starts from rest on a ramp and accelerates at a = g (sin &theta; &minus; &mu; cos &theta;), where &mu; is a small friction coefficient. Every error is a fixed amount (seconds, millimetres or degrees), so longer runs and bigger angles give smaller percentage uncertainties. The uncertainty in a mean is half the range of the readings. Repeating shows the spread and exposes anomalies; it does not make a faulty method accurate. The uncertainty in a gradient is half the difference between the steepest and shallowest lines that pass through the error bars.</p>
   </div>
 </div>

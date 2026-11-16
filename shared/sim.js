@@ -268,7 +268,7 @@
 
 
   /* ---------- axes: the student chooses what to plot ----------
-     Sim.axes({mount, quantities:[{id,label,unit:{kg,m,s,N,deg exponents},tfs:[...]}], get(row,id)->{v,u}|null,
+     Sim.axes({mount, quantities:[{id,label,unit:{kg,m,s,N,deg exponents},tfs:[...]}], get(row,id)->{v,u}|null, brackets:true for "t (s)" labels,
                x:{q,tf}, y:{q,tf}, known:[{key:'a:none|m:inv', slope(ctx)->{slope,intercept}, extras(fit)->[[label,text]], question}], onChange})
      Transforms: none, inv (1/q), sq, sqrt, sin (angles). Uncertainties are propagated and units are worked out. */
   var TFNAME = { none: 'as measured', inv: '1 ÷ it', sq: 'squared', sqrt: 'square root', sin: 'sine' };
@@ -302,7 +302,8 @@
     function qdef(id) { return cfg.quantities.filter(function (q) { return q.id === id; })[0]; }
     function unitOf(sel) { return tfUnit(sel.tf, qdef(sel.q).unit || {}); }
     function labelOf(sel) { return tfLabel(sel.tf, qdef(sel.q).label); }
-    function axisLabel(sel) { var u = uStr(unitOf(sel)); return labelOf(sel) + (u ? ' / ' + u : ''); }
+    // cfg.brackets: label axes "t (s)" like table headings instead of the default "t / s" (opt-in per app)
+    function axisLabel(sel) { var u = uStr(unitOf(sel)); return labelOf(sel) + (u ? (cfg.brackets ? ' (' + u + ')' : ' / ' + u) : ''); }
     function draw() {
       ['y', 'x'].forEach(function (ax) {
         var b = boxes[ax]; b.textContent = '';

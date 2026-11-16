@@ -60,3 +60,9 @@ Plan (variables, prediction sketch, safety), Collect (raw tables, units in brack
 
 ## Files
 `index.html` + `app.js` (UI), `model.js` (wraps ForceModel), `model.test.mjs`, `worksheet/` (`./build.sh`).
+
+## Visual design (same language as projectile-motion)
+- Quiet by default: neutral greys and hairlines instead of cards; one accent (orange) for the main action and THINK prompts. Meaning colours only for physics: data and best line blue, worst lines grey dashed, prediction line dark dashed; on the trolley force dark (dashed), acceleration green (dash-dot), velocity purple, each with a text label.
+- One main thing per stage: the investigation choice; then the ramp and the newest reading (Steps 1 and 2 collapse to a summary line once answered; the Bench results show only the chosen investigation); then the straight-line graph and the validation verdict (data tables one click away); then the design checks.
+- Axis labels use brackets, e.g. "t² (s²)", to match the tables (`Sim.axes` option `brackets: true`). The worksheet's printed graph paper still uses "quantity / unit".
+- Inter self-hosted in `shared/fonts/`; presentation mode and dark mode in the toolbar; controls at least 44 px.
