@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Vectors and Forces Lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../shared/sim.css">
+<style>
+/* App-specific styles only. Colour is never the only cue: every vector has a text label. */
+:root{--v-ball:var(--c1);--v-wind:var(--c2);--v-res:var(--good);--fairway:#dcebd5;--rough:#eaf1e5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--fairway:#173326;--rough:#12241d}}
+:root[data-theme="dark"]{--fairway:#173326;--rough:#12241d}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.tile .k{font:500 12px var(--f-mono);color:var(--muted)}
+.tile .v{font:500 22px/1.25 var(--f-mono);margin-top:2px;overflow-wrap:anywhere}
+.tile .v small{font-size:13px;color:var(--muted)}
+.tile.wide{grid-column:1/-1}
+.pill{display:inline-block;font-weight:700;font-size:14px;border:1px solid var(--line);border-radius:999px;padding:4px 12px;background:var(--surface2)}
+.pill.good{border-color:var(--good);color:var(--good)}
+.pill.warn{border-color:var(--bad);color:var(--bad)}
+.ends{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px}
+svg.fig{width:100%;height:auto;display:block}
+svg.fig text{font:12.5px var(--f-body);fill:var(--ink)}
+svg.fig text.mono{font-family:var(--f-mono)}
+svg.fig text.halo{paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+svg.fig text.muted{fill:var(--muted)}
+.vec{fill:none;stroke-width:3.2;stroke-linecap:round}
+.thin{fill:none;stroke:var(--muted);stroke-width:1.2}
+.dash{stroke-dasharray:5 5}
+.fb{fill:var(--v-ball)}.fw{fill:var(--v-wind)}.fr{fill:var(--v-res)}
+.sb{stroke:var(--v-ball)}.sw{stroke:var(--v-wind)}.sr{stroke:var(--v-res)}
+.working{font:13px/1.5 var(--f-mono)}
+.working .ln{display:flex;gap:12px;padding:6px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.working .ln:first-of-type{border-top:0}
+.working .k{color:var(--muted);min-width:9.5ch}
+.working .ln span:last-child{overflow-wrap:anywhere}
+.drag{cursor:grab;touch-action:none}
+.drag:active{cursor:grabbing}
+details.why{margin-top:12px;font-size:14px}
+details.why p{margin:6px 0 0;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Vectors and Forces Lab</h1>
+    <p class="sub">A-level Physics. Change the numbers and watch the vector diagram and the working update together. Click any underlined value to see how it is worked out.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Simulations">
+    <button role="tab" id="t-golf" aria-controls="p-golf" aria-selected="true" data-tab="golf">Golf ball in a crosswind</button>
+    <button role="tab" id="t-bag" aria-controls="p-bag" aria-selected="false" data-tab="bag">Shopping bag and shoulder</button>
+  </nav>
+
+  <!-- GOLF -->
+  <section id="p-golf" role="tabpanel" aria-labelledby="t-golf">
+    <div class="think"><b>Think</b><span>The wind blows from the west. If you aim straight at the flag, which side will the ball finish, and roughly how far off? Predict, then hit it. Then find an aim angle that works.</span></div>
+    <div class="bench">
+      <div class="stack">
+        <div class="card">
+          <div class="cardhead"><h2>Hit a crosswind shot</h2></div>
+          <p class="fine" style="margin:0 0 12px">The flag is 150 m down the target line.</p>
+          <div class="ctl"><label for="u">Ball speed, u <b id="uo"></b></label><input id="u" type="range" min="30" max="70" step="1" value="40"></div>
+          <div class="ctl"><label for="w">Wind speed, w <b id="wo"></b></label><input id="w" type="range" min="0" max="15" step="0.5" value="8"></div>
+          <div class="ctl"><label for="th">Aim angle, &theta; <b id="tho"></b></label><input id="th" type="range" min="-40" max="40" step="0.1" value="0">
+            <div class="ends"><span>&larr; upwind (west)</span><span>downwind (east) &rarr;</span></div></div>
+          <div class="btns">
+            <button class="btn primary" id="hit" type="button">Hit the ball</button>
+            <button class="btn" id="auto" type="button">Aim at the flag</button>
+            <button class="btn" id="greset" type="button">Reset</button>
+          </div>
+          <details class="why"><summary>Why does that angle work?</summary><p>The wind adds w to the sideways part of the ball's velocity. To cancel it, the ball needs a sideways part of &minus;w, so u sin &theta; = &minus;w, which gives sin &theta; = w &divide; u (aimed upwind).</p></details>
+        </div>
+        <div class="tiles">
+          <div class="tile wide"><div class="k">Result at the flag</div><div class="v" style="font-size:15px;font-family:var(--f-body)"><span id="verdict" class="pill"></span></div></div>
+          <div class="tile"><div class="k">Resultant speed, R</div><div class="v" id="gR"></div></div>
+          <div class="tile"><div class="k">Off the line by, &alpha;</div><div class="v" id="gA"></div></div>
+          <div class="tile"><div class="k">Forward speed</div><div class="v" id="gF"></div></div>
+          <div class="tile"><div class="k">Sideways speed</div><div class="v" id="gS"></div></div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="figs">
+          <div class="card">
+            <div class="cardhead"><h2>Fairway, from above</h2><span class="fine">to scale</span></div>
+            <svg class="fig" id="fairway" viewBox="0 0 360 440" role="img" aria-label="Top view of the fairway showing the ball's path and where it passes the flag">
+              <defs><marker id="fw-wind" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fw"/></marker></defs>
+              <rect x="0" y="0" width="360" height="440" rx="8" style="fill:var(--rough)"/>
+              <rect x="127" y="0" width="106" height="440" style="fill:var(--fairway)"/>
+              <g id="fw-grid"></g>
+              <line x1="180" y1="410" x2="180" y2="20" class="thin dash"/>
+              <circle cx="180" cy="50" r="14.4" fill="none" class="thin dash" style="stroke:var(--v-res)"/>
+              <line x1="180" y1="50" x2="180" y2="26" style="stroke:var(--ink);stroke-width:2"/><path d="M180 26 L196 32 L180 38 Z" class="fw"/>
+              <g id="fw-wind-g"></g>
+              <line id="pred" x1="180" y1="410" x2="180" y2="50" class="thin dash" style="stroke:var(--v-res)"/>
+              <line id="trail" x1="180" y1="410" x2="180" y2="410" class="vec sr" style="stroke-width:3"/>
+              <circle id="landc" cx="180" cy="50" r="7" fill="none" style="stroke:var(--v-res);stroke-width:2.5"/>
+              <circle id="ballDot" cx="180" cy="410" r="6" style="fill:var(--ink);stroke:var(--surface);stroke-width:2"/>
+              <text x="180" y="430" text-anchor="middle" class="muted halo">tee</text>
+            </svg>
+          </div>
+          <div class="card">
+            <div class="cardhead"><h2>Vectors, tip to tail</h2><span class="fine">ball + wind = resultant</span></div>
+            <svg class="fig" viewBox="0 0 420 290" role="img" aria-label="Vector triangle: ball velocity plus wind velocity gives the resultant velocity">
+              <defs>
+                <marker id="ah-ball" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fb"/></marker>
+                <marker id="ah-wind" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fw"/></marker>
+                <marker id="ah-res" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fr"/></marker>
+              </defs>
+              <line x1="150" y1="262" x2="150" y2="20" class="thin dash"/>
+              <text x="156" y="30" class="muted">target line</text>
+              <path id="arcTh" class="thin" d=""/><path id="arcAl" class="thin" d="" style="stroke:var(--v-res)"/>
+              <line id="vBall" class="vec sb" marker-end="url(#ah-ball)"/>
+              <line id="vWind" class="vec sw" marker-end="url(#ah-wind)"/>
+              <line id="vRes" class="vec sr" marker-end="url(#ah-res)" style="stroke-width:3.6"/>
+              <circle cx="150" cy="262" r="3.5" style="fill:var(--ink)"/>
+              <text id="lBall" class="halo mono" style="fill:var(--v-ball)"></text>
+              <text id="lWind" class="halo mono" text-anchor="middle" style="fill:var(--v-wind)"></text>
+              <text id="lRes" class="halo mono" style="fill:var(--v-res)"></text>
+              <text id="lTh" class="halo mono muted"></text>
+              <text id="lAl" class="halo mono" style="fill:var(--v-res)"></text>
+            </svg>
+            <p class="fine">Drawn at 3 px per m/s. Blue is the ball, orange the wind, green the resultant.</p>
+          </div>
+        </div>
+        <div class="card working">
+          <h2 style="margin-bottom:8px">The working, with your numbers</h2>
+          <div class="ln"><span class="k">forward</span><span id="wk1"></span></div>
+          <div class="ln"><span class="k">sideways</span><span id="wk2"></span></div>
+          <div class="ln"><span class="k">resultant</span><span id="wk3"></span></div>
+          <div class="ln"><span class="k">angle</span><span id="wk4"></span></div>
+          <div class="ln"><span class="k">at the flag</span><span id="wk5"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BAG -->
+  <section id="p-bag" role="tabpanel" aria-labelledby="t-bag" hidden>
+    <div class="think"><b>Think</b><span>Which is harder for your shoulder: holding the bag hanging straight down, or out to the side? Predict how many times bigger the muscle force is than the bag's weight, then test it.</span></div>
+    <div class="bench">
+      <div class="stack">
+        <div class="card">
+          <div class="cardhead"><h2>Carry a bag at arm's length</h2></div>
+          <div class="ctl"><label for="m">Mass of the bag, m <b id="mo"></b></label><input id="m" type="range" min="1" max="8" step="0.1" value="4"></div>
+          <div class="ctl"><label for="ph">Arm angle from vertical, &phi; <b id="pho"></b></label><input id="ph" type="range" min="0" max="90" step="1" value="90">
+            <div class="ends"><span>hanging down</span><span>held out sideways</span></div></div>
+          <div class="ctl"><label for="d">Muscle lever arm, d <b id="do"></b></label><input id="d" type="range" min="2" max="8" step="0.5" value="4">
+            <div class="ends"><span>2 cm</span><span>8 cm</span></div></div>
+          <div class="btns">
+            <button class="btn" type="button" data-ph="0">Hang it</button>
+            <button class="btn" type="button" data-ph="45">45&deg;</button>
+            <button class="btn" type="button" data-ph="90">Hold it out</button>
+          </div>
+          <p class="fine">You can also drag the bag in the picture.</p>
+        </div>
+        <div class="tiles">
+          <div class="tile"><div class="k">Weight of bag, W</div><div class="v" id="bW"></div></div>
+          <div class="tile"><div class="k">Distance, x</div><div class="v" id="bX"></div></div>
+          <div class="tile"><div class="k">Moment, W x</div><div class="v" id="bM"></div></div>
+          <div class="tile"><div class="k">Muscle force, F</div><div class="v" id="bF"></div></div>
+          <div class="tile wide"><div class="k">Muscle force compared with the bag</div><div class="v" id="bR"></div></div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="figs">
+          <div class="card">
+            <div class="cardhead"><h2>Arm and bag</h2><span class="fine">side view</span></div>
+            <svg class="fig" id="bagsvg" viewBox="0 0 420 420" role="img" aria-label="Side view of a person holding a bag with a straight arm, showing the perpendicular distance from the shoulder to the line of the bag's weight">
+              <defs>
+                <marker id="bg-w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fb"/></marker>
+                <marker id="bg-m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fw"/></marker>
+                <marker id="bg-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" style="fill:var(--muted)"/></marker>
+              </defs>
+              <circle cx="123" cy="40" r="20" style="fill:var(--surface2);stroke:var(--line);stroke-width:1.5"/>
+              <rect x="96" y="66" width="54" height="270" rx="24" style="fill:var(--surface2);stroke:var(--line);stroke-width:1.5"/>
+              <line id="wline" x1="0" y1="80" x2="0" y2="410" class="thin dash" style="stroke:var(--v-ball)"/>
+              <line id="dimline" x1="160" y1="32" x2="160" y2="32" class="thin" marker-start="url(#bg-d)" marker-end="url(#bg-d)"/>
+              <text id="dimtxt" class="halo mono" y="24"></text>
+              <line id="arm" x1="160" y1="80" x2="160" y2="294" style="stroke:var(--ink);stroke-width:9;stroke-linecap:round"/>
+              <line id="muscle" class="vec sw" marker-end="url(#bg-m)" style="stroke-width:4"/>
+              <text id="mtxt" class="halo mono" style="fill:var(--v-wind)">muscle</text>
+              <circle cx="160" cy="80" r="7" style="fill:var(--surface);stroke:var(--ink);stroke-width:3"/>
+              <text x="172" y="100" class="muted halo">shoulder</text>
+              <g>
+                <line id="strap" stroke-width="2" style="stroke:var(--ink)"/>
+                <rect id="bagrect" width="34" height="38" rx="5" style="fill:var(--surface);stroke:var(--ink);stroke-width:2.5"/>
+                <line id="warrow" class="vec sb" marker-end="url(#bg-w)"/>
+                <text id="wtxt" class="halo mono" style="fill:var(--v-ball)"></text>
+                <circle id="grab" r="30" class="drag" style="fill:transparent"/>
+              </g>
+            </svg>
+          </div>
+          <div class="card">
+            <div class="cardhead"><h2>Moment about the shoulder</h2><span class="fine">M = W L sin &phi;</span></div>
+            <svg class="fig" id="chart" viewBox="0 0 420 300" role="img" aria-label="Chart of the bag's moment about the shoulder against arm angle, rising from zero when hanging to a maximum when held out sideways">
+              <g id="ch-grid"></g>
+              <path id="ch-curve" fill="none" style="stroke:var(--v-ball);stroke-width:3"/>
+              <line id="ch-drop" class="thin dash"/>
+              <circle id="ch-dot" r="6" style="fill:var(--v-wind);stroke:var(--surface);stroke-width:2"/>
+              <text id="ch-lab" class="halo mono" style="fill:var(--v-wind)"></text>
+              <text x="228" y="292" text-anchor="middle" class="muted">arm angle from vertical (°)</text>
+              <text transform="translate(12 140) rotate(-90)" text-anchor="middle" class="muted">moment (N m)</text>
+            </svg>
+            <p class="fine">At 0&deg; the line of the weight passes through the shoulder, so the moment is zero.</p>
+          </div>
+        </div>
+        <div class="card working">
+          <h2 style="margin-bottom:8px">The working, with your numbers</h2>
+          <div class="ln"><span class="k">weight</span><span id="bk1"></span></div>
+          <div class="ln"><span class="k">distance</span><span id="bk2"></span></div>
+          <div class="ln"><span class="k">moment</span><span id="bk3"></span></div>
+          <div class="ln"><span class="k">muscle</span><span id="bk4"></span></div>
+          <div class="ln"><span class="k">ratio</span><span id="bk5"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="about">
+    <p><strong>About these models.</strong> Golf: a flat view from above, no air drag, and the wind simply adds a sideways velocity to the ball's velocity. Bag: a straight rigid arm 65 cm long pivoting at the shoulder, the arm's own weight ignored, and a muscle lever arm you can change (the elbow example in the consolidation sheet used 4 cm). The numbers are illustrative, not measurements of a real shoulder. In equilibrium the clockwise moment equals the anticlockwise moment.</p>
+  </div>
+</div>
+<script src="../shared/sim.js"></script>
+<script src="model.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

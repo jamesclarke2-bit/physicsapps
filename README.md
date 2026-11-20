@@ -15,3 +15,4 @@ its own `index.html`, then add a card to the landing page.
 | `fission-reactor/` | Nuclear fission reactor: Run a reactor: control rods, chain reaction, energy transfers to electricity, and the waste debate. |
 | `ramp-practical/` | Ramp Practical: Design and validate: v² = u² + 2as and a = g sin θ for a trolley on a ramp, with uncertainty analysis, raw and straight-line data. |
 | `projectile-motion/` | Projectile Motion Explorer: Launch speed, angle, height and g: independent horizontal and vertical motion, live graphs, equations with substitution, and marked questions. |
+| `vectors-forces-lab/` | Vectors and Forces Lab: Golf ball in a crosswind (tip-to-tail vectors, aiming off) and a shopping bag at arm's length (moments about the shoulder), with live working. |
