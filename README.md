@@ -16,3 +16,4 @@ its own `index.html`, then add a card to the landing page.
 | `ramp-practical/` | Ramp Practical: Design and validate: v² = u² + 2as and a = g sin θ for a trolley on a ramp, with uncertainty analysis, raw and straight-line data. |
 | `projectile-motion/` | Projectile Motion Explorer: Launch speed, angle, height and g: independent horizontal and vertical motion, live graphs, equations with substitution, and marked questions. |
 | `vectors-forces-lab/` | Vectors and Forces Lab: Golf ball in a crosswind (tip-to-tail vectors, aiming off) and a shopping bag at arm's length (moments about the shoulder), with live working. |
+| `domestic-electricity/` | Domestic Electricity: iGCSE lesson on mains electricity: a.c. and d.c., the heating effect, fuse and earth wire simulations, a pick-the-fuse quiz and wiring a plug, with a student worksheet. |

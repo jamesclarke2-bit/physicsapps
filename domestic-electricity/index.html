@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Domestic Electricity Lesson</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Chakra+Petch:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: sticky header with a numbered stage rail; each stage is a heading, a wide simulation panel and side notes.
+     Wiring colours (live, neutral, earth) are content colours; hazard yellow is the accent. */
+  --bg:#edf0f5; --surface:#ffffff; --surface-2:#e2e7ef; --stage:#f7f9fc;
+  --ink:#0f1829; --ink-soft:#4b576d; --line:#c3ccda;
+  --accent:#ffc400; --accent-ink:#191300; --action:#1b49d6; --action-ink:#ffffff;
+  --live:#8a4a1e; --neutral:#1767d6; --earth:#1c9443; --earth-y:#f0cd00;
+  --danger:#cf1f1f; --ok:#0f7f45; --hot:#f06a00; --metal:#8d99ad; --plastic:#5b6f93; --brass:#c9a13c;
+  --f-display:"Chakra Petch","Trebuchet MS",sans-serif;
+  --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a111e; --surface:#131c2e; --surface-2:#1c2841; --stage:#0d1627;
+    --ink:#eef2fa; --ink-soft:#a7b3c9; --line:#2e3c5a;
+    --accent:#ffcf24; --accent-ink:#191300; --action:#7aa2ff; --action-ink:#07112a;
+    --live:#c98549; --neutral:#4f9cff; --earth:#3bcc6b; --earth-y:#ffe14d;
+    --danger:#ff5d55; --ok:#3ddc84; --hot:#ff9438; --metal:#7e8ca6; --plastic:#8195bb; --brass:#d8b455;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0a111e; --surface:#131c2e; --surface-2:#1c2841; --stage:#0d1627;
+  --ink:#eef2fa; --ink-soft:#a7b3c9; --line:#2e3c5a;
+  --accent:#ffcf24; --accent-ink:#191300; --action:#7aa2ff; --action-ink:#07112a;
+  --live:#c98549; --neutral:#4f9cff; --earth:#3bcc6b; --earth-y:#ffe14d;
+  --danger:#ff5d55; --ok:#3ddc84; --hot:#ff9438; --metal:#7e8ca6; --plastic:#8195bb; --brass:#d8b455;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{font-size:clamp(16px,0.55vw + 11px,21px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);line-height:1.45}
+h1,h2,h3{font-family:var(--f-display);line-height:1.1;margin:0;text-wrap:balance}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--action);outline-offset:2px}
+svg text{font-family:var(--f-body);fill:var(--ink)}
+[hidden]{display:none !important}
+
+/* header */
+.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:2px solid var(--ink)}
+.top-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem 1rem;padding:.55rem 1rem}
+.brand{display:flex;align-items:center;gap:.7rem;min-width:0}
+.bolt{display:grid;place-items:center;width:2.4rem;height:2.4rem;background:var(--accent);border:2px solid var(--ink);transform:rotate(45deg);flex:none}
+.bolt svg{transform:rotate(-45deg);width:1.3rem;height:1.3rem;fill:var(--accent-ink)}
+.eyebrow{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+h1{font-size:1.35rem}
+.tools{display:flex;flex-wrap:wrap;gap:.4rem}
+.btn{border:2px solid var(--ink);background:var(--surface);padding:.38rem .8rem;border-radius:6px;font-weight:700;font-size:.85rem;box-shadow:2px 2px 0 var(--ink)}
+.btn:hover{background:var(--surface-2)}
+.btn:active{transform:translate(2px,2px);box-shadow:none}
+.btn.primary{background:var(--action);color:var(--action-ink)}
+.btn.warn{background:var(--accent);color:var(--accent-ink)}
+.btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.45;cursor:default;box-shadow:none}
+.btn.big{font-size:1rem;padding:.55rem 1.1rem}
+.rail{overflow-x:auto;border-top:1px solid var(--line)}
+.rail ol{display:flex;gap:.25rem;list-style:none;margin:0;padding:.35rem 1rem;min-width:max-content}
+.rail button{display:flex;align-items:center;gap:.4rem;border:0;background:none;padding:.25rem .55rem;border-radius:999px;font-size:.82rem;color:var(--ink-soft);white-space:nowrap}
+.rail button b{display:grid;place-items:center;width:1.5rem;height:1.5rem;border-radius:50%;border:2px solid currentColor;font-family:var(--f-display);font-size:.75rem}
+.rail button[aria-current="step"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.rail button.seen b{background:var(--ink-soft);color:var(--surface);border-color:var(--ink-soft)}
+
+/* stage frame */
+main{max-width:1320px;margin:0 auto;padding:1rem 1rem 5.5rem}
+.stage{display:none}
+.stage.on{display:block}
+.stage-head{display:grid;gap:.3rem;margin-bottom:.9rem}
+.spec{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+h2{font-size:2.1rem}
+.lead{font-size:1.1rem;max-width:62ch;color:var(--ink-soft)}
+.cols{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);gap:1rem;align-items:start}
+.cols.even{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+@media (max-width:860px){.cols,.cols.even{grid-template-columns:minmax(0,1fr)}}
+.stack{display:grid;gap:.8rem;min-width:0}
+.panel{background:var(--surface);border:2px solid var(--ink);border-radius:10px;padding:.9rem;min-width:0}
+.panel h3{font-size:1.05rem;margin-bottom:.45rem}
+.panel ul,.panel ol{margin:.2rem 0 0;padding-left:1.2rem;display:grid;gap:.3rem}
+.sim{background:var(--stage);border:2px solid var(--ink);border-radius:10px;padding:.6rem;min-width:0}
+.sim svg,.sim canvas{display:block;width:100%;height:auto}
+.sim canvas{aspect-ratio:16/8.4}
+.controls{display:flex;flex-wrap:wrap;gap:.5rem .7rem;align-items:center;padding:.6rem .2rem .1rem}
+.controls label{font-weight:700;font-size:.9rem}
+.seg{display:inline-flex;border:2px solid var(--ink);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:.38rem .8rem;font-weight:700;font-size:.85rem}
+.seg button + button{border-left:2px solid var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+input[type=range]{accent-color:var(--action);width:min(16rem,100%)}
+.meters{display:flex;flex-wrap:wrap;gap:.5rem;padding:.5rem .2rem 0}
+.meter{flex:1 1 9rem;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:.4rem .6rem}
+.meter span{display:block;font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
+.meter b{font-family:var(--f-display);font-size:1.25rem;font-variant-numeric:tabular-nums}
+.meter.bad b{color:var(--danger)} .meter.good b{color:var(--ok)}
+.status{margin:.5rem .2rem 0;padding:.5rem .7rem;border-left:6px solid var(--action);background:var(--surface);font-weight:700;border-radius:0 6px 6px 0}
+.status.bad{border-color:var(--danger)} .status.good{border-color:var(--ok)} .status.warm{border-color:var(--hot)}
+.eq{font-family:var(--f-display);font-size:1.5rem;background:var(--surface-2);border-radius:8px;padding:.45rem .8rem;display:inline-block}
+.eq small{font-family:var(--f-body);font-size:.8rem;color:var(--ink-soft);display:block;font-weight:400}
+.key{font-weight:700;background:linear-gradient(transparent 62%,var(--accent) 62%);color:var(--ink)}
+
+/* hazard-striped callouts for the demo and practical */
+.callout{background:var(--surface);border:2px solid var(--ink);border-radius:10px;overflow:hidden}
+.callout::before{content:"";display:block;height:12px;background:repeating-linear-gradient(135deg,var(--accent) 0 14px,var(--accent-ink) 14px 28px)}
+.callout > div{padding:.7rem .9rem .9rem;display:grid;gap:.45rem}
+.tag{font-family:var(--f-display);font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--surface);padding:.15rem .5rem;border-radius:4px;justify-self:start}
+.tnote{display:none;border:2px dashed var(--action);border-radius:10px;padding:.7rem .9rem;background:var(--surface);font-size:.92rem}
+.tnote::before{content:"Teacher notes";display:block;font-family:var(--f-display);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:var(--action);margin-bottom:.25rem}
+body.teacher .tnote{display:block}
+
+/* starter cards */
+.qgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.7rem}
+.qcard{background:var(--surface);border:2px solid var(--ink);border-radius:10px;padding:.7rem .8rem;display:grid;gap:.45rem;align-content:start;text-align:left}
+.qcard .n{font-family:var(--f-display);font-size:.8rem;color:var(--ink-soft)}
+.qcard .ans{border-top:1px dashed var(--line);padding-top:.4rem;font-variant-numeric:tabular-nums}
+.qcard .ans b{font-family:var(--f-display);font-size:1.2rem;color:var(--ok)}
+.qcard .ans[hidden]{display:none}
+.qcard .tap{font-size:.8rem;color:var(--action);font-weight:700}
+.timer{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.timer .t-disp{font-family:var(--f-display);font-size:1.9rem;font-variant-numeric:tabular-nums;min-width:4.2ch}
+.timer.done .t-disp{color:var(--danger)}
+
+/* sorter + mcq */
+.sorter{display:grid;gap:.55rem}
+.sort-card{font-family:var(--f-display);font-size:1.35rem;background:var(--surface-2);border-radius:8px;padding:.8rem;text-align:center;min-height:3.6rem;display:grid;place-items:center}
+.sort-btns{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
+.sort-fb{min-height:2.9em;font-size:.95rem}
+.sort-prog{font-size:.8rem;color:var(--ink-soft)}
+.ok{color:var(--ok);font-weight:700} .no{color:var(--danger);font-weight:700}
+.mcq{border:2px solid var(--ink);border-radius:10px;background:var(--surface);padding:.7rem .9rem;margin:0;min-width:0}
+.mcq legend{font-weight:700;padding:0 .3rem}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.45rem;margin-top:.3rem}
+.opts button{border:2px solid var(--line);background:var(--stage);border-radius:8px;padding:.5rem .7rem;text-align:left}
+.opts button:hover:not(:disabled){border-color:var(--action)}
+.opts button.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 18%,var(--surface))}
+.opts button.wrong{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 16%,var(--surface))}
+.why{margin-top:.5rem;font-size:.95rem}
+.mcq-list{display:grid;gap:.7rem}
+.mcq-score{font-family:var(--f-display);font-size:1.2rem}
+
+/* fuse quiz */
+.quiz-bar{display:flex;flex-wrap:wrap;gap:.5rem 1.2rem;align-items:center;justify-content:space-between;margin-bottom:.8rem}
+.quiz-bar p{font-size:.95rem} .quiz-bar b{font-family:var(--f-display);font-size:1.3rem;font-variant-numeric:tabular-nums}
+.plate{border:3px solid var(--ink);border-radius:8px;background:var(--surface-2);padding:1rem 1.2rem;display:grid;gap:.25rem;max-width:34rem;position:relative}
+.plate::before,.plate::after{content:"";position:absolute;top:.6rem;width:.55rem;height:.55rem;border-radius:50%;border:2px solid var(--ink-soft)}
+.plate::before{left:.6rem} .plate::after{right:.6rem}
+.plate .p-name{font-family:var(--f-display);font-size:1.9rem;padding:0 1rem}
+.plate .p-row{display:flex;flex-wrap:wrap;gap:.3rem 1.6rem;font-family:var(--f-display);font-size:1.25rem;padding:0 1rem;font-variant-numeric:tabular-nums}
+.plate .p-sm{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);padding:0 1rem}
+.fuses{display:flex;flex-wrap:wrap;gap:.8rem;margin:.9rem 0 .5rem}
+.fusebtn{position:relative;border:2px solid var(--ink);border-radius:8px;min-width:9.5rem;height:3.4rem;padding:0 2.2rem;background:#f1ede2;color:#191300;font-family:var(--f-display);font-size:1.35rem;box-shadow:3px 3px 0 var(--ink)}
+.fusebtn::before,.fusebtn::after{content:"";position:absolute;top:-2px;bottom:-2px;width:1.7rem;background:linear-gradient(#f4f6f9,#9aa3b2 45%,#dfe4ec 60%,#7f8898);border:2px solid var(--ink)}
+.fusebtn::before{left:-2px;border-radius:8px 0 0 8px} .fusebtn::after{right:-2px;border-radius:0 8px 8px 0}
+.fusebtn span{border-bottom:5px solid var(--band,#333)}
+.fusebtn:hover:not(:disabled){transform:translateY(-2px)}
+.fusebtn:disabled{cursor:default;opacity:.55}
+.fusebtn.right{opacity:1;outline:5px solid var(--ok);outline-offset:3px}
+.fusebtn.wrong{opacity:1;outline:5px solid var(--danger);outline-offset:3px;animation:blow .5s}
+@keyframes blow{0%{filter:brightness(3)}30%{transform:translateX(-5px)}60%{transform:translateX(5px)}100%{filter:none}}
+.fq-fb{min-height:4.2em;max-width:60ch}
+.work{font-variant-numeric:tabular-nums;font-family:var(--f-display);font-size:1.1rem}
+
+/* SVG parts shared by the simulations */
+.wire{fill:none;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}
+.wire.live{stroke:var(--live)} .wire.neutral{stroke:var(--neutral)} .wire.earthw{stroke:var(--earth)}
+.wire.earthstripe{stroke:var(--earth-y);stroke-dasharray:11 11;stroke-linecap:butt}
+.flow{fill:none;stroke:var(--accent);stroke-width:6;stroke-linecap:round;stroke-dasharray:1 21;visibility:hidden}
+.flow.on{visibility:visible}
+.flow.big{stroke-width:10;stroke-dasharray:1 17}
+.flow.shock{stroke:var(--danger)}
+.box{fill:var(--surface);stroke:var(--ink);stroke-width:3}
+.elem{fill:none;stroke:var(--metal);stroke-width:6;stroke-linejoin:round;stroke-linecap:round}
+.glass{fill:color-mix(in srgb,var(--neutral) 12%,var(--surface));stroke:var(--ink);stroke-width:2.5}
+.cap{fill:var(--metal);stroke:var(--ink);stroke-width:2.5}
+.fwire{fill:none;stroke:var(--metal);stroke-width:4;stroke-linecap:round}
+.spark{fill:var(--accent);stroke:var(--hot);stroke-width:3;transform-box:fill-box;transform-origin:center}
+.spark.pop{animation:pop .6s ease-out forwards}
+@keyframes pop{0%{transform:scale(.4);opacity:1}60%{transform:scale(5);opacity:.9}100%{transform:scale(7);opacity:0}}
+.spark.fizz{animation:fizz .35s infinite alternate}
+@keyframes fizz{from{transform:scale(.7)}to{transform:scale(1.5)}}
+.t-big{font-family:var(--f-display);font-size:26px;font-weight:700}
+.t-sm{font-size:16px;fill:var(--ink-soft)}
+.t-lab{font-family:var(--f-display);font-size:20px;font-weight:700}
+.case{fill:color-mix(in srgb,var(--metal) 22%,var(--surface));stroke:var(--metal);stroke-width:12}
+.case.live{stroke:var(--danger);filter:drop-shadow(0 0 10px var(--danger))}
+.case.plastic{fill:color-mix(in srgb,var(--plastic) 14%,var(--surface));stroke:var(--plastic);stroke-width:18}
+.ground{fill:color-mix(in srgb,var(--earth) 22%,var(--stage))}
+.groundline{stroke:var(--ink);stroke-width:3}
+.person path,.person circle{fill:none;stroke:var(--ink);stroke-width:8;stroke-linecap:round;stroke-linejoin:round}
+.person circle{fill:var(--surface)}
+.person.shock path,.person.shock circle{stroke:var(--danger)}
+.person.shock{animation:jit .08s infinite}
+@keyframes jit{0%{transform:translate(1.5px,0)}50%{transform:translate(-1.5px,1px)}100%{transform:translate(1px,-1px)}}
+.zap{fill:var(--accent);stroke:var(--danger);stroke-width:2}
+.narr{margin:0;padding-left:1.3rem;display:grid;gap:.4rem;font-size:1rem}
+.narr li{transition:opacity .4s}
+.narr li.wait{opacity:.12}
+
+/* plug */
+.plug-body{fill:color-mix(in srgb,var(--plastic) 10%,var(--surface));stroke:var(--ink);stroke-width:4}
+.brass{fill:var(--brass);stroke:var(--ink);stroke-width:2.5}
+.screw{fill:color-mix(in srgb,var(--brass) 60%,var(--ink));stroke:var(--ink);stroke-width:2}
+.sheath{fill:var(--surface-2);stroke:var(--ink);stroke-width:2.5}
+.grip{fill:var(--metal);stroke:var(--ink);stroke-width:2.5}
+.term{cursor:pointer}
+.term .ring{fill:none;stroke:var(--action);stroke-width:4;opacity:0}
+.picking .term:not(.done) .ring{opacity:1;animation:ring 1s infinite alternate}
+@keyframes ring{from{stroke-width:2}to{stroke-width:7}}
+.term text{font-family:var(--f-display);font-size:22px;font-weight:700}
+.pwire{fill:none;stroke-width:11;stroke-linecap:round;transition:opacity .5s}
+.pwire[hidden]{display:none}
+.hl{stroke:var(--action) !important;stroke-width:6 !important}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.wirebtns{display:flex;flex-wrap:wrap;gap:.5rem}
+.wirebtn{border:2px solid var(--ink);border-radius:999px;padding:.35rem .9rem .35rem .45rem;background:var(--surface);font-weight:700;display:flex;align-items:center;gap:.5rem;font-size:.92rem}
+.wirebtn i{display:block;width:2.4rem;height:.85rem;border-radius:999px;border:1.5px solid var(--ink)}
+.wirebtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.wirebtn:disabled{opacity:.5;cursor:default}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem}
+.chips button{border:2px solid var(--line);background:var(--stage);border-radius:999px;padding:.25rem .75rem;font-size:.88rem;font-weight:700}
+.chips button[aria-pressed="true"]{border-color:var(--action);background:var(--action);color:var(--action-ink)}
+.chips button:disabled{opacity:.45;cursor:default}
+.checks{list-style:none !important;padding:0 !important}
+.checks label{display:flex;gap:.55rem;align-items:flex-start}
+.checks input{width:1.15rem;height:1.15rem;margin-top:.15rem;accent-color:var(--ok);flex:none}
+
+/* footer nav + plan overlay */
+.foot{position:fixed;left:0;right:0;bottom:0;z-index:15;display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.55rem 1rem;background:var(--surface);border-top:2px solid var(--ink)}
+.foot p{font-size:.85rem;color:var(--ink-soft);text-align:center}
+.overlay{position:fixed;inset:0;z-index:40;background:color-mix(in srgb,var(--ink) 55%,transparent);display:none;padding:1rem;overflow:auto}
+.overlay.on{display:block}
+.sheet{max-width:60rem;margin:1rem auto;background:var(--surface);border:2px solid var(--ink);border-radius:12px;padding:1.1rem 1.2rem;display:grid;gap:.9rem}
+.sheet header{display:flex;justify-content:space-between;align-items:center;gap:1rem}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{text-align:left;padding:.4rem .55rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-display);font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.fusebtn.wrong,.shake,.person.shock,.spark.fizz{animation:none}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-row">
+    <div class="brand">
+      <span class="bolt" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13.5 1 4 14h6.5L9 23l10-13.5h-6.8z"/></svg></span>
+      <div>
+        <p class="eyebrow">iGCSE Physics · Mains electricity · spec 2.2 to 2.6</p>
+        <h1>Domestic Electricity</h1>
+      </div>
+    </div>
+    <div class="tools">
+      <button class="btn" id="btnPlan" type="button">Lesson plan</button>
+      <button class="btn" id="btnNotes" type="button" aria-pressed="false" title="Shortcut: T">Teacher notes</button>
+      <button class="btn" id="btnTheme" type="button">Light / dark</button>
+      <button class="btn" id="btnFull" type="button">Full screen</button>
+    </div>
+  </div>
+  <nav class="rail" aria-label="Lesson stages"><ol id="rail"></ol></nav>
+</header>
+
+<main>
+
+<!-- 1 STARTER -->
+<section class="stage on" data-key="starter" data-title="Power up">
+  <div class="stage-head">
+    <p class="spec">Starter · revision of 2.4 and 2.5</p>
+    <h2>Power up</h2>
+    <p class="lead">Six questions on mini whiteboards. Tap a card to check the working.</p>
+  </div>
+  <div class="cols">
+    <div class="stack">
+      <div class="qgrid" id="starterGrid"></div>
+      <div class="controls">
+        <button class="btn" id="starterReveal" type="button">Reveal all</button>
+        <button class="btn" id="starterNew" type="button">New numbers</button>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <h3>The two equations</h3>
+        <div class="stack">
+          <p class="eq">P = I × V<small>power (W) = current (A) × voltage (V)</small></p>
+          <p class="eq">E = P × t<small>energy (J) = power (W) × time (s)</small></p>
+          <p>Put the first inside the second:</p>
+          <p class="eq">E = I × V × t<small>energy transferred = current × voltage × time</small></p>
+          <p>Time must be in <span class="key">seconds</span>. UK mains voltage is <span class="key">230 V</span>.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Countdown</h3>
+        <div class="timer" data-secs="300"></div>
+      </div>
+      <div class="tnote">Questions 1 to 4 are direct substitution; 5 and 6 need a rearrangement, shown as algebra in the working. "New numbers" gives a fresh set for a second class or a re-run. Question 5 is the one that matters later: current from power is the first step of choosing a fuse.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 AC DC -->
+<section class="stage" data-key="ac-dc" data-title="a.c. and d.c.">
+  <div class="stage-head">
+    <p class="spec">Spec 2.6</p>
+    <h2>Two kinds of current</h2>
+    <p class="lead">A cell pushes charge one way round the circuit. The mains keeps changing its mind.</p>
+  </div>
+  <div class="cols">
+    <div class="sim">
+      <canvas id="acCanvas" role="img" aria-label="Voltage against time trace, with charges moving in a wire below it"></canvas>
+      <div class="controls">
+        <div class="seg" id="acSeg" role="group" aria-label="Supply">
+          <button type="button" data-mode="dc" aria-pressed="false">Cell (d.c.)</button>
+          <button type="button" data-mode="ac" aria-pressed="true">Mains (a.c.)</button>
+        </div>
+        <span id="acCap">Slowed down 100 times. Real mains completes 50 cycles every second.</span>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <h3>Know the difference</h3>
+        <ul>
+          <li><b>Direct current (d.c.)</b>: the current always flows in the <span class="key">same direction</span>. Supplied by a cell or battery.</li>
+          <li><b>Alternating current (a.c.)</b>: the current <span class="key">keeps changing direction</span>. Mains electricity is a.c.</li>
+          <li>UK mains: 230 V, 50 Hz. That is 50 complete cycles each second.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>a.c. or d.c.?</h3>
+        <div class="sorter" id="acSort"></div>
+      </div>
+      <div class="tnote">Ask what they notice about the charges in the wire in a.c. mode: they never get anywhere, they shuttle to and fro. Good follow-up: "so how does the kettle still get energy?" (the heating does not depend on which way the charge moves). If you have a CRO or data-logger to hand, a cell versus a low-voltage a.c. supply makes this trace real.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 HOT WIRES -->
+<section class="stage" data-key="hot-wires" data-title="Hot wires">
+  <div class="stage-head">
+    <p class="spec">Spec 2.3</p>
+    <h2>Why a current heats a wire</h2>
+    <p class="lead">Zoom into the metal. Turn the current up and watch what the electrons do to the ions.</p>
+  </div>
+  <div class="cols">
+    <div class="stack">
+      <div class="sim">
+        <canvas id="hotCanvas" role="img" aria-label="Electrons moving through a lattice of metal ions; the ions vibrate more as the current rises"></canvas>
+        <div class="controls">
+          <label for="hotI">Current</label>
+          <input type="range" id="hotI" min="0" max="10" step="0.5" value="2">
+          <b id="hotIval">2.0 A</b>
+        </div>
+        <div class="meters">
+          <div class="meter"><span>Wire temperature (model)</span><b id="hotT">20 °C</b></div>
+          <div class="meter" style="flex:2 1 16rem"><span>What you would see</span><b id="hotSee" style="font-size:1rem">Room temperature</b></div>
+        </div>
+      </div>
+      <div class="callout"><div>
+        <span class="tag">Demo · wire wool</span>
+        <p><b>Predict:</b> a few strands of wire wool join two crocodile clips. What will you see as the current is turned up?</p>
+        <p><b>Observe:</b> watch the colour, and watch the ammeter at the moment the strand breaks.</p>
+        <p><b>Explain:</b> use the words <span class="key">electrons</span>, <span class="key">collide</span>, <span class="key">ions</span> and <span class="key">temperature</span>.</p>
+      </div></div>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <h3>The explanation</h3>
+        <ol>
+          <li>A current is a flow of electrons through the metal.</li>
+          <li>The electrons <span class="key">collide with the ions</span> of the metal lattice.</li>
+          <li>Each collision transfers energy to the ions, so they vibrate more.</li>
+          <li>More vibration means a <span class="key">higher temperature</span>. Energy has been transferred electrically to the thermal store of the wire.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3>Useful, and dangerous</h3>
+        <ul>
+          <li><b>On purpose:</b> kettle, toaster, iron, hairdryer, electric heater, hob.</li>
+          <li><b>By accident:</b> too much current in a cable makes it hot enough to melt its insulation and start a fire.</li>
+        </ul>
+        <p style="margin-top:.5rem">So every plug carries a wire that is designed to lose this fight first.</p>
+      </div>
+      <div class="tnote">The temperatures are a model (heating rises with current squared), there to make the trend visible, not to be quoted. Wire wool: a few fine strands across the clips on a heatproof mat, low-voltage supply turned up from zero, eye protection, loose wool well clear. It glows, melts at its thinnest point and the ammeter drops to zero. That last observation is the bridge to the next stage: the wire wool just behaved as a fuse.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 FUSES -->
+<section class="stage" data-key="fuses" data-title="Fuses">
+  <div class="stage-head">
+    <p class="spec">Spec 2.2</p>
+    <h2>The fuse: a wire built to fail</h2>
+    <p class="lead">Pick a fuse, then push the current past its rating. Then try a short circuit.</p>
+  </div>
+  <div class="cols">
+    <div class="sim">
+      <svg id="fuseSvg" viewBox="0 0 820 372" role="img" aria-label="Circuit: mains supply, a fuse in the live wire, and an appliance">
+        <path class="wire live" d="M100 140 V70 H282"/>
+        <path class="wire live" d="M498 70 H710 V140"/>
+        <path class="wire neutral" d="M710 250 V320 H100 V250"/>
+        <text x="190" y="52" text-anchor="middle" class="t-sm">live</text>
+        <text x="405" y="348" text-anchor="middle" class="t-sm">neutral</text>
+        <path id="fuseFlow" class="flow" d="M100 140 V70 H710 V140 M710 250 V320 H100 V250"/>
+        <rect class="box" x="30" y="140" width="140" height="110" rx="10"/>
+        <text x="100" y="186" text-anchor="middle" class="t-big">230 V</text>
+        <path d="M70 218 q15 -22 30 0 t30 0" fill="none" stroke="var(--ink-soft)" stroke-width="3"/>
+        <rect class="box" x="630" y="140" width="160" height="110" rx="10"/>
+        <path id="fuseElem" class="elem" d="M655 185 l11 -18 l22 36 l22 -36 l22 36 l22 -36 l11 18"/>
+        <text x="710" y="238" text-anchor="middle" class="t-sm">appliance</text>
+        <g id="fuseG">
+          <rect class="glass" x="300" y="46" width="180" height="48" rx="8"/>
+          <rect class="cap" x="280" y="42" width="34" height="56" rx="6"/>
+          <rect class="cap" x="466" y="42" width="34" height="56" rx="6"/>
+          <path id="fuseWire" class="fwire" d="M314 70 H466"/>
+          <g id="fuseGap" hidden>
+            <path class="fwire" d="M314 70 H356 q9 2 7 13"/>
+            <path class="fwire" d="M466 70 H424 q-9 2 -7 13"/>
+          </g>
+          <circle id="fuseSpark" class="spark" cx="390" cy="70" r="6" opacity="0"/>
+        </g>
+        <g id="brkG" hidden>
+          <rect class="box" x="290" y="38" width="200" height="64" rx="8"/>
+          <circle cx="330" cy="70" r="7" fill="var(--ink)"/><circle cx="450" cy="70" r="7" fill="var(--ink)"/>
+          <line id="brkLever" x1="330" y1="70" x2="450" y2="70" stroke="var(--ink)" stroke-width="7" stroke-linecap="round" style="transform-origin:330px 70px;transition:transform .12s"/>
+        </g>
+        <text id="fuseLabel" x="390" y="26" text-anchor="middle" class="t-lab">3 A fuse</text>
+      </svg>
+      <div class="controls">
+        <div class="seg" id="fuseRating" role="group" aria-label="Rating">
+          <button type="button" data-r="3" aria-pressed="true">3 A</button>
+          <button type="button" data-r="5" aria-pressed="false">5 A</button>
+          <button type="button" data-r="13" aria-pressed="false">13 A</button>
+        </div>
+        <div class="seg" id="fuseType" role="group" aria-label="Protection">
+          <button type="button" data-t="fuse" aria-pressed="true">Fuse</button>
+          <button type="button" data-t="breaker" aria-pressed="false">Circuit breaker</button>
+        </div>
+      </div>
+      <div class="controls">
+        <label for="fuseI">Appliance current</label>
+        <input type="range" id="fuseI" min="0" max="16" step="0.5" value="2">
+        <button class="btn warn" id="fuseShort" type="button">Short circuit</button>
+        <button class="btn primary" id="fuseReset" type="button" disabled>Replace fuse</button>
+      </div>
+      <div class="meters">
+        <div class="meter" id="fuseMI"><span>Current in the circuit</span><b id="fuseIval">2.0 A</b></div>
+        <div class="meter"><span>Rating</span><b id="fuseRval">3 A</b></div>
+        <div class="meter" id="fuseMS"><span id="fuseSlab">Fuse wire</span><b id="fuseSval">cool</b></div>
+      </div>
+      <p class="status" id="fuseStatus" aria-live="polite">Normal current. The fuse wire stays cool.</p>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <h3>How a fuse protects</h3>
+        <ol>
+          <li>A fuse is a thin piece of wire in the <span class="key">live</span> wire.</li>
+          <li>If the current rises above the fuse rating, the wire heats up and <span class="key">melts</span>.</li>
+          <li>The circuit is broken, so the current stops.</li>
+          <li>The cable and appliance never get hot enough to start a fire.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3>Circuit breakers</h3>
+        <p>A circuit breaker does the same job with an automatic switch. Compared with a fuse it:</p>
+        <ul>
+          <li>cuts the current off <span class="key">faster</span></li>
+          <li>can be <span class="key">reset</span> with a flick, so nothing needs replacing</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Ask the class</h3>
+        <ul>
+          <li>A 3 A fuse is carrying 2.5 A. What happens? And at 3.5 A?</li>
+          <li>Why not fit a 13 A fuse to everything?</li>
+          <li>What did the wire wool have in common with this fuse?</li>
+        </ul>
+      </div>
+      <div class="tnote">The fuse wire warms as the current nears the rating and melts sooner the further you go over it: a small overload takes a second or so, a short circuit is instant. Switch to "Circuit breaker" and repeat the short circuit to show the faster trip and the reset. The "why not 13 A for everything" question sets up the quiz: a fuse far above the working current lets a damaging fault current flow without melting.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 FUSE QUIZ -->
+<section class="stage" data-key="pick-the-fuse" data-title="Pick the fuse">
+  <div class="stage-head">
+    <p class="spec">Spec 2.4</p>
+    <h2>Pick the fuse</h2>
+    <p class="lead">Read the rating plate. Work out the current. Choose the fuse rated just above it.</p>
+  </div>
+  <div class="cols">
+    <div class="panel">
+      <div class="quiz-bar">
+        <div class="seg" id="fqLevel" role="group" aria-label="Level">
+          <button type="button" data-l="std" aria-pressed="true">Standard</button>
+          <button type="button" data-l="hard" aria-pressed="false">Challenge</button>
+        </div>
+        <p>Appliance <b id="fqNum">1</b> of 8</p>
+        <p>Score <b id="fqScore">0</b></p>
+        <p>Streak <b id="fqStreak">0</b></p>
+      </div>
+      <div id="fqPlay">
+        <div class="plate">
+          <p class="p-sm">Rating plate</p>
+          <p class="p-name" id="fqName">Kettle</p>
+          <p class="p-row"><span>230 V ~ 50 Hz</span><span id="fqPower">2500 W</span></p>
+        </div>
+        <div class="fuses" id="fqFuses"></div>
+        <div class="controls" style="padding-left:0">
+          <button class="btn" id="fqHint" type="button">Show the current</button>
+          <button class="btn primary big" id="fqNext" type="button" hidden>Next appliance</button>
+        </div>
+        <p class="work" id="fqWork"></p>
+        <p class="fq-fb" id="fqFb" aria-live="polite"></p>
+      </div>
+      <div id="fqEnd" hidden class="stack">
+        <p class="eq" id="fqFinal"></p>
+        <p id="fqVerdict"></p>
+        <div><button class="btn primary big" id="fqAgain" type="button">Play again</button></div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <h3>The method</h3>
+        <ol>
+          <li>Write down P = I × V.</li>
+          <li>Rearrange: divide both sides by V, so <span class="key">I = P ÷ V</span>.</li>
+          <li>Calculate the normal working current.</li>
+          <li>Choose the fuse with the rating <span class="key">just above</span> that current.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3>Get it wrong and…</h3>
+        <ul>
+          <li><b>Rating too low:</b> the fuse melts as soon as the appliance is switched on.</li>
+          <li><b>Rating too high:</b> a fault current can overheat the cable and the fuse never melts.</li>
+        </ul>
+      </div>
+      <div class="tnote">Eight appliances per round, drawn at random. Standard uses 3 A, 5 A and 13 A; Challenge adds 1 A and 10 A, which punishes anyone who has learned "big appliance, 13 A" without calculating. Works as whole-class voting on whiteboards (hold up 3, 5 or 13) or with students coming up to tap. "Show the current" is the scaffold and does not affect the score. The colour bands match real plug fuses: 3 A red, 5 A black, 13 A brown.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 EARTH -->
+<section class="stage" data-key="earth-wire" data-title="Earth wire">
+  <div class="stage-head">
+    <p class="spec">Spec 2.2</p>
+    <h2>The earth wire: your stand-in</h2>
+    <p class="lead">Cause a fault in this metal kettle. Try it with the earth wire removed, then with it connected.</p>
+  </div>
+  <div class="cols">
+    <div class="sim">
+      <svg id="earthSvg" viewBox="0 0 900 460" role="img" aria-label="A metal-cased appliance connected to the mains by live, neutral and earth wires, with a person standing next to it">
+        <rect class="ground" x="0" y="420" width="900" height="40"/>
+        <line class="groundline" x1="0" y1="420" x2="900" y2="420"/>
+        <text x="884" y="447" text-anchor="end" class="t-sm">the ground: earth, 0 V</text>
+        <rect class="box" x="20" y="90" width="110" height="220" rx="10"/>
+        <text x="75" y="78" text-anchor="middle" class="t-sm">mains socket</text>
+        <text x="36" y="137" class="t-lab">L</text><text x="36" y="207" class="t-lab">N</text><text x="36" y="277" class="t-lab">E</text>
+        <text x="60" y="137" class="t-sm">230 V</text><text x="60" y="207" class="t-sm">0 V</text>
+        <path class="wire earthw" d="M130 270 H90 V420"/><path class="wire earthstripe" d="M130 270 H90 V420"/>
+        <path class="wire live" d="M130 130 H222"/><path class="wire live" d="M298 130 H400"/>
+        <path class="wire neutral" d="M520 200 H130"/>
+        <g id="eEarthWire"><path class="wire earthw" d="M400 270 H130"/><path class="wire earthstripe" d="M400 270 H130"/><text x="265" y="298" text-anchor="middle" class="t-sm">earth wire</text></g>
+        <g id="eEarthCut" hidden>
+          <path class="wire earthw" d="M130 270 H168"/><path class="wire earthw" d="M400 270 H362"/>
+          <text x="265" y="277" text-anchor="middle" class="t-sm" style="fill:var(--danger)">earth wire removed</text>
+        </g>
+        <rect id="eCase" class="case" x="400" y="80" width="260" height="260" rx="18"/>
+        <text id="eCaseLabel" x="530" y="312" text-anchor="middle" class="t-lab">metal case: 0 V</text>
+        <path id="eLiveOK" class="wire live" d="M400 130 H520"/>
+        <path id="eLiveFault" class="wire live" d="M400 130 H452 Q484 130 490 90" hidden/>
+        <path id="eElem" class="elem" d="M520 130 l14 10 l-28 16 l28 16 l-28 16 l14 12"/>
+        <text x="548" y="170" class="t-sm">heating</text><text x="548" y="190" class="t-sm">element</text>
+        <circle id="eSpark" class="spark fizz" cx="490" cy="88" r="7" hidden/>
+        <text x="260" y="104" text-anchor="middle" class="t-sm">13 A fuse</text>
+        <rect class="glass" x="230" y="116" width="60" height="28" rx="6"/>
+        <rect class="cap" x="220" y="113" width="16" height="34" rx="4"/><rect class="cap" x="284" y="113" width="16" height="34" rx="4"/>
+        <path id="eFuseWire" class="fwire" d="M236 130 H284"/>
+        <g id="eFuseGap" hidden><path class="fwire" d="M236 130 h14 q5 1 4 8"/><path class="fwire" d="M284 130 h-14 q-5 1 -4 8"/></g>
+        <circle id="eFuseSpark" class="spark" cx="260" cy="130" r="5" opacity="0"/>
+        <path id="eFlowNormal" class="flow" d="M130 130 H520 l14 10 l-28 16 l28 16 l-28 16 l14 12 H130"/>
+        <path id="eFlowEarth" class="flow big" d="M130 130 H452 Q484 130 490 84 H412 Q402 84 402 94 V270 H90 V420"/>
+        <path id="eFlowBody" class="flow shock" d="M130 130 H452 Q484 130 490 84 H648 Q658 84 658 94 V240 L760 268 V335 L778 420"/>
+        <g id="ePerson" class="person">
+          <path d="M760 240 V335 M760 335 L742 418 M760 335 L778 418 M760 268 L800 318"/>
+          <path id="eArm" d="M760 268 L722 318"/>
+          <circle cx="760" cy="216" r="23"/>
+          <g id="eZaps" hidden>
+            <path class="zap" d="M812 190 l-14 22 h10 l-8 20 l22 -28 h-11 l9 -14z"/>
+            <path class="zap" d="M706 372 l-12 18 h9 l-7 17 l19 -24 h-10 l8 -11z"/>
+          </g>
+        </g>
+      </svg>
+      <div class="controls">
+        <div class="seg" id="eEarthSeg" role="group" aria-label="Earth wire">
+          <button type="button" data-e="1" aria-pressed="true">Earth wire connected</button>
+          <button type="button" data-e="0" aria-pressed="false">Earth wire removed</button>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn warn" id="eFault" type="button">Cause a fault</button>
+        <button class="btn" id="eTouch" type="button" aria-pressed="false">Touch the case</button>
+        <button class="btn primary" id="eReset" type="button">Repair and reset</button>
+      </div>
+      <div class="meters">
+        <div class="meter" id="eMCase"><span>Metal case</span><b id="eVCase">0 V</b></div>
+        <div class="meter"><span>Current in live wire</span><b id="eVI">9 A</b></div>
+        <div class="meter" id="eMFuse"><span>Fuse</span><b id="eVFuse">intact</b></div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <h3>What is happening</h3>
+        <ol class="narr" id="eNarr" aria-live="polite"></ol>
+      </div>
+      <div class="panel">
+        <h3>The key idea</h3>
+        <p>The earth wire joins the metal case to the ground with a <span class="key">low-resistance</span> path. If the case ever becomes live, a <span class="key">large current</span> flows to earth and <span class="key">melts the fuse</span>. The earth wire and the fuse work as a team.</p>
+      </div>
+      <div class="tnote">Suggested order: (1) normal working, touch the case, safe. (2) Remove the earth wire, cause a fault: nothing visible happens and the fuse is intact. Ask whether it is safe. Then touch. (3) Reset, reconnect the earth, cause the fault again and let the five steps play out. Draw out that the current through a person is far too small to melt a 13 A fuse, so a fuse alone does not protect the user. The live wire is drawn coming off the element, so the kettle also stops heating: a dead appliance can still be a live one.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 DOUBLE INSULATION -->
+<section class="stage" data-key="double-insulation" data-title="Double insulation">
+  <div class="stage-head">
+    <p class="spec">Spec 2.2</p>
+    <h2>No earth wire? Double insulation</h2>
+    <p class="lead">Some appliances have only two wires in the cable. Find out why that is still safe.</p>
+  </div>
+  <div class="cols even">
+    <div class="stack">
+      <div class="sim">
+        <svg id="diSvg" viewBox="0 0 640 330" role="img" aria-label="Cross-section of a plastic-cased appliance with a two-core cable">
+          <rect class="sheath" x="0" y="140" width="170" height="50" rx="10"/>
+          <text x="80" y="128" text-anchor="middle" class="t-sm">two-core cable</text>
+          <rect class="case plastic" x="170" y="40" width="430" height="250" rx="34"/>
+          <path class="wire neutral" d="M10 176 H330 Q360 176 372 200"/>
+          <path id="diLiveOK" class="wire live" d="M10 154 H330 Q360 154 372 132"/>
+          <path id="diLiveFault" class="wire live" d="M10 154 H250 Q300 154 320 62" hidden/>
+          <circle cx="420" cy="166" r="56" class="box"/>
+          <text x="420" y="173" text-anchor="middle" class="t-lab">motor</text>
+          <rect x="520" y="218" width="44" height="44" fill="none" stroke="var(--ink)" stroke-width="4"/>
+          <rect x="531" y="229" width="22" height="22" fill="none" stroke="var(--ink)" stroke-width="4"/>
+          <text id="diLabel" x="385" y="318" text-anchor="middle" class="t-lab">plastic case: 0 V</text>
+          <text x="238" y="100" class="t-sm" id="diNote"></text>
+        </svg>
+        <div class="controls">
+          <button class="btn warn" id="diFault" type="button" aria-pressed="false">Live wire comes loose</button>
+          <span id="diMsg" aria-live="polite">Working normally.</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Four ways the mains is kept away from you</h3>
+        <div class="tblwrap"><table>
+          <thead><tr><th>Feature</th><th>What it is</th><th>What it protects</th></tr></thead>
+          <tbody>
+            <tr><td><b>Insulation</b></td><td>Plastic around every wire and plug</td><td>The user, from touching a live conductor</td></tr>
+            <tr><td><b>Double insulation</b></td><td>A plastic case as a second layer</td><td>The user: the case can never become live</td></tr>
+            <tr><td><b>Earthing</b></td><td>A wire from a metal case to the ground</td><td>The user, by making a fault melt the fuse</td></tr>
+            <tr><td><b>Fuse or circuit breaker</b></td><td>A weak link in the live wire</td><td>The cable and appliance, from overheating</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <h3>How it works</h3>
+        <ul>
+          <li>The wires inside are insulated: layer one.</li>
+          <li>The whole case is <span class="key">plastic</span>, an electrical insulator: layer two.</li>
+          <li>Even if the live wire touches the case, the case <span class="key">cannot become live</span>.</li>
+          <li>So no earth wire is needed. Look for the square-in-a-square symbol on the rating plate.</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Earthed or double insulated?</h3>
+        <div class="sorter" id="diSort"></div>
+      </div>
+      <div class="panel">
+        <h3>Think: the French plug</h3>
+        <div style="display:flex;gap:.9rem;align-items:center;flex-wrap:wrap">
+          <svg viewBox="0 0 120 120" width="104" height="104" role="img" aria-label="Face of a French plug: two round pins and a hole" style="flex:none">
+            <circle cx="60" cy="60" r="52" class="box"/>
+            <circle cx="36" cy="66" r="8" class="brass"/><circle cx="84" cy="66" r="8" class="brass"/>
+            <circle cx="60" cy="30" r="8" fill="var(--ink)"/>
+          </svg>
+          <p style="flex:1 1 12rem">Many plugs in France have only <b>two pins</b>. A UK plug has three. <b>Why is a two-pin plug not dangerous?</b></p>
+        </div>
+        <div class="controls" style="padding-left:0"><button class="btn" id="frShow" type="button" aria-expanded="false">Show the answer</button></div>
+        <ol id="frAns" hidden>
+          <li>A circuit needs only two connections: live and neutral. The third UK pin is the earth.</li>
+          <li>An appliance with a two-pin plug is <span class="key">double insulated</span>. Its plastic case cannot become live, so it needs no earth wire.</li>
+          <li>French appliances with metal cases are still earthed. The earth pin is on the <span class="key">socket</span>: it sticks out of the wall and fits into the hole in the plug.</li>
+          <li>There is no fuse in a French plug. A <span class="key">circuit breaker</span> in the house protects each circuit instead.</li>
+        </ol>
+      </div>
+      <div class="tnote">Worth passing round a real double-insulated plug-top charger or hairdryer so they can find the symbol, and comparing its two-core flex with the three-core flex they are about to use. Common slip to listen for: "plastic stops the current" (fine) versus "plastic stops the fuse blowing" (muddled). The table is the one to copy down if you want notes from this lesson. French plug: the drawing shows the plug face, with the hole that takes the socket's earth pin. Extension for the curious: a UK plug needs its own fuse because UK ring circuits are protected at 32 A, far more than a thin flex can safely carry.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 PLUG -->
+<section class="stage" data-key="plug" data-title="Wire a plug">
+  <div class="stage-head">
+    <p class="spec">Spec 2.2 · class practical</p>
+    <h2>Wire a plug</h2>
+    <p class="lead">Wire this one on screen first. Then do it for real.</p>
+  </div>
+  <div class="cols even">
+    <div class="sim">
+      <svg id="plugSvg" viewBox="0 0 520 610" role="group" aria-label="Inside of a three-pin plug, seen from the back with the cable at the bottom" style="max-height:66vh">
+        <g id="plugAll">
+          <path class="plug-body" data-part="case" d="M260 24 C335 24 388 58 406 122 L452 392 C464 470 420 524 350 524 L170 524 C100 524 56 470 68 392 L114 122 C132 58 185 24 260 24 Z"/>
+          <rect class="brass" data-part="pins" x="232" y="64" width="56" height="104" rx="6"/>
+          <rect class="brass" data-part="pins" x="104" y="250" width="100" height="46" rx="6"/>
+          <rect class="brass" data-part="pins" x="318" y="232" width="100" height="42" rx="6"/>
+          <rect class="brass" x="366" y="268" width="38" height="18" rx="3"/>
+          <rect class="glass" data-part="fuse" x="371" y="284" width="28" height="96" rx="5" style="fill:#f1ede2"/>
+          <rect class="cap" data-part="fuse" x="368" y="280" width="34" height="20" rx="4"/>
+          <rect class="cap" data-part="fuse" x="368" y="364" width="34" height="20" rx="4"/>
+          <rect x="371" y="326" width="28" height="9" fill="var(--live)"/>
+          <text x="385" y="320" text-anchor="middle" style="font-size:13px;fill:#191300;font-weight:700">13A</text>
+          <rect class="brass" x="322" y="380" width="80" height="34" rx="5"/>
+          <rect class="sheath" x="233" y="436" width="54" height="174" rx="6"/>
+          <path d="M248 440 V424" class="pwire" style="stroke:var(--neutral)" id="stubBlue"/>
+          <path d="M260 440 V424" class="pwire" style="stroke:var(--earth)" id="stubGy"/>
+          <path d="M272 440 V424" class="pwire" style="stroke:var(--live)" id="stubBrown"/>
+          <path id="pwBlue" class="pwire" style="stroke:var(--neutral)" d="M248 440 C248 372 180 350 180 282" hidden/>
+          <g id="pwGy" hidden>
+            <path class="pwire" style="stroke:var(--earth)" d="M260 440 C260 350 260 250 260 152"/>
+            <path class="pwire" style="stroke:var(--earth-y);stroke-dasharray:14 14;stroke-linecap:butt" d="M260 440 C260 350 260 250 260 152"/>
+          </g>
+          <path id="pwBrown" class="pwire" style="stroke:var(--live)" d="M272 440 C272 410 306 414 340 400" hidden/>
+          <rect class="grip" data-part="grip" x="196" y="452" width="128" height="28" rx="6"/>
+          <circle class="screw" cx="210" cy="466" r="7"/><circle class="screw" cx="310" cy="466" r="7"/>
+          <g class="term" data-t="E" tabindex="0" role="button" aria-label="Top terminal">
+            <circle class="ring" cx="260" cy="146" r="24"/><circle class="screw" cx="260" cy="146" r="13"/>
+            <text x="260" y="104" text-anchor="middle" hidden>E</text>
+          </g>
+          <g class="term" data-t="N" tabindex="0" role="button" aria-label="Left terminal">
+            <circle class="ring" cx="180" cy="273" r="24"/><circle class="screw" cx="180" cy="273" r="13"/>
+            <text x="130" y="281" text-anchor="middle" hidden>N</text>
+          </g>
+          <g class="term" data-t="L" tabindex="0" role="button" aria-label="Right terminal, below the fuse">
+            <circle class="ring" cx="342" cy="397" r="24"/><circle class="screw" cx="342" cy="397" r="13"/>
+            <text x="340" y="262" text-anchor="middle" hidden>L</text>
+          </g>
+        </g>
+      </svg>
+      <p class="spec" style="padding:.2rem .2rem .5rem">Pick a wire, then tap the terminal it belongs to</p>
+      <div class="wirebtns" id="wireBtns">
+        <button class="wirebtn" type="button" data-w="brown" aria-pressed="false"><i style="background:var(--live)"></i>Brown wire</button>
+        <button class="wirebtn" type="button" data-w="blue" aria-pressed="false"><i style="background:var(--neutral)"></i>Blue wire</button>
+        <button class="wirebtn" type="button" data-w="gy" aria-pressed="false"><i style="background:repeating-linear-gradient(90deg,var(--earth) 0 7px,var(--earth-y) 7px 14px)"></i>Green and yellow wire</button>
+        <button class="btn" type="button" id="plugReset">Start again</button>
+      </div>
+      <p class="status" id="plugMsg" aria-live="polite">You are looking into the open plug from the back. Three wires, three terminals.</p>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <h3>Tour of the plug</h3>
+        <div class="chips" id="plugChips">
+          <button type="button" data-p="live" disabled>Live</button>
+          <button type="button" data-p="neutral" disabled>Neutral</button>
+          <button type="button" data-p="earth" disabled>Earth</button>
+          <button type="button" data-p="fuse" disabled>Fuse</button>
+          <button type="button" data-p="grip" disabled>Cable grip</button>
+          <button type="button" data-p="case" disabled>Case</button>
+          <button type="button" data-p="pins" disabled>Pins</button>
+        </div>
+        <p id="plugInfo" style="margin-top:.6rem;min-height:4.4em">Wire the plug correctly to unlock the tour.</p>
+      </div>
+      <div class="callout"><div>
+        <span class="tag">Class practical · in pairs</span>
+        <div class="timer" data-secs="600"></div>
+        <ol style="margin:0;padding-left:1.2rem;display:grid;gap:.25rem">
+          <li>Open the plug and loosen the cable grip.</li>
+          <li>Lay the cable in place. Each wire should reach its terminal with no strain.</li>
+          <li>Strip about 5 mm of insulation from each wire and twist the strands.</li>
+          <li>Blue to the left, brown to the right (the fuse side), green and yellow to the top.</li>
+          <li>Tighten each terminal screw. Tug each wire gently.</li>
+          <li>Clamp the cable grip on the outer sheath.</li>
+          <li>Check the fuse, then refit the cover.</li>
+        </ol>
+        <p><b>Swap plugs and inspect your partner's:</b></p>
+        <ul class="checks" id="plugChecks" style="display:grid;gap:.25rem;margin:0">
+          <li><label><input type="checkbox" id="ck1">Each colour is on the correct terminal</label></li>
+          <li><label><input type="checkbox" id="ck2">No bare copper showing outside a terminal</label></li>
+          <li><label><input type="checkbox" id="ck3">No stray strands</label></li>
+          <li><label><input type="checkbox" id="ck4">Every screw is tight</label></li>
+          <li><label><input type="checkbox" id="ck5">Cable grip holds the outer sheath, not the inner wires</label></li>
+          <li><label><input type="checkbox" id="ck6">Fuse fitted</label></li>
+        </ul>
+        <p id="plugPass" class="ok" aria-live="polite"></p>
+      </div></div>
+      <div class="tnote">A plug wired by a student must never reach a socket: use practice plugs or count them out and back in. Memory hook: b<b>L</b>ue goes <b>L</b>eft, b<b>R</b>own goes <b>R</b>ight, and the striped one goes to the top. The cable-grip check is the one most pairs fail. The tour's earth-pin point (longer, so the earth connects first) is a nice thing to have them confirm on the real plug.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 PLENARY -->
+<section class="stage" data-key="plenary" data-title="Plenary">
+  <div class="stage-head">
+    <p class="spec">Spec 2.2 to 2.6 · check</p>
+    <h2>Prove it</h2>
+    <p class="lead">Seven quick questions, then one longer answer.</p>
+  </div>
+  <div class="cols">
+    <div class="stack">
+      <div class="mcq-list" id="plenMcq"></div>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <h3>Exam-style question (5 marks)</h3>
+        <p>A washing machine has a metal case. The live wire works loose and touches the case.</p>
+        <p style="margin-top:.4rem"><b>Explain how the earth wire and the fuse protect the user.</b></p>
+        <div class="controls" style="padding-left:0"><button class="btn" id="plenShow" type="button" aria-expanded="false">Show the mark points</button></div>
+        <ol id="plenMarks" hidden>
+          <li>The metal case becomes live.</li>
+          <li>The earth wire gives a low-resistance path from the case to earth.</li>
+          <li>A large current flows through the live wire, the case and the earth wire.</li>
+          <li>This current is greater than the fuse rating, so the fuse heats up and melts.</li>
+          <li>The circuit is broken, so the case is no longer live and nobody touching it gets a shock.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3>Countdown</h3>
+        <div class="timer" data-secs="240"></div>
+      </div>
+      <div class="tnote">The seven questions map to the spec points: 1 and 7 to 2.2, 2 to 2.4, 3 to 2.2, 4 to 2.6, 5 to 2.5, 6 to 2.3. The longer question is written for this lesson and is not from a past paper; the five mark points are the same chain the earth-wire simulation steps through. A good homework is to give them the same question for a hairdryer with a plastic case.</div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div class="foot">
+  <button class="btn big" id="btnPrev" type="button">Back</button>
+  <p id="footInfo">Arrow keys move between stages</p>
+  <button class="btn big primary" id="btnNext" type="button">Next</button>
+</div>
+
+<div class="overlay" id="plan" role="dialog" aria-modal="true" aria-labelledby="planTitle">
+  <div class="sheet">
+    <header><h2 id="planTitle" style="font-size:1.5rem">Lesson plan</h2><button class="btn" id="planClose" type="button">Close</button></header>
+    <p>Timed for a 60 minute lesson. For 50 minutes, skip the two sorting games and stop the fuse quiz after five appliances.</p>
+    <div class="tblwrap"><table>
+      <thead><tr><th>Stage</th><th>Time (min)</th><th>What happens</th><th>Spec</th></tr></thead>
+      <tbody>
+        <tr><td>1 Power up</td><td class="num">6</td><td>Six retrieval questions on P = IV and E = IVt, whiteboards</td><td>2.4, 2.5</td></tr>
+        <tr><td>2 a.c. and d.c.</td><td class="num">4</td><td>Scope trace animation, quick sort of five supplies</td><td>2.6</td></tr>
+        <tr><td>3 Hot wires</td><td class="num">7</td><td>Lattice animation, then the <b>wire wool demo</b> as predict, observe, explain</td><td>2.3</td></tr>
+        <tr><td>4 Fuses</td><td class="num">5</td><td>Fuse simulation: overload, short circuit, circuit breaker</td><td>2.2</td></tr>
+        <tr><td>5 Pick the fuse</td><td class="num">7</td><td>Quiz: rating plate to current to fuse</td><td>2.4</td></tr>
+        <tr><td>6 Earth wire</td><td class="num">7</td><td>Fault simulation with and without the earth wire</td><td>2.2</td></tr>
+        <tr><td>7 Double insulation</td><td class="num">4</td><td>Plastic-case fault, the French plug question, summary table, quick sort</td><td>2.2</td></tr>
+        <tr><td>8 Wire a plug</td><td class="num">15</td><td>On-screen wiring, then the <b>class practical</b> with peer inspection</td><td>2.2</td></tr>
+        <tr><td>9 Plenary</td><td class="num">5</td><td>Seven questions and a 5 mark explanation</td><td>2.2 to 2.6</td></tr>
+      </tbody>
+    </table></div>
+    <div class="cols even">
+      <div>
+        <h3 style="font-size:1rem;margin-bottom:.3rem">Wire wool demo kit</h3>
+        <ul style="margin:0;padding-left:1.2rem">
+          <li>Low-voltage power supply and two crocodile-clip leads</li>
+          <li>Fine wire wool, heatproof mat</li>
+          <li>Ammeter in series, so the class sees the current fall to zero</li>
+          <li>Eye protection</li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="font-size:1rem;margin-bottom:.3rem">Plug practical kit, per pair</h3>
+        <ul style="margin:0;padding-left:1.2rem">
+          <li>Three-pin plug with a 13 A fuse</li>
+          <li>About 30 cm of three-core flex</li>
+          <li>Small screwdriver, wire strippers</li>
+          <li>Mini whiteboards and pens for stages 1 and 5</li>
+        </ul>
+      </div>
+    </div>
+    <p>Turn on <b>Teacher notes</b> (or press T) for prompts under each stage. They stay hidden from the class until you do.</p>
+  </div>
+</div>
+<script src="model.js"></script>
+<script>
+(()=>{
+'use strict';
+const M=window.DomesticModel,V=M.MAINS_V;
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const show=(el,on)=>el.toggleAttribute('hidden',!on);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const fmt=n=>{const v=Number.isInteger(n)?n:+(+n).toPrecision(3);const [a,b]=String(v).split('.');return a.replace(/\B(?=(\d{3})+(?!\d))/g,' ')+(b?'.'+b:'');};
+const css=(()=>{let c={};const f=n=>c[n]??(c[n]=getComputedStyle(document.documentElement).getPropertyValue(n).trim());f.reset=()=>{c={};};return f;})();
+const seg=(root,attr,fn)=>$$('button',root).forEach(b=>b.addEventListener('click',()=>{$$('button',root).forEach(x=>x.setAttribute('aria-pressed',x===b));fn(b.dataset[attr]);}));
+const FONT='"Atkinson Hyperlegible","Segoe UI",sans-serif';
+function fit(c){const d=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;if(c.width!==Math.round(w*d)||c.height!==Math.round(h*d)){c.width=Math.round(w*d);c.height=Math.round(h*d);}c.getContext('2d').setTransform(d,0,0,d,0,0);return {w,h};}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+
+/* ---------- stage navigation ---------- */
+const stages=$$('.stage'), rail=$('#rail'), sims={};
+let cur=0;
+stages.forEach((s,i)=>{const li=document.createElement('li');li.innerHTML=`<button type="button"><b>${i+1}</b>${s.dataset.title}</button>`;li.firstChild.addEventListener('click',()=>go(i));rail.append(li);});
+const railBtns=$$('button',rail);
+function go(i,fromHash){
+  cur=clamp(i,0,stages.length-1);
+  stages.forEach((s,k)=>s.classList.toggle('on',k===cur));
+  railBtns.forEach((b,k)=>{if(k===cur){b.setAttribute('aria-current','step');b.classList.add('seen');b.scrollIntoView({block:'nearest',inline:'center'});}else b.removeAttribute('aria-current');});
+  $('#btnPrev').disabled=cur===0; $('#btnNext').disabled=cur===stages.length-1;
+  $('#footInfo').textContent=`Stage ${cur+1} of ${stages.length} · ${stages[cur].dataset.title}`;
+  window.scrollTo(0,0);
+  if(!fromHash){try{location.hash=stages[cur].dataset.key;}catch(e){}}
+}
+function fromHash(){const k=location.hash.slice(1),i=stages.findIndex(s=>s.dataset.key===k);if(i>=0&&i!==cur)go(i,true);}
+window.addEventListener('hashchange',fromHash);
+$('#btnPrev').addEventListener('click',()=>go(cur-1));
+$('#btnNext').addEventListener('click',()=>go(cur+1));
+const plan=$('#plan');
+$('#btnPlan').addEventListener('click',()=>{plan.classList.add('on');$('#planClose').focus();});
+$('#planClose').addEventListener('click',()=>plan.classList.remove('on'));
+plan.addEventListener('click',e=>{if(e.target===plan)plan.classList.remove('on');});
+function setNotes(on){document.body.classList.toggle('teacher',on);$('#btnNotes').setAttribute('aria-pressed',on);try{localStorage.setItem('de-notes',on?'1':'0');}catch(e){}}
+$('#btnNotes').addEventListener('click',()=>setNotes(!document.body.classList.contains('teacher')));
+try{if(localStorage.getItem('de-notes')==='1')setNotes(true);}catch(e){}
+$('#btnTheme').addEventListener('click',()=>{const r=document.documentElement,now=r.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');r.dataset.theme=now==='dark'?'light':'dark';});
+new MutationObserver(()=>css.reset()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>css.reset());
+$('#btnFull').addEventListener('click',()=>{try{(document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()).catch(()=>{});}catch(e){}});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){plan.classList.remove('on');return;}
+  if(e.target.closest('input,textarea,select')||e.ctrlKey||e.metaKey||e.altKey)return;
+  if(e.key==='ArrowRight')go(cur+1); else if(e.key==='ArrowLeft')go(cur-1); else if(e.key==='t'||e.key==='T')setNotes(!document.body.classList.contains('teacher'));
+});
+
+/* ---------- reusable widgets ---------- */
+$$('.timer').forEach(el=>{
+  const total=+el.dataset.secs;let left=total,id=null;
+  el.innerHTML='<span class="t-disp"></span><button class="btn" type="button">Start</button><button class="btn" type="button">Reset</button>';
+  const [disp,goB,rsB]=el.children;
+  const draw=()=>{disp.textContent=`${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`;el.classList.toggle('done',left===0);};
+  const stop=()=>{clearInterval(id);id=null;goB.textContent='Start';};
+  goB.addEventListener('click',()=>{if(id){stop();return;}if(left===0)left=total;goB.textContent='Pause';id=setInterval(()=>{left--;draw();if(left<=0)stop();},1000);draw();});
+  rsB.addEventListener('click',()=>{stop();left=total;draw();});
+  draw();
+});
+function makeSorter(el,cats,items){
+  let i,score,list;
+  el.innerHTML='<p class="sort-prog"></p><p class="sort-card"></p><div class="sort-btns"></div><p class="sort-fb" aria-live="polite"></p>';
+  const [prog,card,btns,fb]=el.children;
+  const ask=()=>{
+    if(i>=list.length){prog.textContent='Finished';card.textContent=`${score} out of ${list.length}`;fb.textContent='';btns.innerHTML='<button class="btn primary" type="button">Go again</button>';btns.firstChild.addEventListener('click',start);return;}
+    prog.textContent=`${i+1} of ${list.length}`;card.textContent=list[i][0];fb.textContent='';
+    btns.innerHTML=cats.map((c,k)=>`<button class="btn big" type="button" data-k="${k}">${c}</button>`).join('');
+    $$('button',btns).forEach(b=>b.addEventListener('click',()=>{
+      const ok=+b.dataset.k===list[i][1];if(ok)score++;
+      fb.innerHTML=`<span class="${ok?'ok':'no'}">${ok?'Correct.':'Not this time.'}</span> ${list[i][2]}`;
+      btns.innerHTML='<button class="btn primary" type="button">Next</button>';btns.firstChild.addEventListener('click',()=>{i++;ask();});btns.firstChild.focus();
+    }));
+  };
+  const start=()=>{i=0;score=0;list=shuffle(items);ask();};
+  start();
+}
+makeSorter($('#acSort'),['d.c.','a.c.'],[
+  ['AA cell',0,'A cell supplies d.c.: the current flows one way only.'],
+  ['Wall socket',1,'Mains electricity is a.c., 230 V at 50 Hz.'],
+  ['Car battery',0,'A battery is several cells, so it supplies d.c.'],
+  ['Power station generator',1,'Generators at power stations produce the a.c. that reaches your house.'],
+  ['Phone power bank',0,'A power bank is a battery, so it supplies d.c.']
+]);
+makeSorter($('#diSort'),['Earthed','Double insulated'],[
+  ['Metal kettle',0,'A metal case could become live, so it must be earthed.'],
+  ['Plastic hairdryer',1,'The plastic case cannot become live. Two-core cable, no earth wire.'],
+  ['Metal toaster',0,'Metal case: it needs an earth wire and a three-core cable.'],
+  ['Phone charger',1,'All plastic. Its earth pin is often plastic too, there only to open the socket shutters.'],
+  ['Washing machine',0,'A large metal case, and water nearby. Earthed.'],
+  ['Plastic-cased drill',1,'The plastic body is the second layer of insulation.']
+]);
+function makeMCQ(el,qs){
+  let score=0,done=0;
+  qs.forEach((q,i)=>{
+    const opts=q.o.map((t,k)=>({t,ok:k===q.a}));const order=q.keep?opts:shuffle(opts);
+    const fs=document.createElement('fieldset');fs.className='mcq';
+    fs.innerHTML=`<legend>${i+1}. ${q.q}</legend><div class="opts">${order.map(o=>`<button type="button" data-ok="${o.ok?1:0}">${o.t}</button>`).join('')}</div><p class="why" hidden>${q.why}</p>`;
+    $$('button',fs).forEach(b=>b.addEventListener('click',()=>{
+      const ok=b.dataset.ok==='1';b.classList.add(ok?'right':'wrong');
+      $$('button',fs).forEach(x=>{x.disabled=true;if(x.dataset.ok==='1')x.classList.add('right');});
+      show($('.why',fs),true);done++;if(ok)score++;
+      sc.textContent=`Score: ${score} out of ${done}`+(done===qs.length?(score===qs.length?'. Full marks.':'. Check the explanations for the ones you missed.'):'');
+    }));
+    el.append(fs);
+  });
+  const sc=document.createElement('p');sc.className='mcq-score';sc.setAttribute('aria-live','polite');el.append(sc);
+}
+
+/* ---------- 1 starter ---------- */
+const starterQs=[
+  ()=>{const d=pick([['torch bulb',3,0.5],['toy motor',6,1.5],['car headlamp',12,5],['bike light',6,0.25]]);return {q:`A ${d[0]} has ${fmt(d[1])} V across it and carries ${fmt(d[2])} A. Calculate its power.`,w:`P = I × V = ${fmt(d[2])} × ${fmt(d[1])}`,a:`${fmt(d[1]*d[2])} W`};},
+  ()=>{const d=pick([['kettle',10],['toaster',4],['electric heater',8],['iron',6],['hairdryer',5]]);return {q:`${/^[aeiou]/.test(d[0])?'An':'A'} ${d[0]} draws ${d[1]} A from the ${V} V mains. Calculate its power.`,w:`P = I × V = ${d[1]} × ${V}`,a:`${fmt(M.power(d[1],V))} W`};},
+  ()=>{const d=pick([['kettle',2000],['microwave',1000],['lamp',60],['toaster',900]]),t=pick([2,3,5,10]);return {q:`A ${fmt(d[1])} W ${d[0]} is switched on for ${t} minutes. Calculate the energy transferred.`,w:`t = ${t} × 60 = ${t*60} s<br>E = P × t = ${fmt(d[1])} × ${t*60}`,a:`${fmt(d[1]*t*60)} J`};},
+  ()=>{const I=pick([2,4,5,10]),t=pick([[30,'30 seconds'],[120,'2 minutes'],[300,'5 minutes']]);return {q:`An appliance draws ${I} A from the ${V} V mains for ${t[1]}. Calculate the energy transferred.`,w:`E = I × V × t = ${I} × ${V} × ${t[0]}`,a:`${fmt(M.energy(I,V,t[0]))} J`};},
+  ()=>{const d=pick([['microwave',920],['heater',2300],['vacuum cleaner',690],['toaster',1150],['kettle',2760],['television',115]]);return {q:`A ${fmt(d[1])} W ${d[0]} runs from the ${V} V mains. Calculate the current.`,w:`P = I × V, so I = P ÷ V = ${fmt(d[1])} ÷ ${V}`,a:`${fmt(M.current(d[1]))} A`};},
+  ()=>{const I=pick([2,5,10]),t=pick([60,120,300]),E=M.energy(I,V,t);return {q:`A heater on the ${V} V mains carries ${I} A and transfers ${fmt(E)} J. For how long was it switched on?`,w:`E = I × V × t, so t = E ÷ (I × V) = ${fmt(E)} ÷ (${I} × ${V})`,a:`${t} s`};}
+];
+function starter(){
+  const g=$('#starterGrid');g.innerHTML='';
+  starterQs.forEach((f,i)=>{const q=f();const b=document.createElement('button');b.type='button';b.className='qcard';b.setAttribute('aria-expanded','false');
+    b.innerHTML=`<span class="n">Question ${i+1}${i>3?' · rearrange':''}</span><span>${q.q}</span><span class="tap">Tap to check</span><span class="ans" hidden>${q.w}<br><b>= ${q.a}</b></span>`;
+    b.addEventListener('click',()=>reveal(b,$('.ans',b).hidden));g.append(b);});
+}
+function reveal(b,on){show($('.ans',b),on);show($('.tap',b),!on);b.setAttribute('aria-expanded',on);}
+$('#starterNew').addEventListener('click',starter);
+$('#starterReveal').addEventListener('click',()=>$$('#starterGrid .qcard').forEach(b=>reveal(b,true)));
+starter();
+
+/* ---------- 2 a.c. and d.c. ---------- */
+(()=>{
+  const c=$('#acCanvas'),ctx=c.getContext('2d');let mode='ac',ph=0,drift=0;
+  seg($('#acSeg'),'mode',m=>{mode=m;$('#acCap').textContent=m==='ac'?'Slowed down 100 times. Real mains completes 50 cycles every second.':'A steady voltage: the charge drifts the same way all the time.';});
+  sims['ac-dc']=dt=>{
+    const {w,h}=fit(c);ctx.clearRect(0,0,w,h);ph+=dt*0.5;
+    const ink=css('--ink'),soft=css('--ink-soft'),fs=Math.max(12,w*0.019);
+    const sx=fs*2.6,sw=w-sx-12,sy=10,sh=h*0.56,mid=sy+sh/2,amp=sh*0.36;
+    ctx.fillStyle=css('--surface');ctx.strokeStyle=ink;ctx.lineWidth=2;rr(ctx,sx,sy,sw,sh,8);ctx.fill();ctx.stroke();
+    ctx.strokeStyle=css('--line');ctx.lineWidth=1;ctx.beginPath();
+    for(let i=1;i<12;i++){const x=sx+sw*i/12;ctx.moveTo(x,sy);ctx.lineTo(x,sy+sh);}
+    for(let j=1;j<6;j++){const y=sy+sh*j/6;ctx.moveTo(sx,y);ctx.lineTo(sx+sw,y);}ctx.stroke();
+    ctx.strokeStyle=soft;ctx.lineWidth=2;ctx.setLineDash([7,7]);ctx.beginPath();ctx.moveTo(sx,mid);ctx.lineTo(sx+sw,mid);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=soft;ctx.font=`700 ${fs}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('+',sx/2,mid-amp);ctx.fillText('0',sx/2,mid);ctx.fillText('−',sx/2,mid+amp);
+    ctx.textAlign='right';ctx.font=`${fs*0.85}px ${FONT}`;ctx.fillText('time',sx+sw-10,sy+sh-fs*0.8);ctx.textAlign='left';ctx.fillText('voltage',sx+10,sy+fs*0.9);
+    const val=u=>mode==='ac'?Math.sin(2*Math.PI*(ph-(1-u)*2.5)):0.62;
+    ctx.strokeStyle=css(mode==='ac'?'--action':'--hot');ctx.lineWidth=Math.max(3,w*0.005);ctx.lineJoin='round';ctx.beginPath();
+    for(let i=0;i<=240;i++){const u=i/240,x=sx+u*(sw-10),y=mid-val(u)*amp;i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();
+    const vn=val(1);ctx.fillStyle=css('--accent');ctx.strokeStyle=ink;ctx.lineWidth=2;ctx.beginPath();ctx.arc(sx+sw-10,mid-vn*amp,fs*0.45,0,7);ctx.fill();ctx.stroke();
+    /* wire with charges */
+    const wh=Math.min(50,h*0.13),wy=sy+sh+(h-sy-sh)*0.62-wh/2,n=12,sp=sw/n,er=wh*0.27;
+    ctx.fillStyle=css('--surface-2');ctx.strokeStyle=ink;rr(ctx,sx,wy,sw,wh,wh/2);ctx.fill();ctx.stroke();
+    if(mode==='dc')drift=(drift+dt*sw*0.1)%sw;
+    const off=mode==='ac'?-Math.cos(2*Math.PI*ph)*sp*0.44:drift;
+    ctx.fillStyle=css('--accent');
+    for(let i=0;i<n;i++){let x=((i+0.5)*sp+off)%sw;if(x<0)x+=sw;x=clamp(x,er+3,sw-er-3);ctx.beginPath();ctx.arc(sx+x,wy+wh/2,er,0,7);ctx.fill();ctx.stroke();}
+    const ay=wy-fs*1.1,L=vn*sw*0.13,cx=sx+sw*0.78;
+    ctx.strokeStyle=ink;ctx.fillStyle=ink;ctx.lineWidth=3;
+    if(Math.abs(vn)>0.1){const d=Math.sign(L);ctx.beginPath();ctx.moveTo(cx-L,ay);ctx.lineTo(cx+L,ay);ctx.stroke();ctx.beginPath();ctx.moveTo(cx+L+d*10,ay);ctx.lineTo(cx+L-d*4,ay-7);ctx.lineTo(cx+L-d*4,ay+7);ctx.closePath();ctx.fill();}
+    ctx.font=`700 ${fs*0.9}px ${FONT}`;ctx.textAlign='left';ctx.fillText(mode==='dc'?'current: always this way':'current: direction keeps reversing',sx,ay);
+  };
+})();
+
+/* ---------- 3 hot wires ---------- */
+(()=>{
+  const c=$('#hotCanvas'),ctx=c.getContext('2d'),sl=$('#hotI');let T=20;
+  const NX=11,NY=3,ions=[],els=[],sparks=[];
+  for(let x=0;x<NX;x++)for(let y=0;y<NY;y++)ions.push({u:(x+0.5)/NX,v:(y+0.5)/NY,p:Math.random()*6.3,q:Math.random()*6.3});
+  for(let i=0;i<30;i++)els.push({u:Math.random(),v:Math.random(),vv:0,cool:0});
+  const see=t=>t<45?'Room temperature':t<150?'Warm to the touch':t<450?'Hot: a kettle element or an iron':t<800?'Glowing red: a toaster or electric fire':'Glowing white: about to melt';
+  sl.addEventListener('input',()=>{$('#hotIval').textContent=(+sl.value).toFixed(1)+' A';});
+  sims['hot-wires']=(dt,t)=>{
+    const {w,h}=fit(c);ctx.clearRect(0,0,w,h);
+    const I=+sl.value;T+=(20+9.8*I*I-T)*(1-Math.exp(-dt*0.9));const f=clamp((T-20)/980,0,1);
+    $('#hotT').textContent=Math.round(T/5)*5+' °C';$('#hotSee').textContent=see(T);
+    const ink=css('--ink'),x0=22,y0=h*0.17,W=w-44,H=h*0.6,fs=Math.max(12,w*0.019);
+    ctx.save();ctx.shadowColor=`rgba(255,110,0,${f})`;ctx.shadowBlur=60*f;ctx.fillStyle=css('--surface-2');rr(ctx,x0,y0,W,H,16);ctx.fill();ctx.restore();
+    ctx.fillStyle=`rgba(255,90,0,${f*0.8})`;rr(ctx,x0,y0,W,H,16);ctx.fill();
+    if(f>0.55){ctx.fillStyle=`rgba(255,236,170,${(f-0.55)*1.5})`;ctx.fill();}
+    ctx.strokeStyle=ink;ctx.lineWidth=2.5;ctx.stroke();
+    const r=Math.min(H/NY,W/NX)*0.22,am=r*(0.05+1.15*f),er=r*0.34;
+    ctx.font=`700 ${r}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';
+    const pos=ions.map(o=>[x0+o.u*W+am*Math.sin(t*17+o.p),y0+o.v*H+am*Math.cos(t*19+o.q)]);
+    pos.forEach(p=>{ctx.fillStyle=css('--metal');ctx.beginPath();ctx.arc(p[0],p[1],r,0,7);ctx.fill();ctx.stroke();ctx.fillStyle=ink;ctx.fillText('+',p[0],p[1]+1);});
+    els.forEach(e=>{
+      e.u+=dt*I*0.045;e.v=clamp(e.v+e.vv*dt,0.05,0.95);e.vv*=0.92;e.cool-=dt;
+      if(e.u>1){e.u-=1;e.v=Math.random();}
+      const x=x0+e.u*W,y=y0+e.v*H;
+      if(I>0&&e.cool<=0)for(const p of pos){const dx=x-p[0],dy=y-p[1];if(dx*dx+dy*dy<(r+er)*(r+er)){sparks.push({x,y,l:0.3});e.vv=(dy>=0?1:-1)*(0.5+Math.random());e.cool=0.3;break;}}
+      ctx.fillStyle=css('--accent');ctx.beginPath();ctx.arc(x,y,er,0,7);ctx.fill();ctx.lineWidth=1.5;ctx.stroke();
+    });
+    for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];s.l-=dt;if(s.l<=0){sparks.splice(i,1);continue;}ctx.strokeStyle=`rgba(255,120,0,${s.l/0.3})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(s.x,s.y,(1-s.l/0.3)*r*1.5+2,0,7);ctx.stroke();}
+    ctx.fillStyle=css('--ink-soft');ctx.font=`${fs}px ${FONT}`;ctx.textAlign='left';
+    ctx.fillText('inside a metal wire',x0,y0-fs*0.9);
+    const ly=y0+H+fs*1.4;ctx.fillStyle=css('--metal');ctx.strokeStyle=ink;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x0+fs*0.6,ly,fs*0.55,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle=css('--ink-soft');ctx.fillText('metal ion',x0+fs*1.6,ly);
+    const lx=x0+fs*8;ctx.fillStyle=css('--accent');ctx.beginPath();ctx.arc(lx,ly,fs*0.35,0,7);ctx.fill();ctx.stroke();
+    ctx.fillStyle=css('--ink-soft');ctx.fillText('electron',lx+fs*0.9,ly);
+    ctx.strokeStyle='rgb(255,120,0)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(lx+fs*6.3,ly,fs*0.5,0,7);ctx.stroke();ctx.fillText('collision',lx+fs*7.3,ly);
+  };
+})();
+
+/* ---------- 4 fuses ---------- */
+(()=>{
+  const F={rating:3,type:'fuse',heat:0,blown:false,short:false,trip:0,off:0};
+  $$('.spark:not(.fizz)').forEach(s=>s.addEventListener('animationend',()=>{s.classList.remove('pop');s.setAttribute('opacity',0);}));
+  const sl=$('#fuseI'),flow=$('#fuseFlow'),wire=$('#fuseWire'),gap=$('#fuseGap'),spark=$('#fuseSpark'),lever=$('#brkLever'),elem=$('#fuseElem'),st=$('#fuseStatus'),rs=$('#fuseReset');
+  const label=()=>{$('#fuseLabel').textContent=`${F.rating} A ${F.type==='fuse'?'fuse':'circuit breaker'}`;$('#fuseRval').textContent=F.rating+' A';$('#fuseSlab').textContent=F.type==='fuse'?'Fuse wire':'Breaker';rs.textContent=F.type==='fuse'?'Replace fuse':'Reset breaker';show($('#fuseG'),F.type==='fuse');show($('#brkG'),F.type!=='fuse');};
+  function reset(){F.blown=false;F.short=false;F.heat=0;F.trip=0;show(wire,true);show(gap,false);lever.style.transform='';rs.disabled=true;spark.classList.remove('pop');spark.setAttribute('opacity',0);}
+  function blow(){F.blown=true;rs.disabled=false;if(F.type==='fuse'){show(wire,false);show(gap,true);spark.setAttribute('opacity',1);spark.classList.remove('pop');void spark.getBBox();spark.classList.add('pop');}else lever.style.transform='rotate(-30deg)';}
+  seg($('#fuseRating'),'r',r=>{F.rating=+r;reset();label();});
+  seg($('#fuseType'),'t',t=>{F.type=t;reset();label();});
+  $('#fuseShort').addEventListener('click',()=>{if(!F.blown)F.short=true;});
+  rs.addEventListener('click',reset);
+  sims.fuses=dt=>{
+    const demand=F.short?60:+sl.value,I=F.blown?0:demand,r=I/F.rating;
+    if(!F.blown){
+      if(F.type==='fuse'){if(r<=1)F.heat+=(0.55*r*r-F.heat)*Math.min(1,dt*2.5);else{F.heat+=dt*(0.3+0.9*(r*r-1));if(F.heat>=1)blow();}}
+      else{F.heat=0;if(r>1){F.trip+=dt;if(F.trip>0.12)blow();}else F.trip=0;}
+    }else F.heat*=Math.max(0,1-dt*2);
+    flow.classList.toggle('on',I>0);F.off-=dt*(30+Math.min(I,25)*14);flow.style.strokeDashoffset=F.off;
+    const hh=clamp(F.heat,0,1);
+    wire.style.stroke=hh<0.12?'':`hsl(${18+38*hh} 100% ${42+38*hh}%)`;wire.style.filter=hh>0.3?`drop-shadow(0 0 ${10*hh}px hsl(30 100% 55%))`:'';
+    const e=Math.min(1,I/13);elem.style.stroke=I>0.4?`hsl(${16+30*e} ${55+45*e}% ${42+18*e}%)`:'';
+    $('#fuseIval').textContent=I.toFixed(1)+' A';$('#fuseMI').classList.toggle('bad',!F.blown&&r>1);
+    let sv,msg,cl='';
+    if(F.blown){sv=F.type==='fuse'?'melted':'tripped';cl='bad';msg=F.type==='fuse'?'The fuse wire has melted. The circuit is broken, so the current is 0 A. Fix the fault, then fit a new fuse.':'The breaker has tripped. The circuit is broken, so the current is 0 A. Fix the fault, then reset it.';}
+    else if(I===0){sv=F.type==='fuse'?'cool':'closed';msg='Switched off. No current.';}
+    else if(r>1){sv=F.type==='fuse'?'glowing':'closed';cl='warm';msg='The current is above the rating. The fuse wire is heating fast.';}
+    else if(r>0.8){sv=F.type==='fuse'?'warm':'closed';cl='warm';msg='Close to the rating. The fuse wire is warm but holding.';}
+    else{sv=F.type==='fuse'?'cool':'closed';cl='good';msg=F.type==='fuse'?'Normal current. The fuse wire stays cool.':'Normal current. The breaker stays closed.';}
+    $('#fuseSval').textContent=sv;$('#fuseMS').classList.toggle('bad',F.blown);
+    if(st.textContent!==msg){st.textContent=msg;st.className='status '+cl;}
+  };
+  label();
+})();
+
+/* ---------- 5 pick the fuse ---------- */
+(()=>{
+  const APPL=M.APPLIANCES.map(a=>[a.name,a.P]),SETS=M.FUSES,BAND=M.FUSE_BAND;
+  const grp=f=>APPL.filter(a=>M.fuseFor(M.current(a[1]),'std')===f);
+  let level='std',list,n,score,streak,locked;
+  const iStr=I=>I<0.1?I.toFixed(3):I.toFixed(2);
+  function start(){list=shuffle([...shuffle(grp(3)).slice(0,3),...shuffle(grp(5)).slice(0,2),...shuffle(grp(13)).slice(0,3)]);n=0;score=0;streak=0;show($('#fqEnd'),false);show($('#fqPlay'),true);ask();}
+  function hud(){$('#fqNum').textContent=Math.min(n+1,8);$('#fqScore').textContent=score;$('#fqStreak').textContent=streak;}
+  function ask(){
+    locked=false;const [name,P]=list[n];hud();
+    $('#fqName').textContent=name;$('#fqPower').textContent=fmt(P)+' W';$('#fqWork').textContent='';$('#fqFb').textContent='';show($('#fqNext'),false);$('#fqHint').disabled=false;
+    const box=$('#fqFuses');box.innerHTML='';
+    SETS[level].forEach(f=>{const b=document.createElement('button');b.type='button';b.className='fusebtn';b.style.setProperty('--band',BAND[f]);b.innerHTML=`<span>${f} A</span>`;b.addEventListener('click',()=>answer(f,b));box.append(b);});
+  }
+  const work=()=>{const [,P]=list[n];$('#fqWork').textContent=`I = P ÷ V = ${fmt(P)} ÷ ${V} = ${iStr(M.current(P))} A`;$('#fqHint').disabled=true;};
+  function answer(f,b){
+    if(locked)return;locked=true;const [name,P]=list[n],I=M.current(P),right=M.fuseFor(I,level),ok=f===right;
+    $$('#fqFuses .fusebtn').forEach(x=>{x.disabled=true;if(x.textContent.trim()===right+' A')x.classList.add('right');});
+    if(!ok)b.classList.add('wrong');work();
+    if(ok){score++;streak++;}else streak=0;
+    const fb=$('#fqFb');
+    if(ok)fb.innerHTML=`<span class="ok">Correct.</span> The ${name.toLowerCase()} normally takes ${iStr(I)} A, and ${right} A is the lowest rating above that.`;
+    else if(M.verdict(f,I,level)==='low')fb.innerHTML=`<span class="no">Too low.</span> A ${f} A fuse would melt the moment you switched on, because the normal current is ${iStr(I)} A. It needs the ${right} A fuse.`;
+    else fb.innerHTML=`<span class="no">Too high.</span> It would work, but a ${f} A fuse lets a fault current of up to ${f} A flow through an appliance that normally takes ${iStr(I)} A. The cable could overheat without the fuse melting. It needs the ${right} A fuse.`;
+    hud();const nx=$('#fqNext');nx.textContent=n===7?'See your score':'Next appliance';show(nx,true);nx.focus();
+  }
+  $('#fqHint').addEventListener('click',work);
+  $('#fqNext').addEventListener('click',()=>{n++;if(n<8){ask();return;}
+    show($('#fqPlay'),false);show($('#fqEnd'),true);$('#fqFinal').textContent=`${score} out of 8`;
+    $('#fqVerdict').textContent=score===8?'Flawless. Every appliance safely fused.':score>=6?'Solid. Check the ones you missed: was the fuse too low or too high?':'Go back to the method: find the current first, then pick the rating just above it.';});
+  $('#fqAgain').addEventListener('click',start);
+  seg($('#fqLevel'),'l',l=>{level=l;start();});
+  start();
+})();
+
+/* ---------- 6 earth wire ---------- */
+(()=>{
+  const S={earth:true,fault:false,touch:false,blown:false};let timers=[],prev='',off=0;
+  const E=id=>$('#'+id),narr=E('eNarr');
+  const TEXT={
+    ok:['The kettle is working normally.','Current flows in along the live wire, through the heating element and back along the neutral wire.','The earth wire carries no current. The case is at 0 V.'],
+    okNoEarth:['The earth wire has been removed.','The kettle still works, and nothing looks wrong.','That is the danger: you only find out when there is a fault.'],
+    okTouch:['You touch the case.','The case is at 0 V, so no current flows through you. Safe.'],
+    live:['The live wire has come loose and is touching the metal case.','The case is now live, at 230 V.','No current flows, so the fuse does nothing. The kettle just looks broken.'],
+    shock:['The case is live at 230 V and you touch it.','Current flows through you to the ground: an electric shock.','The current is about 0.1 A. That is far too small to melt a 13 A fuse, and enough to kill.'],
+    surge:['The live wire touches the metal case.','The earth wire gives a low-resistance path from the case to earth.','A large current flows through the live wire, the case and the earth wire.','The large current melts the fuse.','The circuit is broken. The case is no longer live.'],
+    blown:['The fuse has melted, so the kettle is cut off from the live wire.','The case is at 0 V.'],
+    blownTouch:['You touch the case.','The fuse has already melted, so the case is disconnected from the live wire. Safe.']
+  };
+  const clearT=()=>{timers.forEach(clearTimeout);timers=[];};
+  function narrate(key){narr.innerHTML='';TEXT[key].forEach((t,i)=>{const li=document.createElement('li');li.textContent=t;narr.append(li);if(key==='surge'&&i){li.classList.add('wait');timers.push(setTimeout(()=>li.classList.remove('wait'),i*1000));}});}
+  function render(){
+    const {earth,fault,touch,blown}=S,surge=fault&&earth&&!blown,caseLive=fault&&!earth&&!blown,shock=caseLive&&touch;
+    show(E('eLiveOK'),!fault);show(E('eLiveFault'),fault);show(E('eSpark'),fault&&!blown);
+    show(E('eEarthWire'),earth);show(E('eEarthCut'),!earth);
+    E('eCase').classList.toggle('live',caseLive||surge);
+    E('eCaseLabel').textContent=caseLive?'metal case: LIVE, 230 V':surge?'fault current to earth':'metal case: 0 V';
+    E('eCaseLabel').style.fill=caseLive||surge?'var(--danger)':'';
+    E('eFlowNormal').classList.toggle('on',!fault&&!blown);E('eFlowEarth').classList.toggle('on',surge);E('eFlowBody').classList.toggle('on',shock);
+    show(E('eFuseWire'),!blown);show(E('eFuseGap'),blown);
+    E('eElem').style.stroke=!fault&&!blown?'var(--hot)':'';
+    E('eArm').setAttribute('d',touch?'M760 268 L666 240':'M760 268 L722 318');
+    E('ePerson').classList.toggle('shock',shock);show(E('eZaps'),shock);
+    E('eVCase').textContent=caseLive?'230 V':surge?'fault':'0 V';E('eMCase').className='meter '+(caseLive||surge?'bad':'good');
+    E('eVI').textContent=blown?'0 A':surge?'over 100 A':shock?'about 0.1 A':fault?'0 A':'9 A';
+    E('eVFuse').textContent=blown?'melted':'intact';E('eMFuse').className='meter '+(blown?'bad':'');
+    E('eFault').disabled=fault||blown;E('eTouch').setAttribute('aria-pressed',touch);E('eTouch').textContent=touch?'Let go of the case':'Touch the case';
+    const key=blown?(touch?'blownTouch':'blown'):!fault?(touch?'okTouch':earth?'ok':'okNoEarth'):earth?'surge':touch?'shock':'live';
+    if(key!==prev){
+      if(!(prev==='surge'&&key==='blown')){clearT();narrate(key);}
+      if(key==='surge')timers.push(setTimeout(()=>{S.blown=true;const sp=E('eFuseSpark');sp.setAttribute('opacity',1);sp.classList.remove('pop');void sp.getBBox();sp.classList.add('pop');render();},3000));
+      prev=key;
+    }
+  }
+  seg(E('eEarthSeg'),'e',v=>{S.earth=v==='1';render();});
+  E('eFault').addEventListener('click',()=>{S.fault=true;render();});
+  E('eTouch').addEventListener('click',()=>{S.touch=!S.touch;render();});
+  E('eReset').addEventListener('click',()=>{S.fault=false;S.blown=false;S.touch=false;prev='';clearT();render();});
+  sims['earth-wire']=dt=>{
+    off-=dt;
+    E('eFlowNormal').style.strokeDashoffset=off*120;E('eFlowEarth').style.strokeDashoffset=off*420;E('eFlowBody').style.strokeDashoffset=off*45;
+  };
+  render();
+})();
+
+/* ---------- 7 double insulation ---------- */
+(()=>{
+  const b=$('#diFault');let on=false;
+  b.addEventListener('click',()=>{on=!on;b.setAttribute('aria-pressed',on);b.textContent=on?'Put the wire back':'Live wire comes loose';
+    show($('#diLiveOK'),!on);show($('#diLiveFault'),on);
+    $('#diNote').textContent=on?'live wire touching the case':'';
+    $('#diMsg').textContent=on?'The live wire is touching the case. Plastic does not conduct, so the case stays at 0 V. Safe to hold.':'Working normally.';});
+})();
+
+$('#frShow').addEventListener('click',e=>{const m=$('#frAns'),on=m.hidden;show(m,on);e.target.textContent=on?'Hide the answer':'Show the answer';e.target.setAttribute('aria-expanded',on);});
+
+/* ---------- 8 plug ---------- */
+(()=>{
+  const svg=$('#plugSvg'),all=$('#plugAll'),msg=$('#plugMsg'),info=$('#plugInfo');
+  const MAP={brown:'L',blue:'N',gy:'E'},PATH={brown:'#pwBrown',blue:'#pwBlue',gy:'#pwGy'},STUB={brown:'#stubBrown',blue:'#stubBlue',gy:'#stubGy'};
+  const GOOD={brown:'Brown is the live wire. It goes to the right, so the current has to pass through the fuse.',blue:'Blue is the neutral wire. It goes to the left-hand terminal.',gy:'Green and yellow is the earth wire. It goes to the top terminal, the longest pin.'};
+  const HINT={brown:'Not there. Brown is the live wire: it must connect through the fuse.',blue:'Not there. Blue is neutral. Think: bLue, Left.',gy:'Not there. Green and yellow is the earth wire. It goes to the longest pin.'};
+  const INFO={
+    live:['Live wire (brown)','Carries the 230 V supply to the appliance. It is the dangerous one, which is why the fuse and the switch are always in the live wire.'],
+    neutral:['Neutral wire (blue)','Completes the circuit back to the supply. It stays close to 0 V.'],
+    earth:['Earth wire (green and yellow)','A safety wire joined to the metal case of the appliance. It carries a current only when there is a fault.'],
+    fuse:['Fuse','Sits between the live pin and the live wire. If the current gets too high the fuse wire melts and breaks the circuit.'],
+    grip:['Cable grip','Clamps the outer sheath of the cable, so a tug on the cable cannot pull the wires off their terminals.'],
+    case:['Case','Made of plastic, an electrical insulator, so you can hold the plug safely.'],
+    pins:['Pins','Made of brass, a good conductor. The earth pin is the longest, so the earth connects first and disconnects last.']
+  };
+  let sel=null,done={};
+  const wbtns=$$('#wireBtns .wirebtn'),chips=$$('#plugChips button'),terms=$$('.term',svg);
+  function setSel(w){sel=w;wbtns.forEach(b=>b.setAttribute('aria-pressed',b.dataset.w===w));svg.classList.toggle('picking',!!w);}
+  function hit(t){
+    if(t.classList.contains('done'))return;
+    if(!sel){msg.textContent='Pick a wire first, then tap a terminal.';msg.className='status';return;}
+    const w=sel;
+    if(MAP[w]!==t.dataset.t){msg.textContent=HINT[w];msg.className='status bad';all.classList.remove('shake');void all.getBBox();all.classList.add('shake');return;}
+    done[w]=true;t.classList.add('done');show($(PATH[w]),true);show($(STUB[w]),false);show($('text',t),true);
+    wbtns.find(b=>b.dataset.w===w).disabled=true;setSel(null);
+    if(Object.keys(done).length===3){msg.textContent='Wired correctly. Blue left, brown right through the fuse, green and yellow to the top. Now take the tour, then wire a real one.';msg.className='status good';chips.forEach(c=>c.disabled=false);info.textContent='Tap a part to find out what it does.';}
+    else{msg.textContent=GOOD[w];msg.className='status good';}
+  }
+  wbtns.forEach(b=>b.addEventListener('click',()=>{setSel(sel===b.dataset.w?null:b.dataset.w);if(sel){msg.textContent='Now tap the terminal this wire belongs to.';msg.className='status';}}));
+  terms.forEach(t=>{t.addEventListener('click',()=>hit(t));t.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();hit(t);}});});
+  $('#plugReset').addEventListener('click',()=>{done={};setSel(null);terms.forEach(t=>{t.classList.remove('done');show($('text',t),false);});
+    Object.values(PATH).forEach(p=>show($(p),false));Object.values(STUB).forEach(p=>show($(p),true));wbtns.forEach(b=>b.disabled=false);
+    chips.forEach(c=>{c.disabled=true;c.setAttribute('aria-pressed',false);});$$('.hl',svg).forEach(x=>x.classList.remove('hl'));
+    msg.textContent='You are looking into the open plug from the back. Three wires, three terminals.';msg.className='status';info.textContent='Wire the plug correctly to unlock the tour.';});
+  const HL={live:'#pwBrown',neutral:'#pwBlue',earth:'#pwGy path'};
+  chips.forEach(c=>c.addEventListener('click',()=>{
+    chips.forEach(x=>x.setAttribute('aria-pressed',x===c));$$('.hl',svg).forEach(x=>x.classList.remove('hl'));
+    const p=c.dataset.p;info.innerHTML=`<b>${INFO[p][0]}.</b> ${INFO[p][1]}`;
+    if(!HL[p])$$(`[data-part="${p}"]`,svg).forEach(x=>x.classList.add('hl'));
+    else{svg.querySelectorAll('.pwire').forEach(x=>x.style.opacity=.25);svg.querySelectorAll(HL[p]).forEach(x=>x.style.opacity=1);return;}
+    svg.querySelectorAll('.pwire').forEach(x=>x.style.opacity='');
+  }));
+  const cks=$$('#plugChecks input');
+  cks.forEach(k=>k.addEventListener('change',()=>{$('#plugPass').textContent=cks.every(x=>x.checked)?'Passed inspection. This plug is safely wired.':'';}));
+})();
+
+/* ---------- 9 plenary ---------- */
+makeMCQ($('#plenMcq'),[
+  {q:'A fuse is always connected in which wire?',o:['Live','Neutral','Earth'],a:0,keep:1,why:'Live. When the fuse melts, the appliance is cut off from the 230 V supply.'},
+  {q:'A 1500 W heater runs from the 230 V mains. Which fuse should it have?',o:['3 A','5 A','13 A'],a:2,keep:1,why:'I = P ÷ V = 1500 ÷ 230 = 6.5 A. The lowest rating above 6.5 A is 13 A.'},
+  {q:'A hairdryer has a plastic case and a two-core cable. Why does it not need an earth wire?',o:['The plastic case cannot become live','It runs on d.c.','Its fuse has a higher rating','It draws a very small current'],a:0,why:'It is double insulated. Plastic is an insulator, so even a loose live wire cannot make the case live.'},
+  {q:'Which statement describes mains electricity?',o:['a.c.: the current keeps changing direction','d.c.: the current keeps changing direction','a.c.: the current flows in one direction only','d.c.: the current flows in one direction only'],a:0,why:'Mains is alternating current. A cell or battery supplies direct current, which flows one way only.'},
+  {q:'A kettle draws 10 A from the 230 V mains for 3 minutes. How much energy is transferred?',o:['2300 J','6900 J','41 400 J','414 000 J'],a:3,keep:1,why:'E = I × V × t = 10 × 230 × 180 = 414 000 J. The 3 minutes must be converted to 180 s first.'},
+  {q:'Why does a wire get hotter when it carries a current?',o:['Electrons collide with the ions in the metal and transfer energy to them','The ions flow along the wire and rub against the insulation','The voltage is used up along the wire','Electrons are destroyed and release their energy'],a:0,why:'The collisions make the ions vibrate more, which is a rise in temperature.'},
+  {q:'What is one advantage of a circuit breaker over a fuse?',o:['It can be reset instead of replaced','It lets a larger current flow','It does not need a live wire','It works only with d.c.'],a:0,why:'A circuit breaker can be reset, and it also cuts the current off faster than a fuse.'}
+]);
+$('#plenShow').addEventListener('click',e=>{const m=$('#plenMarks'),on=m.hidden;show(m,on);e.target.textContent=on?'Hide the mark points':'Show the mark points';e.target.setAttribute('aria-expanded',on);});
+
+/* ---------- run ---------- */
+let last=performance.now();
+function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;const f=sims[stages[cur].dataset.key];if(f)f(dt,now/1000);requestAnimationFrame(frame);}
+go(0,true);fromHash();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
