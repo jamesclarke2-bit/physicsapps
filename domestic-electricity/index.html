@@ -542,7 +542,7 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
           <li><b>Rating too high:</b> a fault current can overheat the cable and the fuse never melts.</li>
         </ul>
       </div>
-      <div class="tnote">Eight appliances per round, drawn at random. Standard uses 3 A, 5 A and 13 A; Challenge adds 1 A and 10 A, which punishes anyone who has learned "big appliance, 13 A" without calculating. Works as whole-class voting on whiteboards (hold up 3, 5 or 13) or with students coming up to tap. "Show the current" is the scaffold and does not affect the score. The colour bands match real plug fuses: 3 A red, 5 A black, 13 A brown.</div>
+      <div class="tnote">Eight appliances per round, drawn at random. Standard uses 3 A, 5 A and 13 A fuses and only appliances that take more than 1 A. Challenge adds low-power appliances and 1 A and 10 A fuses, which punishes anyone who has learned "big appliance, 13 A" without calculating. Works as whole-class voting on whiteboards (hold up 3, 5 or 13) or with students coming up to tap. "Show the current" is the scaffold and does not affect the score. The colour bands match real plug fuses: 3 A red, 5 A black, 13 A brown.</div>
     </div>
   </div>
 </section>
@@ -1132,11 +1132,11 @@ starter();
 
 /* ---------- 5 pick the fuse ---------- */
 (()=>{
-  const APPL=M.APPLIANCES.map(a=>[a.name,a.P]),SETS=M.FUSES,BAND=M.FUSE_BAND;
-  const grp=f=>APPL.filter(a=>M.fuseFor(M.current(a[1]),'std')===f);
+  const SETS=M.FUSES,BAND=M.FUSE_BAND;
+  const round=l=>{const pool=M.pool(l).map(a=>[a.name,a.P]),plan=M.ROUND[l];return shuffle(Object.keys(plan).flatMap(f=>shuffle(pool.filter(a=>M.fuseFor(M.current(a[1]),l)===+f)).slice(0,plan[f])));};
   let level='std',list,n,score,streak,locked;
   const iStr=I=>I<0.1?I.toFixed(3):I.toFixed(2);
-  function start(){list=shuffle([...shuffle(grp(3)).slice(0,3),...shuffle(grp(5)).slice(0,2),...shuffle(grp(13)).slice(0,3)]);n=0;score=0;streak=0;show($('#fqEnd'),false);show($('#fqPlay'),true);ask();}
+  function start(){list=round(level);n=0;score=0;streak=0;show($('#fqEnd'),false);show($('#fqPlay'),true);ask();}
   function hud(){$('#fqNum').textContent=Math.min(n+1,8);$('#fqScore').textContent=score;$('#fqStreak').textContent=streak;}
   function ask(){
     locked=false;const [name,P]=list[n];hud();

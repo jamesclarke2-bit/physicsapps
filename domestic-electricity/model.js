@@ -8,6 +8,8 @@
    - Fuse choice: the lowest rating ABOVE the normal working current, I = P / V.
    - Fuses on offer: 3 A, 5 A, 13 A (standard); 1 A, 3 A, 5 A, 10 A, 13 A (challenge).
    - Every appliance current is at least 5% away from every fuse rating, so no answer is a judgement call.
+   - The standard quiz and the worksheet use only appliances that take more than 1 A, so no current sits oddly
+     far below its fuse. Low-power appliances appear in the challenge quiz, where there is a 1 A fuse.
    - Earth wire simulation: a kettle taking 9 A through a 13 A fuse. A person touching a live case has a
      resistance of 2300 ohms to earth, so the current through them is 230 / 2300 = 0.1 A. */
 (function (root, factory) {
@@ -20,14 +22,17 @@
   var FUSE_BAND = { 1: '#222222', 3: '#c8102e', 5: '#222222', 10: '#222222', 13: '#7a4a21' };
   var APPLIANCES = [
     { name: 'LED lamp', P: 10 }, { name: 'Hair straighteners', P: 45 }, { name: 'Laptop charger', P: 65 },
-    { name: 'Television', P: 120 }, { name: 'Games console', P: 160 }, { name: 'Fridge-freezer', P: 350 },
-    { name: 'Blender', P: 500 }, { name: 'Electric drill', P: 750 }, { name: 'Vacuum cleaner', P: 900 },
+    { name: 'Television', P: 120 }, { name: 'Games console', P: 160 }, { name: 'Slow cooker', P: 280 }, { name: 'Fridge-freezer', P: 350 },
+    { name: 'Desktop computer', P: 400 }, { name: 'Blender', P: 500 }, { name: 'Coffee maker', P: 600 }, { name: 'Electric drill', P: 750 }, { name: 'Vacuum cleaner', P: 900 },
     { name: 'Toaster', P: 950 }, { name: 'Microwave', P: 1000 }, { name: 'Hairdryer', P: 1800 },
     { name: 'Iron', P: 2000 }, { name: 'Dishwasher', P: 2100 }, { name: 'Kettle', P: 2500 }, { name: 'Fan heater', P: 2800 }
   ];
-  /* the six appliances printed in the worksheet table, in this order */
-  var WORKSHEET_APPLIANCES = ['Television', 'Vacuum cleaner', 'Kettle', 'Electric drill', 'Laptop charger', 'Iron'];
+  /* the six appliances printed in the worksheet table, in this order (all above 1 A, so no current looks oddly far below its fuse) */
+  var WORKSHEET_APPLIANCES = ['Blender', 'Vacuum cleaner', 'Kettle', 'Electric drill', 'Fridge-freezer', 'Iron'];
   /* the fuse simulation prompt in the worksheet: one current below and one above this rating */
+  /* quiz: smallest working current used at each level, and how many appliances of each fuse rating make a round of 8 */
+  var MIN_I = { std: 1, hard: 0 };
+  var ROUND = { std: { 3: 3, 5: 2, 13: 3 }, hard: { 1: 2, 3: 2, 5: 2, 10: 1, 13: 1 } };
   var FUSE_DEMO = { rating: 3, currents: [2.5, 3.5] };
   var EARTH = { normalI: 9, fuse: 13, bodyR: 2300 };
   var PLUG = [
@@ -44,9 +49,11 @@
   /* 'right', 'low' (melts at switch-on) or 'high' (a fault current can flow without melting it) */
   function verdict(rating, I, set) { var r = fuseFor(I, set); return rating === r ? 'right' : rating < I ? 'low' : 'high'; }
   function appliance(name) { for (var i = 0; i < APPLIANCES.length; i++) if (APPLIANCES[i].name === name) return APPLIANCES[i]; return null; }
+  /* the appliances a quiz level can draw from */
+  function pool(set) { set = set || 'std'; return APPLIANCES.filter(function (a) { return current(a.P) > MIN_I[set]; }); }
   function bodyCurrent() { return MAINS_V / EARTH.bodyR; }
 
   return { MAINS_V: MAINS_V, MAINS_F: MAINS_F, MARGIN: MARGIN, FUSES: FUSES, FUSE_BAND: FUSE_BAND, APPLIANCES: APPLIANCES,
-    WORKSHEET_APPLIANCES: WORKSHEET_APPLIANCES, FUSE_DEMO: FUSE_DEMO, EARTH: EARTH, PLUG: PLUG,
+    WORKSHEET_APPLIANCES: WORKSHEET_APPLIANCES, MIN_I: MIN_I, ROUND: ROUND, pool: pool, FUSE_DEMO: FUSE_DEMO, EARTH: EARTH, PLUG: PLUG,
     power: power, current: current, energy: energy, fuseFor: fuseFor, verdict: verdict, appliance: appliance, bodyCurrent: bodyCurrent };
 });

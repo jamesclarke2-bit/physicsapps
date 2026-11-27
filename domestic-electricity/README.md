@@ -18,6 +18,7 @@ Misconception targeted: "the fuse protects the person". The earth wire simulatio
 - UK mains: 230 V, 50 Hz.
 - Fuse choice: the lowest rating above the working current I = P ÷ V. Standard set 3 A, 5 A, 13 A; challenge set adds 1 A and 10 A.
 - Every appliance current is at least 5% away from every fuse rating.
+- The standard quiz and the worksheet table use only appliances that take more than 1 A. Low-power appliances appear in the challenge quiz, where there is a 1 A fuse.
 - Fuse simulation: the wire warms as the current nears the rating and melts sooner the further the current is above it. Illustrative, not a real fuse characteristic.
 - Hot wires: temperature rises with current squared. The temperatures are illustrative.
 - Earth wire simulation: kettle at 9 A, 13 A fuse, person at 2300 Ω so the shock current is 0.1 A. The live wire is drawn coming off the heating element, so the kettle stops heating when the fault happens.
