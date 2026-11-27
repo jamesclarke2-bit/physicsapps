@@ -44,13 +44,25 @@ test('no appliance current is within 5% of a fuse rating', () => {
   }
 });
 
-test('each standard fuse is the answer for at least three appliances', () => {
-  for (const f of M.FUSES.std) assert.ok(M.APPLIANCES.filter(a => M.fuseFor(M.current(a.P)) === f).length >= 3, `${f} A`);
+test('each quiz level has enough appliances for a round of 8', () => {
+  for (const set of Object.keys(M.FUSES)) {
+    const plan = M.ROUND[set], pool = M.pool(set);
+    assert.equal(Object.values(plan).reduce((x, y) => x + y, 0), 8);
+    assert.deepEqual(Object.keys(plan).map(Number), M.FUSES[set]);
+    for (const f of M.FUSES[set]) assert.ok(pool.filter(a => M.fuseFor(M.current(a.P), set) === f).length >= plan[f], `${set} ${f} A`);
+  }
+});
+
+test('the standard quiz only uses appliances above 1 A; the challenge quiz uses them all', () => {
+  assert.ok(M.pool('std').every(a => M.current(a.P) > 1));
+  assert.ok(M.pool('std').length < M.APPLIANCES.length);
+  assert.equal(M.pool('hard').length, M.APPLIANCES.length);
 });
 
 test('worksheet appliances exist and cover every standard fuse', () => {
   const fs = M.WORKSHEET_APPLIANCES.map(n => { const a = M.appliance(n); assert.ok(a, n); return M.fuseFor(M.current(a.P)); });
   for (const f of M.FUSES.std) assert.ok(fs.includes(f), `${f} A missing from the worksheet table`);
+  for (const n of M.WORKSHEET_APPLIANCES) assert.ok(M.current(M.appliance(n).P) > 1, `${n} is below 1 A`);
 });
 
 test('fuse demo currents sit either side of the rating', () => {
